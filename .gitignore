@@ -1,0 +1,8 @@
+.htaccess
+!var/log
+var/log/*
+!var/db
+var/db/*
+!var/cache
+var/cache/*
+etc/config.php
