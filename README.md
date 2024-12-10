@@ -15,6 +15,8 @@ The database system, `CachedDB`class, is inherited from Medoo and added caching 
 ## Getting Started
 To use MeowBase, first initialize the `Config` object with user-defined configuration file in etc folder. Then pass the `Config` object to `MeowBase` constructor to generate the `MeowBase` object. `MeowBase` will load the configuration and initialize the other components automatically. Developer can used the `MeowBase` object to access all components, such as `config`, `log`, `cache`, `db` and `profiler`.
 
+User may copy or rename the `config-example.php` to `config.php` and modify the configuration in it.
+
 Here is a simple example to show how to use MeowBase:
 ```php
 <?php
