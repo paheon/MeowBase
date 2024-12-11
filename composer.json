@@ -6,7 +6,7 @@
     "require": {
         "php": "^8.2",
         "catfan/medoo": "^2.1.6",
-        "katzgrau/klogger": "dev-master",
+        "katzgrau/klogger": "^1.2.2",
         "symfony/cache": "^6.4.12"
     },
     "autoload": {
@@ -17,7 +17,7 @@
     "authors": [
         {
             "name": "Vincent Leung",
-            "email": "vincent@paheon.com"
+            "email": "meow@paheon.com"
         }
     ]
 }
