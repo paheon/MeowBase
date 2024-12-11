@@ -3,9 +3,9 @@
     "description": "Meow Base support both CLI and Web environment",
     "type": "library",
     "require": {
-        "php": "^8.1",
+        "php": "^8.2",
         "catfan/medoo": "^2.1.6",
-        "katzgrau/klogger": "^1.2.2",
+        "katzgrau/klogger": "dev-master",
         "symfony/cache": "^6.4.12"
     },
     "autoload": {
