@@ -1,7 +1,8 @@
 {
     "name": "paheon/meowbase",
-    "description": "Meow Base support both CLI and Web environment",
-    "type": "library",
+    "description": "Meow Base lightweight PHP framework for Web environment and CLI",
+    "license": "MIT",
+    "type": "framework",
     "require": {
         "php": "^8.2",
         "catfan/medoo": "^2.1.6",
