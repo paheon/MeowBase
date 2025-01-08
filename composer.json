@@ -1,6 +1,6 @@
 {
     "name": "paheon/meowbase",
-    "description": "Meow Base lightweight PHP framework for Web environment and CLI",
+    "description": "Meow Base - Lightweight PHP framework for Web environment and CLI",
     "license": "MIT",
     "type": "framework",
     "require": {

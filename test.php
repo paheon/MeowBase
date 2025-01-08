@@ -10,6 +10,8 @@
 use Paheon\MeowBase\Config;
 use Paheon\MeowBase\MeowBase;
 use Paheon\MeowBase\ClassBase;
+use Paheon\MeowBase\DTree;
+use Paheon\MeowBase\DTreeIterator;
 use Psr\Log\LogLevel;
 
 // Profiler will read this global variable for the application start time, 
@@ -345,5 +347,165 @@ var_dump($data9);
 
 $meow->profiler->record("DB Test Completed!", "DB Test");
 
+// Test DTree //
+echo "Test DTree function".$br;
+echo "--------------------------------".$br;
+echo "The test will create a tree structure like this:".$br;
+echo "Root".$br;
+echo "├── A".$br;
+echo "│   ├── A1".$br;
+echo "│   └── A2".$br;
+echo "├── B".$br;
+echo "│   ├── B1".$br;  
+echo "│   ├── B2".$br;
+echo "│   │   ├── B2X".$br;
+echo "│   │   └── B2Y".$br;
+echo "│   └── B3".$br;
+echo "└── C".$br;
+
+echo "Create root node".$br;
+$tree = new DTree();    
+$tree->data = "Root";
+
+echo "Add child nodes".$br;
+// Create first level nodes
+$tree->createNode("A", "Data A");
+$tree->createNode("B", "Data B");
+$tree->createNode("C", "Data C");
+
+// Create second level nodes under A
+$nodeA = $tree->children["A"];
+$nodeA->createNode("A1", "Data A1");
+$nodeA->createNode("A2", "Data A2");
+
+// Create second level nodes under B
+$nodeB = $tree->children["B"];
+$nodeB1 = new DTree("B1", "Data B1", $nodeB);
+$nodeB2 = new DTree("B2", "Data B2");
+$nodeB->AddNode($nodeB2);
+$nodeB->createNode("B3", "Data B3");
+
+// Create third level nodes under B2
+$nodeB2 = $nodeB->children["B2"];
+$nodeB2->createNode("B2X", "Data B2X");
+$nodeB2Y = new DTree("B2Y", "Data B2Y", $nodeB2);
+
+echo "Tree structure created".$br;
+echo "tree: ".$br;
+var_dump($tree);
+echo "nodeA: ".$br;
+var_dump($nodeA);
+echo "nodeB: ".$br;
+var_dump($nodeB);
+echo "nodeC: ".$br;
+var_dump($tree->children["C"]);
+
+// Test path finding
+echo "Test path finding:".$br;
+$testPaths = [
+    "/A/A1",
+    "/B/B2/B2X",
+    "/C",
+    "/D",  // Non-existent path
+    "B2/B2Y",  // Relative path from B2 node
+    "B/B2/B2Y",  // Relative path from root node
+];
+
+echo "Using nodeB: ".$nodeB->getPath().$br;
+foreach ($testPaths as $path) {
+    $node = $nodeB->findByPath($path);
+    echo "Finding path '$path': " . ($node ? "Found (path: {$node->getPath()}, data: {$node->data})" : "Not found") . $br;
+}
+
+// Test tree iteration
+echo $br."Test tree iteration:".$br;
+$iterator = new DTreeIterator($tree);
+foreach ($iterator as $position => $node) {
+    echo str_pad("", strlen($node->getPath()) * 2, " ") . $node->getPath() . " => " . $node->data . $br;
+}
+
+// Test node operations
+echo $br."Test node operations:".$br;
+
+// Test adding duplicate node
+echo "Adding duplicate node 'A1' to node A: " . ($nodeA->createNode("A1", "New A1", false) ? "Success" : "Failed - " . $nodeA->lastError) . $br;
+// Show node A children
+echo "Node A children: ".$br;
+var_dump($nodeA->children["A1"]);
+
+// Test replacing existing node
+echo "Replacing node 'A1' in node A: " . ($nodeA->createNode("A1", "Replaced A1", true) ? "Success" : "Failed - " . $nodeA->lastError) . $br;
+// Show node A children
+echo "Node A children: ".$br;
+var_dump($nodeA->children["A1"]);
+
+// Test deleting node
+echo "Deleting node 'A2' from node A: " . ($nodeA->delNode("A2") ? "Success" : "Failed - " . $nodeA->lastError) . $br;
+// Show node A children
+echo "Node A children: ".$br;
+var_dump($nodeA->children);
+
+// Test copy node
+$copyNode = $nodeA->copyNode("A1", $nodeA, "A1-copy");
+echo "Copy node from 'A1' to 'A1-copy': " . ($copyNode ? "Success (new node: {$copyNode->name})" : "Failed - " . $nodeA->lastError) . $br;
+// Show node A children
+echo "Node A children after copy: ".$br;
+var_dump($nodeA->children);
+
+// Test renaming node
+echo "Renaming node 'A1' to 'A1-renamed': " . ($nodeA->renameNode("A1", "A1-renamed") ? "Success" : "Failed - " . $nodeA->lastError) . $br;
+// Show node A children
+echo "Node A children after renaming: ".$br;
+var_dump($nodeA->children);
+
+// Test duplicating node
+$dupNode = $nodeA->dupNode("A1-renamed", null, "A1-dup");
+echo "Duplicating node 'A1-renamed': " . ($dupNode ? "Success (new node: {$dupNode->name})" : "Failed - " . $nodeA->lastError) . $br;
+// Show node A1-dup children
+echo "Node A1-dup after duplication: ".$br;
+var_dump($dupNode);
+echo "Node A children after duplication: ".$br;
+var_dump($nodeA->children);
+
+// Test moving node
+$moveNode = $nodeA->moveNode("A1-renamed", $nodeB);
+echo "Moving node 'A1-renamed' to node B: " . ($moveNode ? "Success" : "Failed - " . $nodeA->lastError) . $br;
+// Show node A and B children
+echo "Node A children after moving: ".$br;
+var_dump($nodeA->children);
+echo "Node B children after moving: ".$br;
+var_dump($nodeB->children);
+
+// Test sorting
+$nodeB->sortNode(true);
+echo "Sorted node B children (ascending): " . implode(", ", array_keys($nodeB->children)) . $br;
+
+$nodeB->sortNode(false);
+echo "Sorted node B children (descending): " . implode(", ", array_keys($nodeB->children)) . $br;
+
+// Test serialize and unserialize
+echo $br."Test serialize and unserialize:".$br;
+
+// Serialize the tree
+$serializedTree = $tree->serialize();
+echo "Serialized tree: ".$serializedTree.$br;
+
+// Unserialize the tree
+$unserializedTree = $tree->unserialize($serializedTree);
+echo "Unserialized tree: ".($unserializedTree ? "Success" : "Failed - " . $tree->lastError).$br;
+
+// Verify the unserialized tree structure
+if ($unserializedTree) {
+    echo "Unserialized tree structure:".$br;
+    $iterator = new DTreeIterator($unserializedTree);
+    foreach ($iterator as $position => $node) {
+        echo str_pad("", strlen($node->getPath()) * 2, " ") . $node->getPath() . " => " . $node->data . $br;
+    }
+} else {
+    echo "Failed to unserialize tree due to hash mismatch or other error.".$br;
+}
+
+$meow->profiler->record("Serialize/Unserialize test completed", "DTree Test");
+
 // Show report //
-echo $meow->profiler->report($isWeb);
+echo $br . $meow->profiler->report($isWeb);
