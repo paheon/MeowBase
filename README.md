@@ -780,7 +780,7 @@ foreach ($iterator as $position => $node) {
 - `__get(string $prop): mixed`: Magic method for property access and lazy loading
 
 ## System Requirements
-- PHP: 8.1 or higher
+- PHP: 8.2 or higher
 - Required extensions depend on cache adapter and database configuration
 - catfan/medoo: 2.1.6 or higher
 - katzgrau/klogger: dev-master
