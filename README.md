@@ -657,38 +657,40 @@ Below is a code example demonstrating how to use the `DTree` and `DTreeIterator`
 // | | |-B2Y
 // | |-B3
 // |-C
+// | |-C1
 // |-D
 //   |-D1
 //   |-D2
 $tree = new DTree();
 $tree->data = "Root";
 
-// Add child nodes using createNode
-$tree->createNode("A", "Data A");
-$tree->createNode("B", "Data B");
+// Create first level nodes
+$nodeA = $tree->createNode("A", "Data A");
+$nodeB = $tree->createNode("B", "Data B");
 $tree->createNode("C", "Data C");
 
-// Add child nodes using addNode
-$nodeD = new DTree("D", "Data D");
-$nodeD->createNode("D1", "Data D1");
-$nodeD->createNode("D2", "Data D2");
-$tree->addNode($nodeD);
-
 // Create second level nodes under A
-$nodeA = $tree->children["A"];
-$nodeA->createNode("A1", "Data A1");
-$nodeA->createNode("A2", "Data A2");
+$nodeA->createByPath("A1", "Data A1");          // Relative path
+$nodeB->createByPath("/A/A2", "Data A2");       // Absolute path
 
 // Create second level nodes under B
-$nodeB = $tree->children["B"];
-$nodeB->createNode("B1", "Data B1");
-$nodeB->createNode("B2", "Data B2");
+$nodeB1 = new DTree("B1", "Data B1", $nodeB);   // Create node and hook to node B
+$nodeB2 = new DTree("B2", "Data B2");           // Create node first
+$nodeB->AddNode($nodeB2);                       // Hook node B2 to node B by AddNode()
 $nodeB->createNode("B3", "Data B3");
 
 // Create third level nodes under B2
-$nodeB2 = $nodeB->children["B2"];
 $nodeB2->createNode("B2X", "Data B2X");
-$nodeB2->createNode("B2Y", "Data B2Y");
+$nodeB2Y = new DTree("B2Y", "Data B2Y", $nodeB2);
+
+// Create remained nodes by createByArray //
+$nodeList = $tree->createByArray([
+    "/C/C1" => "Data C1",
+    "/D/D1" => "Data D1",
+    "D/D2"  => "Data D2",
+]);
+$nodeC = $nodeList["/C/C1"]->parent;
+$nodeD = $nodeList["/D/D1"]->parent;
 
 // Iterate over the tree
 $iterator = new DTreeIterator($tree);
@@ -711,6 +713,8 @@ foreach ($iterator as $position => $node) {
 - `__construct(string $name = "", mixed $data = null, ?DTree $parent = null, bool $replace = true)`: Initializes a new node.
 - `addNode(DTree $child, bool $clone = false, bool $replace = true): bool`: Adds a child node.
 - `createNode(string $name, mixed $data = null, bool $replace = true): ?DTree`: Creates and adds a new child node.
+- `createByPath(string $path, mixed $data = null, bool $replace = true):?DTree`: Creates and adds a new child node by path.
+- `createByArray(array $recList, bool $replace = true):array`: Creates and adds number of new child nodes by array.
 - `delNode(string $name): bool`: Deletes a child node.
 - `renameNode(string $srcName, string $dstName): bool`: Renames a child node.
 - `dupNode(string $srcName, ?DTree $dstNode = null, ?string $dstName = null, bool $clone = false, bool $replace = true): ?DTree`: Duplicates a node.
@@ -724,6 +728,7 @@ foreach ($iterator as $position => $node) {
 - `isRoot(): bool`: Checks if the node is the root node.
 - `getPath(): string`: Gets the path from the root to the current node.
 - `findByPath(string $path): ?DTree`: Finds a node by its path.
+- `findByData(mixed $data, bool $singleResult = false, bool $global = true):array|DTree|null`: Finds single node or multiple nodes by data matching.
 - `__toString(): string`: Returns the name of the node.
 - `__debugInfo(): array`: Provides debug information about the node.
 
@@ -748,7 +753,7 @@ foreach ($iterator as $position => $node) {
 
 **Methods:**
 
-- `__construct(DTree $tree)`: Initializes the iterator with the root node.
+- `__construct(DTree $tree, bool $global = true)`: Initializes the iterator with the root node.
 - `current(): mixed`: Returns the current node.
 - `key(): mixed`: Returns the current position.
 - `next(): void`: Moves to the next node.

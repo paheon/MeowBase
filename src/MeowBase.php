@@ -34,7 +34,7 @@ class MeowBase extends ClassBase {
     protected   bool            $debug = false;                 // Debug Mode
 
     // Constructor //
-    public function __construct(Config $config, bool $preload = false) {
+    public function __construct(Config $config, bool $preload = true) {
 
         $this->denyWrite = array_merge($this->denyWrite, [ 'profiler', 'config', 'log', 'cache', 'db', 'configTree', 'lazyLoad' ]);
 

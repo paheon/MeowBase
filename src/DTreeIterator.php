@@ -7,11 +7,20 @@ use Paheon\MeowBase\DTree;
 class DTreeIterator implements \Iterator {
     protected   DTree   $treeRoot;
     protected   ?DTree   $treeCurr;
+    protected   ?DTree   $rootParent;
     protected   array   $nodeStack = [];
     protected   int     $position = 0;
+    protected   bool    $global = true;
 
-    public function __construct(DTree $tree) {
-        $this->treeCurr = $this->treeRoot = $tree->getRoot();
+    public function __construct(DTree $tree, bool $global = true) {
+        $this->global = $global;
+        if ($global) {
+            $this->treeCurr = $this->treeRoot = $tree->getRoot();
+            $this->rootParent = null;
+        } else {
+            $this->treeCurr = $this->treeRoot = $tree;
+            $this->rootParent = $tree->parent;
+        }
         $this->nodeStack = [$this->treeRoot];
     }
 
@@ -37,11 +46,13 @@ class DTreeIterator implements \Iterator {
             while (!empty($this->nodeStack)) {
                 $current = array_pop($this->nodeStack);
                 $parent = $current->parent;
-                
                 if ($parent) {
+                    if (!$this->global && $parent === $this->rootParent) {
+                        $this->treeCurr = null;
+                        return;                        
+                    }
                     $siblings = array_values($parent->children);
                     $currentIndex = array_search($current, $siblings);
-                    
                     if ($currentIndex !== false && isset($siblings[$currentIndex + 1])) {
                         // Found next sibling
                         $this->treeCurr = $siblings[$currentIndex + 1];

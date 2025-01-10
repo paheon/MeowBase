@@ -361,7 +361,11 @@ echo "│   ├── B2".$br;
 echo "│   │   ├── B2X".$br;
 echo "│   │   └── B2Y".$br;
 echo "│   └── B3".$br;
-echo "└── C".$br;
+echo "├── C".$br;
+echo "│   └── C1".$br;  
+echo "├── D".$br;
+echo "│   ├── D1".$br;
+echo "│   └── D2".$br;
 
 echo "Create root node".$br;
 $tree = new DTree();    
@@ -369,26 +373,34 @@ $tree->data = "Root";
 
 echo "Add child nodes".$br;
 // Create first level nodes
-$tree->createNode("A", "Data A");
-$tree->createNode("B", "Data B");
+$nodeA = $tree->createNode("A", "Data A");
+$nodeB = $tree->createNode("B", "Data B");
 $tree->createNode("C", "Data C");
 
 // Create second level nodes under A
-$nodeA = $tree->children["A"];
-$nodeA->createNode("A1", "Data A1");
-$nodeA->createNode("A2", "Data A2");
+$nodeA->createByPath("A1", "Data A1");          // Relative path
+$nodeB->createByPath("/A/A2", "Data A2");       // Absolute path
 
 // Create second level nodes under B
-$nodeB = $tree->children["B"];
-$nodeB1 = new DTree("B1", "Data B1", $nodeB);
-$nodeB2 = new DTree("B2", "Data B2");
-$nodeB->AddNode($nodeB2);
+$nodeB1 = new DTree("B1", "Data B1", $nodeB);   // Create node and hook to node B
+$nodeB2 = new DTree("B2", "Data B2");           // Create node first
+$nodeB->AddNode($nodeB2);                       // Hook node B2 to node B by AddNode()
 $nodeB->createNode("B3", "Data B3");
 
 // Create third level nodes under B2
-$nodeB2 = $nodeB->children["B2"];
 $nodeB2->createNode("B2X", "Data B2X");
 $nodeB2Y = new DTree("B2Y", "Data B2Y", $nodeB2);
+
+// Create remained nodes by createByArray //
+$nodeList = $tree->createByArray([
+    "/C/C1" => "Data C1",
+    "/D/D1" => "Data D1",
+    "D/D2"  => "Data D2",
+]);
+$nodeC = $nodeList["/C/C1"]->parent;
+$nodeD = $nodeList["/D/D1"]->parent;
+echo "Result from createByArray:".$br;
+var_dump($nodeList);
 
 echo "Tree structure created".$br;
 echo "tree: ".$br;
@@ -398,7 +410,9 @@ var_dump($nodeA);
 echo "nodeB: ".$br;
 var_dump($nodeB);
 echo "nodeC: ".$br;
-var_dump($tree->children["C"]);
+var_dump($nodeC);
+echo "nodeD: ".$br;
+var_dump($nodeD);
 
 // Test path finding
 echo "Test path finding:".$br;
@@ -406,9 +420,10 @@ $testPaths = [
     "/A/A1",
     "/B/B2/B2X",
     "/C",
-    "/D",  // Non-existent path
-    "B2/B2Y",  // Relative path from B2 node
-    "B/B2/B2Y",  // Relative path from root node
+    "/E",           // Non-existent path
+    "B2/B2Y",       // Relative path from B2 node
+    "B/B2/B2Y",     // Relative path from root node
+    "/D/D1"
 ];
 
 echo "Using nodeB: ".$nodeB->getPath().$br;
@@ -418,8 +433,14 @@ foreach ($testPaths as $path) {
 }
 
 // Test tree iteration
-echo $br."Test tree iteration:".$br;
+echo $br."Test tree iteration (Global):".$br;
 $iterator = new DTreeIterator($tree);
+foreach ($iterator as $position => $node) {
+    echo str_pad("", strlen($node->getPath()) * 2, " ") . $node->getPath() . " => " . $node->data . $br;
+}
+
+echo $br."Test tree iteration (from nodeB):".$br;
+$iterator = new DTreeIterator($nodeB, false);
 foreach ($iterator as $position => $node) {
     echo str_pad("", strlen($node->getPath()) * 2, " ") . $node->getPath() . " => " . $node->data . $br;
 }
