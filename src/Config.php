@@ -18,7 +18,7 @@ class Config extends ClassBase {
 	protected string  $etcPath;
     protected string  $varPath;
     protected string  $file;
-    protected string  $docRoot;
+    protected string  $docRoot = "";
 
     // Default Config //
 	protected array   $config = [
@@ -74,6 +74,15 @@ class Config extends ClassBase {
             "lifeTime" => 86400,
             "adapter" => "files"
         ],
+        "image" => [
+            "driver" => "Intervention\Image\Drivers\Gd\Driver", // Intervention\Image\Drivers\Vips\Driver, Intervention\Image\Drivers\Imagick\Driver
+            "options" => [
+                "autoOrientation" => true,
+                "decodeAnimation" => true,
+                "driver" => "ffffff",
+                "strip" => false,
+            ],
+        ],
         "sapi" => "unknown",
 	];	
 
@@ -84,19 +93,17 @@ class Config extends ClassBase {
         session_start();
         $this->denyWrite = array_merge($this->denyWrite, [ 'config', 'etcPath', 'varPath', 'file', 'docRoot' ]);
 
-        $this->etcPath = $etcPath;
-        $this->varPath = $varPath;
-        $this->file = $file;
-
         // cli mode or web mode mode? //
         $this->config['sapi'] = php_sapi_name();    // In cli-mode or fpt/cgi mode?
 
-        // Get doc root and path //
-        if (!is_null($docRoot)) {
-            $this->docRoot = $docRoot;
-        } else {
-            $this->docRoot = $_SERVER['DOCUMENT_ROOT'];
-        };
+        if (file_exists("configdir.php")) {
+            include_once "configdir.php";
+        }
+        $this->docRoot = $configDocRoot ?? $docRoot ?? $_SERVER['DOCUMENT_ROOT'];
+        $this->etcPath = $configEtcPath ?? $etcPath ?? "/etc";
+        $this->varPath = $configVarPath ?? $varPath ?? "/var";
+        $this->file    = $configFile ?? $file ?? "config.php";
+
         if (!is_dir($this->docRoot)) {
             $this->docRoot = getcwd();
         }
@@ -136,6 +143,7 @@ class Config extends ClassBase {
             $config = &$config[$key] ?? null;
             if (is_null($config)) {
                 $this->lastError = "Config path not found: ".$path;
+                $this->throwException($this->lastError, 1);
                 break;
             }
         }
@@ -154,6 +162,7 @@ class Config extends ClassBase {
             $config = &$config[$key] ?? null;
             if (is_null($config)) {
                 $this->lastError = "Config path not found: ".$path;
+                $this->throwException($this->lastError, 1);
                 break;
             } else {
                 if ($i == $cnt) {

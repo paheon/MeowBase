@@ -1,8 +1,8 @@
 <?php
-namespace Paheon\MeowBase;
+namespace Paheon\MeowBase\Tools;
 
 use Paheon\MeowBase\ClassBase;
-use Paheon\MeowBase\DTreeIterator;
+use Paheon\MeowBase\Tools\DTreeIterator;
 
 // DTree class //
 class DTree extends ClassBase {
@@ -19,9 +19,30 @@ class DTree extends ClassBase {
         $this->name = $name;
         $this->data = $data;
         $this->parent = $parent;
-        if ($name !== "" && $parent) {
-            $parent->addNode($this, false, $replace);
+        if ($this->name !== "" && $parent) {
+            $this->parent->addNode($this, false, $replace);
         }
+    }
+
+    // Build node //
+    public function buildNode(array $param):?DTree {
+        $name = $param['name'] ?? "";
+        $data = $param['data'] ?? null;
+        $parent = ($param['parent'] instanceof DTree) ? $param['parent'] : null;
+        $replace = $param['replace'] ?? true;
+        return new DTree($name, $data, $parent, $replace);
+    }
+
+    // Set node properties //
+    protected function setNode(DTree $node, array $param):void {
+        $node->name = $param['name'] ?? "";
+        $node->data = $param['data'] ?? null;
+        $node->parent = $param['parent'] ?? null;
+    }
+
+    // Get node properties //
+    protected function getNode(DTree $node):array {
+        return [ 'name' => $node->name, 'data' => $node->data ];
     }
 
     // Add child node //
@@ -30,6 +51,7 @@ class DTree extends ClassBase {
         if (isset($this->children[$child->name])) {
             if (!$replace) {
                 $this->lastError = "Child node '{$child->name}' already exists!";
+                $this->throwException($this->lastError, 2);
                 return false;
             }
         }
@@ -45,24 +67,30 @@ class DTree extends ClassBase {
     }
 
     // create child node //
-    public function createNode(string $name, mixed $data = null, bool $replace = true):?DTree {
+    public function createNode(array $param):?DTree {
         $this->lastError = "";
-        if ($name == "" && $this->parent === null) {
+        $param['name'] = $param['name'] ?? "";
+        $param['replace'] = $param['replace'] ?? true;
+        if ($param['name'] == "" && $this->parent === null) {
             $this->lastError = "Child node is root node!";
+            $this->throwException($this->lastError, 1);
             return null;
         }
-        if (isset($this->children[$name])) {
-            if (!$replace) {
-                $this->lastError = "Child node '$name'already exists!";
+        if (isset($this->children[$param['name']])) {
+            if (!$param['replace']) {
+                $this->lastError = "Child node '{$param['name']}' already exists!";
+                $this->throwException($this->lastError, 2);
                 return null;
             }
         }
-        $newNode = new DTree($name, $data, $this, $replace);
+        $param['data'] = $param['data'] ?? null;
+        $param['parent'] = $this;
+        $newNode = $this->buildNode($param);
         return $newNode;
     }
 
     // Create Node by Path // 
-    public function createByPath(string $path, mixed $data = null, bool $replace = true):?DTree {
+    public function createByPath(string $path, array $param):?DTree {
         $this->lastError = "";
         $path = trim($path);
         if (substr($path, 0, 1) === '/') {
@@ -73,41 +101,70 @@ class DTree extends ClassBase {
         }
         $pathList = explode('/', $path);
         $lastIdx = count($pathList) - 1;
+        $param['data'] = $param['data'] ?? null;
+        $param['replace'] = $param['replace'] ?? true;
         foreach ($pathList as $idx =>$name) {
             if ($name === '') continue;
             if (isset($currNode->children[$name])) {
+                // has child node //
                 if ($idx == $lastIdx) {
-                    if ($replace) {
-                        $currNode->children[$name]->data = $data;
+                    if ($param['replace']) {
+                        $param['parent'] = $currNode;
+                        $param['name'] = $name;
+                        $this->setNode($currNode->children[$name], $param);
                     } else {
-                        $this->lastError = "Child node '$name' already exists!";
+                        $this->lastError = "Child node '{$param['name']}' already exists!";
+                        $this->throwException($this->lastError, 2);
                     }    
                     return $currNode->children[$name];
                 }
                 $currNode = $currNode->children[$name];
             } else {
+                // Child node not found //
                 if ($idx == $lastIdx) {
-                    $newNode = new DTree($name, $data, $currNode, true);
+                    // New child node //
+                    $param['parent'] = $currNode;
+                    $param['name'] = $name;
+                    $newNode = $this->buildNode($param);
                     return $newNode;
                 } 
-                $newNode = new DTree($name, null, $currNode, true);
+                // Create a new parent node //
+                $newNode = $this->buildNode([ 'name' => $name, 'data' => null, 'parent' => $currNode, 'replace' => true ]);
                 $currNode = $newNode;
             }
         }
         return null;
     }
 
-    // Create node by array //
-    // $recList = [ 'path' => 'data', ... ]
-    public function createByArray(array $recList, bool $replace = true):array {
+    // load node from array //
+    // $recList = [ 'path' => [ 'data' => 'value1', 'name' => 'value2', ... ], 'path2' => [ 'data' => 'value3', 'name' => 'value4', ... ], ... ]
+    public function loadFromArray(array $recList):array {
         $this->lastError = "";
         $result = [];
-        foreach ($recList as $path => $data) {
-            $result[$path] = $this->createByPath($path, $data, $replace);
+        foreach ($recList as $path => $param) {
+            $result[$path] = $this->createByPath($path, $param);
         }
         return $result;
     }
     
+    // Save node to array //
+    public function saveToArray(?DTree $startNode = null):array {
+        $global = true;
+        if ($startNode) {
+            if (!$startNode->isRoot()) {
+                $global = false;
+            } 
+        } else {    
+            $startNode = $this->getRoot();
+        }
+        $result = [];
+        $iterator = new DTreeIterator($startNode, $global);
+        foreach ($iterator as $node) {
+            $result[$node->getPath()] = $this->getNode($node);
+        }
+        return $result;
+    }
+
     // Delete child node //
     public function delNode(string $name):bool {
         $this->lastError = "";
@@ -116,22 +173,25 @@ class DTree extends ClassBase {
             return true;
         } 
         $this->lastError = "Child node '$name' not found!";
+        $this->throwException($this->lastError, 3);
         return false;
     }
 
     // Rename node //
-    public function renameNode(string $srcName, string $dstName):bool {
+    public function renameNode(string $srcName, string $dstName, bool $replace = true):bool {
         $this->lastError = "";
         if (!isset($this->children[$srcName])) {
             $this->lastError = "Child node '$srcName'not found!";
+            $this->throwException($this->lastError, 3);
             return false;
         }    
         if (isset($this->children[$dstName])) {
             $this->lastError = "Child node '$dstName' already exists!";
+            $this->throwException($this->lastError, 2);
             return false;
         }
         // Build a new node 
-        $newNode = new DTree($dstName, $this->children[$srcName]->data, $this, true);
+        $this->buildNode([ 'name' => $dstName, 'data' => $this->children[$srcName]->data, 'parent' => $this, 'replace' => $replace ]);
         unset($this->children[$srcName]);
         if ($this->sort) {
             $this->sortNode();
@@ -144,11 +204,13 @@ class DTree extends ClassBase {
         $this->lastError = "";
         if (!isset($this->children[$srcName])) {
             $this->lastError = "Child node '$srcName'not found!";
+            $this->throwException($this->lastError, 3);
             return null;
         }
         if (!$dstName) $dstName = $srcName;
         if (!$replace && $dstNode && $dstNode->getChild($dstName)) {
             $this->lastError = "Child node '$srcName' in destination node is already exists!";
+            $this->throwException($this->lastError, 4);
             return null;
         }
         if ($clone && is_object($this->children[$srcName]->data)) {
@@ -156,7 +218,7 @@ class DTree extends ClassBase {
         } else {
             $srcData = $this->children[$srcName]->data;
         }
-        $newNode = new DTree($dstName, $srcData, $dstNode, $replace);
+        $newNode = $this->buildNode([ 'name' => $dstName, 'data' => $srcData, 'parent' => $dstNode, 'replace' => $replace ]);
         return $newNode;
     }   
 
@@ -200,6 +262,7 @@ class DTree extends ClassBase {
         $decoded = json_decode($serializedData, true);
         if (!is_array($decoded) || !isset($decoded['data'], $decoded['hash'])) {
             $this->lastError = "Invalid serialized data!";
+            $this->throwException($this->lastError, 5);
             return null;
         }
         $data = $decoded['data'];
@@ -208,6 +271,7 @@ class DTree extends ClassBase {
             $calculatedHash = hash_hmac($algo, $data, $key);
             if (!hash_equals($calculatedHash, $hash)) {
                 $this->lastError = "Hash mismatch, data integrity compromised!";
+                $this->throwException($this->lastError, 6);
                 return null;
             }    
         }
@@ -217,6 +281,7 @@ class DTree extends ClassBase {
             return $newNode;
         }
         $this->lastError = "Failed to unserialize data!";
+        $this->throwException($this->lastError, 7);
         return null;
     }
 
@@ -305,9 +370,9 @@ class DTree extends ClassBase {
             'path' => $this->getPath(),
             'name' => $this->name,
             'data' => $this->data,
-            'parent' => $this->parent->name,
+            'isRoot' => $this->isRoot(),
+            'parent' => is_null($this->parent) ? null : $this->parent->name,
             'children' => $this->children,
-            'isRoot' => $this->isRoot()
         ];
     }
     

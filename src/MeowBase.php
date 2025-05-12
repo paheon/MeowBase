@@ -15,6 +15,8 @@ use Paheon\MeowBase\SysLog;
 use Paheon\MeowBase\Cache;
 use Paheon\MeowBase\CacheDB;
 use Paheon\MeowBase\Profiler;
+use Paheon\MeowBase\FileUrl;
+use Paheon\MeowBase\Image;
 
 class MeowBase extends ClassBase {
 
@@ -25,7 +27,7 @@ class MeowBase extends ClassBase {
     protected   ?Cache           $cache = null;                 // Cache Object
     protected   ?CacheDB         $db = null;                    // System DB Object (Cached Medoo)
 
-    protected   array            $lazyLoad = [ "db"=>"initCacheDB", "cache"=>"initCache", "log"=>"initLogger" ];
+    protected   array            $lazyLoad = [ "db"=>"initCacheDB", "cache"=>"initCache", "log"=>"initLogger"];
 
     // Config //
     protected   array           $configTree = [];               // Read only, virtural linkup with $config->config
@@ -36,7 +38,7 @@ class MeowBase extends ClassBase {
     // Constructor //
     public function __construct(Config $config, bool $preload = true) {
 
-        $this->denyWrite = array_merge($this->denyWrite, [ 'profiler', 'config', 'log', 'cache', 'db', 'configTree', 'lazyLoad' ]);
+        $this->denyWrite = array_merge($this->denyWrite, [ 'profiler', 'config', 'log', 'cache', 'db', 'image', 'configTree', 'lazyLoad' ]);
 
         // Init Profiler //
         $this->profiler = new Profiler();
@@ -56,6 +58,7 @@ class MeowBase extends ClassBase {
             $this->initCacheDB();
         }
     }
+
 
     // Init Logger //
     private function initLogger():void {
@@ -80,7 +83,7 @@ class MeowBase extends ClassBase {
         if (is_null($this->log)) $this->initLogger();
         $sqlConfig = $this->config->config['db']['sql'];
         $this->db = new CacheDB($sqlConfig, $this->cache, $this->log);
-        $this->db->enableLog = true;    		// Enable SQL Log
+        $this->db->enableLog = $this->debug;    		// Enable SQL Log
         //$this->db->enableCache(false);        // Disable Cache
         //$this->profiler->record("Cache DB loaded");
     }

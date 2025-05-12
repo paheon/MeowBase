@@ -10,9 +10,13 @@
 use Paheon\MeowBase\Config;
 use Paheon\MeowBase\MeowBase;
 use Paheon\MeowBase\ClassBase;
-use Paheon\MeowBase\DTree;
-use Paheon\MeowBase\DTreeIterator;
+use Paheon\MeowBase\Tools\DTree;
+use Paheon\MeowBase\Tools\DTreeIterator;
 use Psr\Log\LogLevel;
+use Paheon\MeowBase\Tools\File;
+use Paheon\MeowBase\Tools\Url;
+use Paheon\MeowBase\Tools\Mime;
+use Paheon\MeowBase\Tools\Mailer;
 
 // Profiler will read this global variable for the application start time, 
 //   so it should be run at the beginning of the application
@@ -368,39 +372,46 @@ echo "│   ├── D1".$br;
 echo "│   └── D2".$br;
 
 echo "Create root node".$br;
+$meow->profiler->record("Create DTree Start", "DTree Test");
 $tree = new DTree();    
 $tree->data = "Root";
 
 echo "Add child nodes".$br;
 // Create first level nodes
-$nodeA = $tree->createNode("A", "Data A");
-$nodeB = $tree->createNode("B", "Data B");
-$tree->createNode("C", "Data C");
+$nodeA = $tree->createNode([ 'name' => "A", 'data' => "Data A" ]);
+$nodeB = $tree->createNode([ 'name' => "B", 'data' => "Data B" ]);
+$tree->createNode([ 'name' => "C", 'data' => "Data C" ]);
 
 // Create second level nodes under A
-$nodeA->createByPath("A1", "Data A1");          // Relative path
-$nodeB->createByPath("/A/A2", "Data A2");       // Absolute path
+$nodeA->createByPath("A1", [ 'data' => "Data A1" ]);          // Relative path
+$nodeB->createByPath("/A/A2", [ 'data' => "Data A2" ]);       // Absolute path
 
 // Create second level nodes under B
 $nodeB1 = new DTree("B1", "Data B1", $nodeB);   // Create node and hook to node B
 $nodeB2 = new DTree("B2", "Data B2");           // Create node first
 $nodeB->AddNode($nodeB2);                       // Hook node B2 to node B by AddNode()
-$nodeB->createNode("B3", "Data B3");
+$nodeB->createNode([ 'name' => "B3", 'data' => "Data B3" ]);
 
 // Create third level nodes under B2
-$nodeB2->createNode("B2X", "Data B2X");
+$nodeB2->createNode([ 'name' => "B2X", 'data' => "Data B2X" ]);
 $nodeB2Y = new DTree("B2Y", "Data B2Y", $nodeB2);
 
 // Create remained nodes by createByArray //
-$nodeList = $tree->createByArray([
-    "/C/C1" => "Data C1",
-    "/D/D1" => "Data D1",
-    "D/D2"  => "Data D2",
+$nodeList = $tree->loadFromArray([
+    "/C/C1" => [ 'data' => "Data C1" ],
+    "/D/D1" => [ 'data' => "Data D1" ],
+    "D/D2"  => [ 'data' => "Data D2" ],
 ]);
 $nodeC = $nodeList["/C/C1"]->parent;
 $nodeD = $nodeList["/D/D1"]->parent;
-echo "Result from createByArray:".$br;
+echo "Result from loadFromArray:".$br;
 var_dump($nodeList);
+
+// Save tree to array //
+echo "Save tree to array".$br;
+$nodeList2 = $tree->SaveToArray();
+echo "Result from SaveToArray:".$br;
+var_dump($nodeList2);
 
 echo "Tree structure created".$br;
 echo "tree: ".$br;
@@ -413,6 +424,8 @@ echo "nodeC: ".$br;
 var_dump($nodeC);
 echo "nodeD: ".$br;
 var_dump($nodeD);
+
+$meow->profiler->record("Create DTree Completed", "DTree Test");
 
 // Test path finding
 echo "Test path finding:".$br;
@@ -442,6 +455,7 @@ foreach ($iterator as $position => $node) {
 echo $br."Test tree iteration (from nodeB):".$br;
 $iterator = new DTreeIterator($nodeB, false);
 foreach ($iterator as $position => $node) {
+    echo "Position: ".$position.$br;
     echo str_pad("", strlen($node->getPath()) * 2, " ") . $node->getPath() . " => " . $node->data . $br;
 }
 
@@ -449,13 +463,13 @@ foreach ($iterator as $position => $node) {
 echo $br."Test node operations:".$br;
 
 // Test adding duplicate node
-echo "Adding duplicate node 'A1' to node A: " . ($nodeA->createNode("A1", "New A1", false) ? "Success" : "Failed - " . $nodeA->lastError) . $br;
+echo "Adding duplicate node 'A1' to node A: " . ($nodeA->createNode([ 'name' => "A1", 'data' => "New A1", 'replace' => false ]) ? "Success" : "Failed - " . $nodeA->lastError) . $br;
 // Show node A children
 echo "Node A children: ".$br;
 var_dump($nodeA->children["A1"]);
 
 // Test replacing existing node
-echo "Replacing node 'A1' in node A: " . ($nodeA->createNode("A1", "Replaced A1", true) ? "Success" : "Failed - " . $nodeA->lastError) . $br;
+echo "Replacing node 'A1' in node A: " . ($nodeA->createNode([ 'name' => "A1", 'data' => "Replaced A1", 'replace' => true ]) ? "Success" : "Failed - " . $nodeA->lastError) . $br;
 // Show node A children
 echo "Node A children: ".$br;
 var_dump($nodeA->children["A1"]);
@@ -496,6 +510,7 @@ echo "Node A children after moving: ".$br;
 var_dump($nodeA->children);
 echo "Node B children after moving: ".$br;
 var_dump($nodeB->children);
+$meow->profiler->record("DTree Operation Completed", "DTree Test");
 
 // Test sorting
 $nodeB->sortNode(true);
@@ -503,6 +518,7 @@ echo "Sorted node B children (ascending): " . implode(", ", array_keys($nodeB->c
 
 $nodeB->sortNode(false);
 echo "Sorted node B children (descending): " . implode(", ", array_keys($nodeB->children)) . $br;
+$meow->profiler->record("DTree Sorting Completed", "DTree Test");
 
 // Test serialize and unserialize
 echo $br."Test serialize and unserialize:".$br;
@@ -512,8 +528,10 @@ $serializedTree = $tree->serialize();
 echo "Serialized tree: ".$serializedTree.$br;
 
 // Unserialize the tree
+$meow->profiler->record("Serialize test Completed", "DTree Test");
 $unserializedTree = $tree->unserialize($serializedTree);
 echo "Unserialized tree: ".($unserializedTree ? "Success" : "Failed - " . $tree->lastError).$br;
+
 
 // Verify the unserialized tree structure
 if ($unserializedTree) {
@@ -526,7 +544,406 @@ if ($unserializedTree) {
     echo "Failed to unserialize tree due to hash mismatch or other error.".$br;
 }
 
-$meow->profiler->record("Serialize/Unserialize test completed", "DTree Test");
+$meow->profiler->record("Unserialize test completed", "DTree Test");
+
+// Test File class //
+echo $br."Test File class".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("File Test Start", "File Test");
+
+// Create File object
+$file = new File();
+echo "File object created".$br;
+echo "Home path: ".($file->home ?? "null").$br;
+
+// Set home to current directory
+$file->setHomeToCurrent();
+echo "Home path set to current directory: ".$file->home.$br;
+
+// Set home to a specific directory
+$file->setHome(__DIR__);
+echo "Home path set to __DIR__: ".$file->home.$br;
+
+// Test file path building
+$fullPath = $file->genFile("test.txt");
+echo "Full path for 'test.txt': ".$fullPath.$br;
+
+// Test file path with substitution
+$filePath = $file->genFile("[type]/[name].[ext]", [
+    "type" => "documents",
+    "name" => "report",
+    "ext" => "pdf"
+]);
+echo "File path with substitution: ".$filePath.$br;
+
+// Test temporary file creation by tempFile
+$tempFilePath = "";
+$tempFile = $file->tempFile($tempFilePath);
+if ($tempFile !== false) {
+    echo "Temporary file created: ".$tempFilePath.$br;
+    // Write something to the temp file
+    fwrite($tempFile, "This is a test content for the temporary file.");
+    fseek($tempFile, 0);
+    // Read the content
+    $content = fread($tempFile, 1024);
+    echo "Content read from temp file: ".$content.$br;
+    // Close the temp file (this will also delete it)
+    fclose($tempFile);
+} else {
+    echo "Failed to create temporary file: ".$file->lastError.$br;
+}
+if (file_exists($tempFilePath)) {
+    echo "Deleting temp file: ".$tempFilePath.$br;
+    unlink($tempFilePath);
+}
+
+// Test temporary file creation by genTempFile
+$tempFilePath = "";
+$tempFile = $file->genTempFile("", "MyTemp_");
+if ($tempFile !== false) {
+    echo "Temporary file created: ".$tempFile.$br;
+    // Write something to the temp file
+    file_put_contents($tempFile, "This is a test content for the temporary file.");
+    // Read the content
+    $content = file_get_contents($tempFile);
+    echo "Content read from temp file: ".$content.$br;
+    // Close the temp file (this will also delete it)
+} else {
+    echo "Failed to create temporary file: ".$file->lastError.$br;
+}
+if (file_exists($tempFilePath)) {
+    echo "Deleting temp file: ".$tempFilePath.$br;
+    unlink($tempFilePath);
+}
+
+
+$meow->profiler->record("File Test Completed", "File Test");
+
+// Test Url class //
+echo $br."Test Url class".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("Url Test Start", "Url Test");
+
+// Create Url object
+$url = new Url();
+echo "Url object created".$br;
+echo "Home URL: ".($url->home ?? "null").$br;
+
+// Set home URL
+$url->setHome("https://example.com/app");
+echo "Home URL set to: ".$url->home.$br;
+
+// Test URL building
+$fullUrl = $url->genUrl("users/profile", ["id" => 123, "view" => "full"], "section1", true);
+echo "Full URL: ".$fullUrl.$br;
+
+$relativeUrl = $url->genUrl("users/profile", ["id" => 123, "view" => "full"], "section1", false);
+echo "Relative URL: ".$relativeUrl.$br;
+
+// Test URL modification
+$sourceUrl = "https://example.com/products?category=electronics&sort=price";
+$modifiedUrl = $url->modifyUrl($sourceUrl, [
+    "path" => "/services",
+    "query" => ["category" => "software", "filter" => "new"]
+]);
+echo "Source URL: ".$sourceUrl.$br;
+echo "Modified URL: ".$modifiedUrl.$br;
+
+// Test URL info (only if we have internet connection)
+echo "Testing URL info for https://example.com:".$br;
+$urlInfo = $url->urlInfo("https://example.com");
+if ($urlInfo !== false) {
+    echo "URL info retrieved successfully".$br;
+    echo "HTTP code: ".$urlInfo["http_code"].$br;
+    echo "Content type: ".$urlInfo["content_type"].$br;
+} else {
+    echo "Failed to retrieve URL info: ".$url->lastError.$br;
+}
+
+$meow->profiler->record("Url Test Completed", "Url Test");
+
+// Test Mime class //
+echo $br."Test Mime class".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("Mime Test Start", "Mime Test");
+
+// Create Mime object with default paths
+$mime = new Mime();
+echo "Mime object created".$br;
+
+// Test file to MIME type conversion
+$testFile = __FILE__;
+echo "Testing MIME type for current file: ".$testFile.$br;
+$mimeType = $mime->file2Mime($testFile);
+if ($mimeType !== false) {
+    echo "MIME type: ".$mimeType.$br;
+} else {
+    echo "Failed to determine MIME type: ".$mime->lastError.$br;
+}
+
+// Test MIME to icon conversion
+if ($mimeType !== false) {
+    echo "Testing icon for MIME type: ".$mimeType.$br;
+    $icon = $mime->mime2Icon($mimeType);
+    if ($icon !== false) {
+        echo "Icon: ".$icon.$br;
+    } else {
+        echo "Failed to determine icon: ".$mime->lastError.$br;
+    }
+}
+
+// Test alias to MIME conversion
+echo "Testing alias to MIME conversion for 'text/plain'".$br;
+$aliasMime = $mime->alias2Mime("text/plain");
+if ($aliasMime !== false) {
+    echo "Alias MIME: ".$aliasMime.$br;
+} else {
+    echo "Failed to determine alias MIME: ".$mime->lastError.$br;
+}
+
+$meow->profiler->record("Mime Test Completed", "Mime Test");
+
+// Test Mailer class //
+echo $br."Test Mailer class".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("Mailer Test Start", "Mailer Test");
+
+// Create Mailer object
+$mailer = new Mailer($meow->configTree["mailer"]);
+echo "Mailer object created".$br;
+
+// Test email validation
+echo "Testing email validation:".$br;
+$testEmails = [
+    'valid@example.com',
+    'invalid.email',
+    'test@nonexistentdomain.xyz'
+];
+
+foreach ($testEmails as $email) {
+    echo "Validating '$email': " . ($mailer->emailValidate($email, true) ? "Valid" : "Invalid - " . $mailer->lastError) . $br;
+}
+echo $br;
+
+// Test setting addresses
+echo "Testing address setting:".$br;
+$addresses = [
+    'from' => ['sender@example.com' => 'Test Sender'],
+    'to' => ['recipient1@example.com' => 'Recipient 1', 'recipient2@example.com' => 'Recipient 2'],
+    'cc' => ['cc1@example.com' => 'CC 1'],
+    'bcc' => ['bcc1@example.com' => 'BCC 1'],
+    'replyto' => ['reply@example.com' => 'Reply To']
+];
+
+foreach ($addresses as $type => $addr) {
+    echo "Setting $type addresses: " . ($mailer->addAddress($type, $addr) ? "Success" : "Failed - " . $mailer->lastError) . $br;
+}
+echo $br;
+
+// Test setting subject and body
+echo "Testing subject and body setting:".$br;
+$mailer->setSubject("Test Email Subject");
+$mailer->setBody(
+    "<h1>Test Email</h1><p>This is a <b>test</b> email body.</p>",
+    true,
+    "This is a test email body."
+);
+echo "Subject and body set!".$br;
+echo $br;
+
+// Test adding attachments
+echo "Testing attachment handling:".$br;
+$tempFile = tempnam(sys_get_temp_dir(), 'test_');
+echo "Create temp file '$tempFile' for attachment: ".$br;
+file_put_contents($tempFile, "This is a test attachment content.");
+
+// Test regular attachment
+try {
+    echo "Adding regular attachment: " . ($mailer->addAttachment($tempFile, 'test.txt') ? "Success" : "Failed - " . $mailer->lastError) . $br;
+} catch (\Exception $e) {
+    echo "Error adding regular attachment: " . $e->getMessage() . $br;
+}
+
+// Test string attachment
+try {
+    echo "Adding string attachment: " . ($mailer->addStringAttachment("This is a string attachment content.", 'string.txt') ? "Success" : "Failed - " . $mailer->lastError) . $br;
+} catch (\Exception $e) {
+    echo "Error adding string attachment: " . $e->getMessage() . $br;
+}
+
+// Test embedded image
+try {
+    echo "Adding embedded image: " . ($mailer->addEmbeddedImage($tempFile, 'test_image', 'test.jpg') ? "Success" : "Failed - " . $mailer->lastError) . $br;
+} catch (\Exception $e) {
+    echo "Error adding embedded image: " . $e->getMessage() . $br;
+}
+
+if (file_exists($tempFile)) {
+    echo "Deleting temp file: ".$tempFile.$br;
+    unlink($tempFile);
+}
+$meow->profiler->record("Mailer setting test completed", "Mailer Test");
+echo $br;
+
+// Test async mode
+$skipSendTest = true;   // Please set the from, to, cc, bcc, replyTo, subject, body, attachments, etc. before running this test
+$tempFile = "";
+$tmpFile = new File();
+echo "Testing email sending with async mode:".$br;
+if ($skipSendTest) {
+    echo "This test skipped! (set \$skipSendTest to false to run this test):".$br;
+} else {
+    $tempFile = $tmpFile->genTempFile("", "test_");
+    try {
+        $mailer->reset();
+        $mailer->async = true;
+
+        $mailer->from = ['sender@example.com' => 'Test Sender'];
+        $mailer->to = ['recipient1@example.com' => 'First Recipient', 'recipient2@example.com' => 'Second Recipient'];
+        $mailer->CC = ['cc1@example.com' => 'CC Recipient'];
+        $mailer->BCC = ['bcc1@example.com' => 'BCC Recipient'];
+        $mailer->replyTo = ['reply@example.com' => 'Reply To'];
+        $mailer->subject = "Test Email - Async Mode";
+        $mailer->setBody(
+            "<h1>Async Mode Test</h1><p>This is a test email to recipients.</p>",
+            true,
+            "This is a test email to recipients."
+        );
+
+        // Add attachments file
+        echo "Adding contents to temp file '$tempFile' as attachments".$br;
+        file_put_contents($tempFile, "This is a test attachment content.");
+
+        $mailer->addAttachment($tempFile, 'test.txt');
+        $mailer->addStringAttachment("This is a string attachment content.", 'string.txt');
+        $mailer->addEmbeddedImage($tempFile, 'test_image', 'test.jpg');
+
+        // Display email details before sending
+        echo "Email details:".$br;
+        foreach ($mailer->from as $addr => $name) {
+            echo "- From: " . $addr . " (" . $name . ")".$br;
+        }
+        foreach ($mailer->to as $addr => $name) {
+            echo "- To: " . $addr . " (" . $name . ")".$br;
+        }
+        foreach ($mailer->CC as $addr => $name) {
+            echo "- CC: " . $addr . " (" . $name . ")".$br;
+        }
+        foreach ($mailer->BCC as $addr => $name) {
+            echo "- BCC: " . $addr . " (" . $name . ")".$br;
+        }
+        foreach ($mailer->replyTo as $addr => $name) {
+            echo "- Reply-To: " . $addr . " (" . $name . ")".$br;
+        }
+        echo "- Subject: " . $mailer->subject.$br;
+        echo "- Body: " . $mailer->body.$br;
+        echo "- Alt Body: " . $mailer->altBody.$br;
+        echo "- Attachments: " . count($mailer->attachments) . " files".$br;
+
+        $mailer->config = ["debug" => 4];
+        echo "Sending email with async mode: " . ($mailer->send() ? "Success" : "Failed - " . $mailer->lastError) . $br;
+
+    } catch (\Exception $e) {
+        echo "Error sending email: " . $e->getMessage() . $br;
+    }
+}
+$meow->profiler->record("Send email with async mode", "Mailer Test");
+echo $br;
+
+// Test proessing email with async mode
+$skipSendTest = true;   
+echo "Testing email processing with async mode :".$br;
+if ($skipSendTest) {
+    echo "This test skipped! (set \$skipSendTest to false to run this test):".$br;
+} else {
+    try {
+        $mailer->config = ["debug" => 4];
+        $result = $mailer->sendAsync();
+        echo "Proecess email with async mode: successfully send = " . $result["success"] . ", failed to send = " . $result["failed"] . $br;
+        foreach ($result['errors'] as $error) {
+            echo "Error sending email: " . print_r($error['error'], true). $br;
+        }
+    } catch (\Exception $e) {
+        echo "Error sending email: " . $e->getMessage() . $br;
+    }
+}
+// Clean up temp file
+if (file_exists($tempFile)) {
+    echo "Deleting temp file: ".$tempFile.$br;
+    unlink($tempFile);
+}
+$meow->profiler->record("Process email with async mode", "Mailer Test");
+echo $br;
+
+// Test direct mode
+$skipSendTest = true;   // Please set the from, to, cc, bcc, replyTo, subject, body, attachments, etc. before running this test
+echo "Testing email sending with direct mode:".$br;
+if ($skipSendTest) {
+    echo "This test skipped! (set \$skipSendTest to false to run this test):".$br;
+} else {
+    $tempFile = $tmpFile->genTempFile("", "test_");
+    try {
+        $mailer->reset();
+        $mailer->async = false;
+
+        $mailer->from = ['sender@example.com' => 'Test Sender'];
+        $mailer->to = ['recipient1@example.com' => 'First Recipient', 'recipient2@example.com' => 'Second Recipient'];
+        $mailer->CC = ['cc1@example.com' => 'CC Recipient'];
+        $mailer->BCC = ['bcc1@example.com' => 'BCC Recipient'];
+        $mailer->replyTo = ['reply@example.com' => 'Reply To'];
+        $mailer->subject = "Test Email - Direct Mode";
+        $mailer->setBody(
+            "<h1>Direct Mode Test</h1><p>This is a test email to recipients.</p>",
+            true,
+            "This is a test email to recipients."
+        );
+
+        // Add attachments
+        echo "Adding contents to temp file '$tempFile' as attachments".$br;
+        file_put_contents($tempFile, "This is a test attachment content.");
+
+        $mailer->addAttachment($tempFile, 'test.txt');
+        $mailer->addStringAttachment("This is a string attachment content.", 'string.txt');
+        $mailer->addEmbeddedImage($tempFile, 'test_image', 'test.jpg');
+
+        // Display email details before sending
+        echo "Email details:".$br;
+        foreach ($mailer->from as $addr => $name) {
+            echo "- From: " . $addr . " (" . $name . ")".$br;
+        }
+        foreach ($mailer->to as $addr => $name) {
+            echo "- To: " . $addr . " (" . $name . ")".$br;
+        }
+        foreach ($mailer->CC as $addr => $name) {
+            echo "- CC: " . $addr . " (" . $name . ")".$br;
+        }
+        foreach ($mailer->BCC as $addr => $name) {
+            echo "- BCC: " . $addr . " (" . $name . ")".$br;
+        }
+        foreach ($mailer->replyTo as $addr => $name) {
+            echo "- Reply-To: " . $addr . " (" . $name . ")".$br;
+        }
+        echo "- Subject: " . $mailer->subject.$br;
+        echo "- Body: " . $mailer->body.$br;
+        echo "- Alt Body: " . $mailer->altBody.$br;
+        echo "- Attachments: " . count($mailer->attachments) . " files".$br;
+
+        $mailer->config = ["debug" => 4];
+        echo "Sending email with direct mode: " . ($mailer->send() ? "Success" : "Failed - " . $mailer->lastError) . $br;
+
+    } catch (\Exception $e) {
+        echo "Error sending email: " . $e->getMessage() . $br;
+    }
+    // Clean up temp file
+    if (file_exists($tempFile)) {
+        echo "Deleting temp file: ".$tempFile.$br;
+        unlink($tempFile);
+    }
+}    
+$meow->profiler->record("Send email with direct mode", "Mailer Test");
+echo $br;
+
+$meow->profiler->record("Mailer Test Completed", "Mailer Test");
 
 // Show report //
 echo $br . $meow->profiler->report($isWeb);

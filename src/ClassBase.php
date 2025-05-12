@@ -14,6 +14,8 @@ class ClassBase {
     protected	array	$denyWrite = ["lastError"];     // Write deny list
     protected	array	$varMap    = [];                // Variable Mapping [ "srcProp" => "destProp" ]
     protected	string	$lastError = "";                // Last error message
+    protected	bool	$useException = false;          // Enable exception
+    protected   string  $exceptionClass = "\Exception"; // Name of exception class
 
     // Get Property //
 	private function _getProperty(string $prop, string $elem = ""):mixed {
@@ -23,6 +25,7 @@ class ClassBase {
         // Deny read //
         if (in_array($prop, $this->denyRead)) {
             $this->lastError = "Property '$prop' read denied!";
+            $this->throwException($this->lastError, 1);
             return null;
         }
         // Get property data //
@@ -35,12 +38,14 @@ class ClassBase {
 	                return $this->$prop[$elem];
 	            } else {
 	                $this->lastError = "Property '$prop' element '$elem' not exist!";
+                    $this->throwException($this->lastError, 3);
                     return null;
 	            }    
 	        }
 	        return $this->$prop;
 	    }
 	    $this->lastError = "Property '$prop' not exist!";
+        $this->throwException($this->lastError, 4);
 	    return null;
 	}
 
@@ -52,6 +57,7 @@ class ClassBase {
         // Deny write //
         if (in_array($prop, $this->denyWrite)) {
             $this->lastError = "Property '$prop' write denied!";
+            $this->throwException($this->lastError, 2);
             return;
         }
         // Set data //
@@ -69,6 +75,7 @@ class ClassBase {
                         $this->$prop = $arrayVal;
                     } else {
                         $this->lastError = "Property '$prop' assignment ignored! Cannot decode json value '$value'";
+                        $this->throwException($this->lastError, 5);
                     }
                 } 
             } else if (is_bool($this->$prop)) {
@@ -84,6 +91,7 @@ class ClassBase {
                         $this->$prop = (int)$value;
                     } else {
                         $this->lastError = "Property '$prop' assignment ignored! Type mismatch (property = integer, value = $valType)!";
+                        $this->throwException($this->lastError, 6);
                     }
                 } else if (is_float($this->$prop)) {
                     $valType  = gettype($value);
@@ -91,13 +99,16 @@ class ClassBase {
                         $this->$prop = (float)$value;
                     } else {
                         $this->lastError = "Property '$prop' assignment ignored! Type mismatch (property = double, value = $valType)!";
+                        $this->throwException($this->lastError, 6);
                     }
                 } else {
                     $this->lastError = "Property '$prop' assignment ignored! Type mismatch (property = $propType, value = $valType)!";
+                    $this->throwException($this->lastError, 6);
                 }
             }	
         } else {
             $this->lastError = "Property '$prop' not exist!";
+            $this->throwException($this->lastError, 4);
         }
         return;
     }
@@ -122,6 +133,7 @@ class ClassBase {
         }
         if ($hasError) {
             $this->lastError = "Some properties not exist!";
+            $this->throwException($this->lastError, 4);
         }
         return $propList;
     }
@@ -145,6 +157,7 @@ class ClassBase {
         }
         if ($hasError) {
             $this->lastError = "Some assignments failed!";
+            $this->throwException($this->lastError, 8);
         }
         return $unsetList;
     }            
@@ -154,12 +167,14 @@ class ClassBase {
         $this->lastError = "";
         if (!property_exists($this, $prop) || !is_array($this->$prop)) {
             $this->lastError = "Property '$prop' not exist or not array!";
+            $this->throwException($this->lastError, 9);
             return null;
         }
         
         // Deny write //
         if (in_array($prop, $this->denyRead)) {
             $this->lastError = "Property '$prop' read denied!";
+            $this->throwException($this->lastError, 1);
             return null;
         }
 
@@ -174,6 +189,7 @@ class ClassBase {
             $property = &$property[$pathElem] ?? null;
             if ($cnt != count($pathList) && !is_array($property)) {
                 $this->lastError = "Path '$pathElem' not exist!";
+                $this->throwException($this->lastError, 7);
                 return null;
             }
         }
@@ -185,12 +201,14 @@ class ClassBase {
         $this->lastError = "";
         if (!property_exists($this, $prop) || !is_array($this->$prop)) {
             $this->lastError = "Property '$prop' not exist or not array!";
+            $this->throwException($this->lastError, 9);
             return;
         }
         
         // Deny write //
         if (in_array($prop, $this->denyWrite)) {
             $this->lastError = "Property '$prop' write denied!";
+            $this->throwException($this->lastError, 2);
             return;
         }
 
@@ -205,6 +223,7 @@ class ClassBase {
             $property = &$property[$pathElem] ?? null;
             if ($cnt != count($pathList) && !is_array($property)) {
                 $this->lastError = "Path '$pathElem' not exist!";
+                $this->throwException($this->lastError, 7);
                 return;
             }
         }
@@ -232,6 +251,38 @@ class ClassBase {
 		return false;
 	}
 
-
+    // Throw exception //
+    public function throwException(string $message = "", int $code = 0, ?\Throwable $previous = null):void {
+        if ($this->useException) {
+            if (!class_exists($this->exceptionClass)) {
+                $this->lastError = "Exception class '$this->exceptionClass' not exist!";
+                return;
+            }
+            
+            // Get caller information
+            $backtrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 2);
+            $caller = $backtrace[0];
+            
+            // Create exception with caller's context
+            $exception = new $this->exceptionClass($message, $code, $previous);
+            
+            // Set file and line to match the caller
+            $reflection = new \ReflectionObject($exception);
+            
+            if ($reflection->hasProperty('file')) {
+                $prop = $reflection->getProperty('file');
+                $prop->setAccessible(true);
+                $prop->setValue($exception, $caller['file']);
+            }
+            
+            if ($reflection->hasProperty('line')) {
+                $prop = $reflection->getProperty('line');
+                $prop->setAccessible(true);
+                $prop->setValue($exception, $caller['line']);
+            }
+            
+            throw $exception;
+        }
+    }
 }
 

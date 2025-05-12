@@ -1,0 +1,33 @@
+v1.2.0
+- Introduced core class and tool class concept. 
+  Core class is most important class for whole application. It creates a single instance for whole application. 
+  (Actually, it may create multiple instances for some cases) 
+  Tool class is used to extend the functionality of MeowBase framework and we may create multiple instances as needed. 
+  All tool classes are stored in Tools sub-directory (Tools namespace).
+- Config: 
+    - Update default config for new classes and tools classes
+    - Add configdir.php for core directory configuration
+    - Add mail config for phpmailer/phpmailer
+- ClassBase:
+    - Added useException property to enable/disable exception
+    - Added exceptionClass property to set exception class name
+    - Added throwException() method to throw exception
+- DTree:
+    - Became a tool class (changed namespace to Paheon\MeowBase\Tool)
+    - Added DTree::getNode() and DTree::setNode() methods to get and set node properties
+    - Added DTree::buildNode() method to build a new node by array
+    - Using array $param instead of fixed parameters in DTree::buildNode(), DTree::createNode() and DTree::createByPath().
+    - Bug fixed createByPath() method    
+- New tool classes:
+    - File: File class for file operations
+    - Url: Url class for url operations
+    - Mime: Get and convert mime type and related icon
+    - Mailer: Mailer class for linkup with phpmailer/phpmailer
+- composert.json 
+    - Updated to add phpmailer/phpmailer as dependency
+- test.php
+    - Updated for new Mailer class and support classes
+- README.md 
+    - Updated for new core classes and tools classes introduction
+
+

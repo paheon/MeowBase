@@ -1,21 +1,50 @@
 # MeowBase - lightweight PHP framework for Web and CLI
 
+[![Latest Version](https://img.shields.io/packagist/v/paheon/meowbase.svg)](https://packagist.org/packages/paheon/meowbase)
+[![MIT Licensed](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
+[![Total Downloads](https://img.shields.io/packagist/dt/paheon/meowbase.svg)](https://packagist.org/packages/paheon/meowbase)
+
 ## Overview
 
 MeowBase is a lightweight PHP framework that provides various functionalities including configuration management, caching, database operations, and performance profiling. It is designed to be simple yet powerful, supporting both CLI and Web environments. MeowBase is the foundation base of Meow Framework, which is a web-based framework for PHP. 
 
-The MeowBase configuration is an array variable which returns from an anonymous function, `$getSysConfig`, and stored in a PHP file, `etc/config.php`. Developers may override the default configuration by `$localSettings`. The profiler records the time used for each process to help developers to find out the performance bottleneck. It also provided a ‘group’ option to record the process time for a group of process. These two features, configuration and profiler, are natively supported by MeowBase and can be used by any Meow Framework components. Other features are optional and can be loaded on demand.
+MeowBase introduces two types of classes: Core Classes and Tool Classes. Core Classes are foundation classes for the whole application, creating a single instance for the entire application (though they may create multiple instances in some cases). Tool Classes are used to extend the functionality of the MeowBase framework and can create multiple instances as needed. All tool classes are stored in the Tools sub-directory (Tools namespace).
 
-Logging system, `SysLog` class, uses Katzgrau/KLogger package to provide logging service. It supports multiple log levels and file rotation. Details please refer to the [KLogger’s documentation](https://github.com/katzgrau/KLogger).
+## Core Classes
+
+Among the Core Classes, `Config` and `Profiler` are mandatory and will be loaded automatically when MeowBase is initialized. Other core classes like `SysLog`, `Cache`, and `CachedDB` are optional and can be loaded on demand. This design allows for better resource management and performance optimization. When these optional classes are needed, they can be initialized either through preloading during MeowBase initialization or lazily when first accessed.
+
+The preload behavior can be controlled by setting the `$preload` parameter to true in the MeowBase constructor. When preloaded, these classes will be initialized immediately and stored in MeowBase's data members. If not preloaded, they will be initialized only when first accessed through the lazy loading mechanism, which calls `initLogger()`, `initCache()`, or `initCacheDB()` as needed.
+
+This flexible loading approach helps optimize resource usage - if your application doesn't need logging, caching, or database functionality, these components won't be loaded, resulting in faster execution and lower memory usage.
+
+The MeowBase configuration is an array variable which returns from an anonymous function, `$getSysConfig`, and stored in a PHP file, `etc/config.php`. Developers may override the default configuration by `$localSettings`. The profiler records the time used for each process to help developers to find out the performance bottleneck. It also provided a 'group' option to record the process time for a group of process. These two features, configuration and profiler, are natively supported by MeowBase and can be used by any Meow Framework components. Other features are optional and can be loaded on demand.
+
+Logging system, `SysLog` class, uses Katzgrau/KLogger package to provide logging service. It supports multiple log levels and file rotation. Details please refer to the [KLogger's documentation](https://github.com/katzgrau/KLogger).
 
 Cache system, `Cache` class, is based on Symfony Cache component and simplied the cache key building process. It also supports multiple cache adapters and keep the data in memory for faster access. However, only file adapter and memcached adapter are supported now. It may add more adapters in the future. Details please refer to the [Symfony Cache documentation](https://symfony.com/doc/current/components/cache.html).
 
-The database system, `CachedDB`class, is inherited from Medoo and added caching and logging abilities on top of it. All cached functions have prefix, 'cached', such as `cachedSelect()`, `cachedGet()`, `cachedCalc()` and `cachedHas()`, to distinguish original non-cached functions. All original functions from Medoo, like `select()` and `get()`, don’t have cache access ability but they may use logging function to log the query statement and query result. For more details of Medoo, please refer to the [Medoo documentation](https://medoo.in/api/new).
+The database system, `CachedDB` class, is inherited from Medoo and added caching and logging abilities on top of it. All cached functions have prefix, 'cached', such as `cachedSelect()`, `cachedGet()`, `cachedCalc()` and `cachedHas()`, to distinguish original non-cached functions. All original functions from Medoo, like `select()` and `get()`, don't have cache access ability but they may use logging function to log the query statement and query result. For more details of Medoo, please refer to the [Medoo documentation](https://medoo.in/api/new).
+
+## Tools Classes 
+
+Unlike Core Classes, Tools Classes are designed to be instantiated on demand and can create multiple instances as needed. These classes are stored in the Tools sub-directory and can be instantiated anywhere in your application. Each instantiation creates a new instance, allowing for different configurations and states to be maintained simultaneously.
 
 The `DTree` class is a versatile and efficient tree data structure implementation in PHP. It is designed to handle hierarchical data with ease, providing a robust set of features for managing tree nodes. The class supports operations such as adding, replacing, deleting, and sorting nodes, making it suitable for a wide range of applications, from simple data organization to complex hierarchical data management.
 
+The `Mailer` class provides email functionality through PHPMailer integration, supporting both direct mode and asynchronous mode email sending, with features for handling attachments, embedded images, and HTML content. Details for the PHPMailer, please refer to the [PHPMailer](https://github.com/PHPMailer/PHPMailer)
+
+The `File` class offers file system operations with path management and temporary file handling capabilities.
+
+The `Url` class provides URL manipulation and validation features, including URL building, modification, and information retrieval.
+
+The `Mime` class handles MIME type detection and conversion, supporting file-to-MIME type mapping and icon association. It integrates with the Shared MIME-Info database for accurate MIME type detection.
+
+The `PHP` class provides utility functions for PHP environment checks.
+
 ## Getting Started
-To use MeowBase, first initialize the `Config` object with user-defined configuration file in etc folder. Then pass the `Config` object to `MeowBase` constructor to generate the `MeowBase` object. `MeowBase` will load the configuration and initialize the other components automatically. Developer can used the `MeowBase` object to access all components, such as `config`, `log`, `cache`, `db` and `profiler`.
+
+To use MeowBase, first initialize the `Config` object with user-defined configuration file in etc folder. Then pass the `Config` object to `MeowBase` constructor to generate the `MeowBase` object. `MeowBase` will load the configuration and initialize the other components automatically. Developer can used the `MeowBase` object to access all core components, such as `config`, `log`, `cache`, `db` and `profiler`.
 
 User may copy or rename the `config-example.php` to `config.php` and modify the configuration in it.
 
@@ -70,7 +99,35 @@ echo $meow->profiler->report($isWeb);                               // Show prof
 
 ## Core Components
 
-### 1. Fundamental class
+### 1. Core of MeowBase Framework - MeowBase
+
+`MeowBase` class serves as the core component of the MeowBase Framework, managing the initialization and lifecycle of all core components. As a singleton class, it provides a unified interface for accessing various system components while ensuring efficient resource management.
+
+During initialization, `MeowBase` automatically loads the mandatory `Config` and `Profiler` components. The optional components - `SysLog`, `Cache`, and `CachedDB` - can be loaded in two ways: either through preloading during initialization by setting `$preload = true` in the constructor, or through lazy loading when first accessed via the `$meow` object. This flexible loading approach allows applications to optimize resource usage by only loading components when they are actually needed.
+
+The class maintains references to all core components through its properties, with the `$lazyLoad` array managing the initialization of optional components. The `$configTree` property provides a virtual link to the configuration data, while the `$debug` flag controls debug mode functionality.
+
+**Properties:**
+- `$profiler`: Profiler object for performance tracking
+- `$config`: Configuration management object
+- `$log`: System logging object
+- `$cache`: Cache management object
+- `$db`: Database object with caching capabilities
+- `$lazyLoad`: Array mapping objects to initialization methods for lazy loading
+- `$configTree`: Virtual link to configuration data
+- `$debug`: Debug mode flag
+
+**Private Methods:**
+- `initLogger(): void`: Initializes logging system internally
+- `initCache(): void`: Sets up cache system internally
+- `initCacheDB(): void`: Initializes database with caching internally
+- `setConfigTree(array &$configTree): void`: Internal method to set configuration tree reference
+
+**Public Methods:**
+- `__construct(Config $config, bool $preload = false)`: Initializes MeowBase with configuration
+- `__get(string $prop): mixed`: Magic method for property access and lazy loading
+
+### 2. Fundamental class - ClassBase
 `ClassBase` is a fundamental class that is used as base class for all MeowBase components. It mainly provides the properties access control, mass properties access ability and property name mapping for all MeowBase components.
 
 #### Property Access Control
@@ -134,11 +191,61 @@ if ($meow->isTrue($result)) {
 Other values will return false.
 If `$result` is array, object, null and callable, this function will return false.
 
+#### Exception Handling
+The `useException` property controls whether exceptions should be thrown when errors occur. When set to true, errors will be thrown as exceptions; when false, errors will be stored in the `lastError` property. The `exceptionClass` property allows customization of the exception class to be used.
+
+The `throwException()` method is used to handle error conditions consistently across the framework. It either throws an exception or sets the `lastError` property based on the `useException` setting.
+
+Here's an example of how to use exception handling in your code:
+
+```php
+// Create a class that extends ClassBase
+class MyClass extends ClassBase {
+    public function processData($data) {
+        if (empty($data)) {
+            // This will either throw an exception or set lastError
+            $this->throwException("Data cannot be empty", 1001);
+            return false;
+        }
+        return true;
+    }
+}
+
+// Using the class with exception handling
+$obj = new MyClass();
+
+// Method 1: Using exceptions
+$obj->useException = true;
+try {
+    $obj->processData(null);
+} catch (\Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+    echo "Code: " . $e->getCode() . "\n";
+}
+
+// Method 2: Using lastError
+$obj->useException = false;
+if (!$obj->processData(null)) {
+    echo "Error: " . $obj->lastError . "\n";
+}
+
+// Method 3: Using custom exception class
+$obj->exceptionClass = 'MyCustomException';
+$obj->useException = true;
+try {
+    $obj->processData(null);
+} catch (MyCustomException $e) {
+    echo "Custom Error: " . $e->getMessage() . "\n";
+}
+```
+
 **Properties:**
 - `$denyRead`: List of properties which denied for reading
 - `$denyWrite`: List of properties which denied for writing
 - `$varMap`: List of property name for mapping
 - `$lastError`: Last error message
+- `$useException`: Flag to control exception throwing
+- `$exceptionClass`: Custom exception class name
 
 **Private Methods:**
 - `_getProperty(string $prop, string $elem = ""): mixed`: Internal property getter
@@ -152,10 +259,30 @@ If `$result` is array, object, null and callable, this function will return fals
 - `getElemByPath(string $prop, string $path = ""): mixed`: Get array property element by path
 - `setElemByPath(string $prop, string $path, mixed $value): void`: Set array property element by path
 - `isTrue(mixed $value, mixed $matchValue = null): bool`: Evaluate if value is considered to be true
+- `throwException(string $message, int $code = 0): void`: Handle error conditions consistently
 
-### 2. Configuration Management
+### 3. Configuration Management - Config
+`Config` class handles application configuration with a PHP file, `etc/config.php`. The path of the config file is composed of three parts: `$docRoot`, `$etcPath` and `$file`. `$docRoot` is the document root of the application; `$etcPath` is the path of the etc folder; `$file` is the name of the config file. By default, `$docRoot` is the document path of website for Web and current working directory for CLI; `$etcPath` is `/etc`; `$file` is `config.php`.
 
-`Config` class handles application configuration with a PHP file, `etc/config.php`. The path of the config file is composed of three parts: `$docRoot`, `$etcPath` and `$file`. `$docRoot` is the document root of the application; `$etcPath` is the path of the etc folder; `$file` is the name of the config file. By default, `$docRoot` is the document path of website for Web and current working directory for CLI; `$etcPath` is `/etc`; `$file` is `config.php`. 
+#### Configuration Directory Setup
+
+The `Config` class automatically checks for a `configdir.php` file in the current directory during initialization. If found, this file is loaded and can define four important variables to customize the configuration paths:
+
+- `$configDocRoot`: Overrides the document root path
+- `$configEtcPath`: Overrides the etc directory path
+- `$configVarPath`: Overrides the var directory path
+- `$configFile`: Overrides the configuration file name
+
+This feature is particularly useful when running scripts outside the document root or when you need to maintain different configuration paths for different environments. Here's an example of a `configdir.php` file:
+
+```php
+<?php
+// Example configdir.php
+$configDocRoot = "/var/www/myapp";     // Custom document root
+$configEtcPath = "/var/www/config";    // Custom etc directory
+$configVarPath = "/data";              // Custom var directory
+$configFile = "myconfig.php";          // Custom config file name
+```
 
 #### Path Setting
 If user needs to execute the application from a different path, it may set the `$docRoot` property in the constructor of config class by passing the path to the second parameter of the constructor. For example:
@@ -221,7 +348,7 @@ However, the `configTree` array is read only and any change to it will be ignore
 - `getConfigByPath(string $path): mixed`: Retrieves configuration by path
 - `setConfigByPath(string $path, mixed $value): void`: Sets configuration by path
 
-### 3. Profiler
+### 4. Performance turning - Profiler
 The `Profiler` is a simple but powerful tool to record the time used for each process to help developers to find out the performance bottleneck. It provdes group function to record the process time for a group of process. There are two member functions in `Profiler` class:
 - `record()`: Record the time used for a process
 - `report()`: Generate the performance report
@@ -291,7 +418,7 @@ The `report()` method will generate the above performance report. The `$nlbr` pa
 - `record(string $tag, string $group = 'all', ?string $forceTime = null)`: Records a timing point
 - `report(bool $nlbr = false): string`: Generates performance report
 
-### 4. Log System
+### 5. Log System - SysLog
 Logging system, `sysLog` class, is a extension of Katzgrau/KLogger package, so it support log message formatting, multiple log level and file rotation. `sysLog` class added two more functions, enable property (on/off switch) and tracking stack ability, to provide more flexible logging service.
 
 For more details, like formatting, log level and file rotation, please refer to the [KLogger documentation](https://github.com/katzgrau/KLogger). 
@@ -392,7 +519,7 @@ $meow->log->enable = true;           // Enable log again
 - `setLogLevel(string $level): void`: Sets logging level
 - `getLogLevel(): string`: Returns current log level
 
-### 5. Cache System
+### 6. Cache System - Cache
 
 Cache system in `MeowBase` is built on top of the Symfony Cache component, details refer to the [Symfony Cache documentation](https://symfony.com/doc/current/components/cache.html), providing a simplified cache key building process and support for multiple cache adapters. The system maintains data in memory for faster access and currently supports two adapters: file adapter and memcached adapter.
 
@@ -480,9 +607,8 @@ Optionally, developer can defer the save operation by setting the parameter `$de
 - `delItem(mixed $key = null, bool $prune = false): ?bool`: Deletes specific cache item
 - `delItemByTag(mixed $tags, bool $prune = false): ?bool`: Deletes items by tag
 
-### 6. Cached Database
-
-Database system, `cachedDB`, is an enhanced version of Medoo. It is directly inherited from Medoo and added caching and logging abilities on top of it. 
+### 7. Cached Database - CachedDB
+Database system, `CachedDB`, is an enhanced version of Medoo. It is directly inherited from Medoo and added caching and logging abilities on top of it. 
 
 The original functions from Medoo, like `select()` and `get()`, are not cached but may use logging function to log the query and result. Logging function allows to log the executed SQL statment and the result of query. It is controlled by two properties, `enableLog` and `logResult`, in `cachedDB` class. When `enableLog` is true, the executed SQL statment will be logged; if `logResult` is true, the result of query will be logged. These two properties are false by default and can be changed at any time.
 
@@ -551,12 +677,12 @@ Total duration=0.0051s
 *Other properties and methods same to Medoo's functions.*
 
 
-### 7. DTree
+## Tools Components
 
+### 1. Hierarchical Data Handling - DTree and DTreeIterator
 The `DTree` class is a versatile and efficient tree data structure implementation in PHP. It is designed to handle hierarchical data with ease, providing a robust set of features for managing tree nodes. The class supports operations such as adding, replacing, deleting, and sorting nodes, making it suitable for a wide range of applications, from simple data organization to complex hierarchical data management.
 
 #### Main Concepts
-
 The `DTree` class revolves around the concept of node management, where each node can store data and have multiple child nodes. Nodes are identified by unique names within their parent node, allowing for clear and organized data structures. The tree structure facilitates the representation of hierarchical relationships, where each node can have a parent and multiple children, mirroring real-world hierarchical data. This design enables users to model complex data relationships in a straightforward manner.
 
 Each node in the `DTree` has several key properties: `$data`, `$name`, `$parent`, and `$children`. The `$data` property holds the information associated with the node, while `$name` uniquely identifies the node within its parent. The `$parent` property references the node's parent, establishing the hierarchical relationship. The `$children` property is an array that stores the node's child nodes, allowing for dynamic expansion of the tree.
@@ -575,12 +701,11 @@ if ($node) {
 ```
 
 #### Features
-
 The `DTree` class offers dynamic node creation, allowing nodes to be added to the tree at any level, providing flexibility in building and modifying the tree structure. Nodes can be added using the `createNode()` method, which creates and adds a new node, or the `addNode()` method, which adds an existing node as a child:
 
 ```php
 // Create and add a new node
-$newNode = $tree->createNode("D", "Data D");
+$newNode = $tree->createNode(['name' => "D", 'data' => "Data D"]);
 
 // Add an existing node
 $existingNode = new DTree("E", "Data E");
@@ -641,7 +766,6 @@ Furthermore, the path-based access feature allows nodes to be accessed and manip
 To use the `DTree` class, you start by creating a root node. From there, you can add child nodes, perform various operations on them, and navigate the tree using paths. The `DTreeIterator` class facilitates easy traversal of the tree, allowing you to iterate over all nodes in a structured manner.
 
 #### Code Example
-
 Below is a code example demonstrating how to use the `DTree` and `DTreeIterator` classes:
 
 ```php
@@ -665,29 +789,29 @@ $tree = new DTree();
 $tree->data = "Root";
 
 // Create first level nodes
-$nodeA = $tree->createNode("A", "Data A");
-$nodeB = $tree->createNode("B", "Data B");
-$tree->createNode("C", "Data C");
+$nodeA = $tree->createNode(['name' => "A", 'data' => "Data A"]);
+$nodeB = $tree->createNode(['name' => "B", 'data' => "Data B"]);
+$tree->createNode(['name' => "C", 'data' => "Data C"]);
 
 // Create second level nodes under A
-$nodeA->createByPath("A1", "Data A1");          // Relative path
-$nodeB->createByPath("/A/A2", "Data A2");       // Absolute path
+$nodeA->createByPath("A1", ['data' => "Data A1"]);          // Relative path
+$nodeB->createByPath("/A/A2", ['data' => "Data A2"]);       // Absolute path
 
 // Create second level nodes under B
 $nodeB1 = new DTree("B1", "Data B1", $nodeB);   // Create node and hook to node B
 $nodeB2 = new DTree("B2", "Data B2");           // Create node first
-$nodeB->AddNode($nodeB2);                       // Hook node B2 to node B by AddNode()
-$nodeB->createNode("B3", "Data B3");
+$nodeB->addNode($nodeB2);                       // Hook node B2 to node B by AddNode()
+$nodeB->createNode(['name' => "B3", 'data' => "Data B3"]);
 
 // Create third level nodes under B2
-$nodeB2->createNode("B2X", "Data B2X");
+$nodeB2->createNode(['name' => "B2X", 'data' => "Data B2X"]);
 $nodeB2Y = new DTree("B2Y", "Data B2Y", $nodeB2);
 
 // Create remained nodes by createByArray //
-$nodeList = $tree->createByArray([
-    "/C/C1" => "Data C1",
-    "/D/D1" => "Data D1",
-    "D/D2"  => "Data D2",
+$nodeList = $tree->loadFromArray([
+    "/C/C1" => ['data' => "Data C1"],
+    "/D/D1" => ['data' => "Data D1"],
+    "D/D2"  => ['data' => "Data D2"],
 ]);
 $nodeC = $nodeList["/C/C1"]->parent;
 $nodeD = $nodeList["/D/D1"]->parent;
@@ -700,7 +824,6 @@ foreach ($iterator as $position => $node) {
 ```
 
 #### Properties
-
 - `$parent`: Reference to the parent node.
 - `$data`: Data stored in the node.
 - `$name`: Name of the node.
@@ -709,14 +832,14 @@ foreach ($iterator as $position => $node) {
 - `$lastError`: Stores the last error message.
 
 #### Methods
-
 - `__construct(string $name = "", mixed $data = null, ?DTree $parent = null, bool $replace = true)`: Initializes a new node.
 - `addNode(DTree $child, bool $clone = false, bool $replace = true): bool`: Adds a child node.
-- `createNode(string $name, mixed $data = null, bool $replace = true): ?DTree`: Creates and adds a new child node.
-- `createByPath(string $path, mixed $data = null, bool $replace = true):?DTree`: Creates and adds a new child node by path.
-- `createByArray(array $recList, bool $replace = true):array`: Creates and adds number of new child nodes by array.
+- `createNode(array $param): ?DTree`: Creates and adds a new child node.
+- `createByPath(string $path, array $param): ?DTree`: Creates and adds a new child node by path.
+- `loadFromArray(array $recList): array`: Creates and adds multiple new child nodes from an array.
+- `saveToArray(?DTree $startNode = null): array`: Saves the tree structure to an array.
 - `delNode(string $name): bool`: Deletes a child node.
-- `renameNode(string $srcName, string $dstName): bool`: Renames a child node.
+- `renameNode(string $srcName, string $dstName, bool $replace = true): bool`: Renames a child node.
 - `dupNode(string $srcName, ?DTree $dstNode = null, ?string $dstName = null, bool $clone = false, bool $replace = true): ?DTree`: Duplicates a node.
 - `copyNode(string $srcName, DTree $dstNode, ?string $dstName = null, bool $replace = false): ?DTree`: Copies a node to another node.
 - `moveNode(string $srcName, DTree $dstNode, bool $replace = false): ?DTree`: Moves a node to another node.
@@ -728,12 +851,12 @@ foreach ($iterator as $position => $node) {
 - `isRoot(): bool`: Checks if the node is the root node.
 - `getPath(): string`: Gets the path from the root to the current node.
 - `findByPath(string $path): ?DTree`: Finds a node by its path.
-- `findByData(mixed $data, bool $singleResult = false, bool $global = true):array|DTree|null`: Finds single node or multiple nodes by data matching.
+- `findByData(mixed $data, bool $singleResult = false, bool $global = true): array|DTree|null`: Finds single node or multiple nodes by data matching.
 - `__toString(): string`: Returns the name of the node.
 - `__debugInfo(): array`: Provides debug information about the node.
+- *Parameters of some methods is changed since MeowBase v1.1.2 and these functions are not backward compatible.*
 
 #### DTreeIterator
-
 The `DTreeIterator` class implements the `Iterator` interface to allow traversal of a `DTree` structure. It provides a simple way to iterate over all nodes in the tree, maintaining the order of traversal. Here is an example of how to use the `DTreeIterator`:
 
 ```php
@@ -745,14 +868,12 @@ foreach ($iterator as $position => $node) {
 ```
 
 **Properties:**
-
 - `$treeRoot`: The root node of the tree.
 - `$treeCurr`: The current node in the iteration.
 - `$nodeStack`: Stack to manage node traversal.
 - `$position`: Current position in the iteration.
 
 **Methods:**
-
 - `__construct(DTree $tree, bool $global = true)`: Initializes the iterator with the root node.
 - `current(): mixed`: Returns the current node.
 - `key(): mixed`: Returns the current position.
@@ -760,29 +881,272 @@ foreach ($iterator as $position => $node) {
 - `rewind(): void`: Rewinds the iterator to the start.
 - `valid(): bool`: Checks if the current position is valid.
 
-### 8. MeowBase
+### 2. File Operations - File
+The `File` class provides path management and temporary file handling capabilities. It is designed to simplify file path handling and provide a consistent interface for file operations.
 
-`MeowBase` is the core class of MeowBase Framework, it is responsible for initializing the system and providing a unified interface for accessing various components. It is a singleton class and can be accessed through the `$meow` variable. Besides `Config` class and `Profiler` class, `MeowBase` does not initialize `Log` class, `Cache` class and `CachedDB` class initially.  These classes are initialized internally on demand. It may help to save resources and improve the performance. If application required initialize `Log` class, `Cache` class and `CachedDB` class in the `MeowBase` constructor, setting `$preload` parameter to true when calling constructor. 
+#### Features
+The `File` class offers path management through a home directory concept, allowing for relative path resolution and path normalization. It supports temporary file creation and provides methods for building file paths with variable substitution.
 
+#### Usage Example
+```php
+// Create a File object with a home directory
+$file = new File('/var/www/html');
+
+// Generate file name with by substitution
+$fileName = $file->genFile("myfile.txt");
+// $fileName = "/var/www/html/myfile.txt"
+
+// Generate file name by substitution
+$fileName = $file->genFile("[type]/[name].[ext]", [
+    "type" => "documents",
+    "name" => "report",
+    "ext" => "pdf"
+]);
+// $fileName = "/var/www/html/documents/report.pdf"
+
+// Create a temporary file (return the resource)
+$tempFile = $file->tempFile($filePath);
+if ($tempFile !== false) {
+    // Use the temporary file
+    fwrite($tempFile, "Temporary content");
+    fclose($tempFile);
+    // $filePath contains the path to the temporary file
+}
+
+// Another way to create temporary file (return file name)
+$tempFile = $file->genTempFile("", "MyApp_");
+if ($tempFile !== false) {
+    file_put_contents($tempFile, "Temporary content");
+    // $tempFile = "/tmp/MyApp_ce0JDh"
+}
+```
 **Properties:**
-- `$profiler`: Profiler object for performance tracking
-- `$config`: Configuration management object
-- `$log`: System logging object
-- `$cache`: Cache management object
-- `$db`: Database object with caching capabilities
-- `$lazyLoad`: Array mapping objects to initialization methods for lazy loading
-- `$configTree`: Virtual link to configuration data
-- `$debug`: Debug mode flag
-
-**Private Methods:**
-- `initLogger(): void`: Initializes logging system internally
-- `initCache(): void`: Sets up cache system internally
-- `initCacheDB(): void`: Initializes database with caching internally
-- `setConfigTree(array &$configTree): void`: Internal method to set configuration tree reference
+- `$home`: Home directory path
 
 **Public Methods:**
-- `__construct(Config $config, bool $preload = false)`
-- `__get(string $prop): mixed`: Magic method for property access and lazy loading
+- `__construct(?string $home = null)`: Initializes file handler
+- `setHome(?string $home = null): void`: Sets home directory
+- `setHomeToCurrent(): void`: Sets home to current directory
+- `genFile(string $relativePath, array $substituteList = []): string`: Builds file path with variable substitution
+- `tempFile(string &$filePath): mixed`: Creates temporary file and returns resource
+- `genTempFile(string $path = "", string $prefix = ""): mixed`: Creates temporary file and returns path
+
+### 3. URL Handling - Url
+The `Url` class provides URL manipulation and validation features, including URL building, modification, and information retrieval. It supports both relative and absolute URL handling.
+
+#### Features
+The `Url` class offers URL building with query parameters and fragments, URL modification capabilities, and real URL information retrieval through cURL. It maintains a home URL for relative path resolution and supports full URL generation.
+
+#### Usage Example
+```php
+// Create a Url object with a home URL
+$url = new Url('https://example.com', true);
+
+// Build a URL with query parameters
+$path = $url->genUrl('api/users', ['page' => 1, 'limit' => 10]);
+// $path = "https://example.com/api/users?page=1&limit=10"
+
+// Modify an existing URL
+$modifiedUrl = $url->modifyUrl('https://example.com/api', [
+    'path' => '/api/v2',
+    'query' => ['version' => '2.0']
+]);
+// $modifiedUrl = "https://example.com/api/v2?version=2.0"
+
+// Get URL information
+$info = $url->urlInfo('https://example.com/api');
+if ($info !== false) {
+    echo "HTTP Code: " . $info['http_code']; // The repond code from web server
+}
+```
+
+**Properties:**
+- `$home`: Home base URL
+- `$fullUrl`: Flag for full URL generation
+
+**Public Methods:**
+- `__construct(?string $home = null, bool $fullUrl = false)`: Initializes URL handler
+- `setHome(?string $home = null): void`: Sets home URL
+- `genUrl(string $path, array $query = [], string $fragment = "", ?bool $fullUrl = null): string`: Builds URL
+- `modifyUrl(string $srcUrl, array $replace): string`: Modifies URL
+- `urlInfo(string $url, array $curlOptList = []): array|false`: Gets URL information
+
+### 4. MIME Type Handling - Mime
+The `Mime` class handles MIME type detection and conversion, supporting file-to-MIME type mapping and icon association. It integrates with the Shared MIME-Info database for accurate MIME type detection.
+
+#### System Requirements and File Access
+
+The `Mime` class attempts to access three system files for MIME type information:
+- `/usr/share/mime/globs2`: Contains file extension to MIME type mappings
+- `/usr/share/mime/aliases`: Contains MIME type aliases
+- `/usr/share/mime/generic-icons`: Contains icon associations
+
+Some systems may not have these files or may restrict access to them. In such cases, you can provide your own copies of these files in a different location. The `file2Mime()` method will continue to work even if these files are not available, as it uses PHP's built-in MIME type detection as a fallback.
+
+#### Features
+The `Mime` class provides MIME type detection from files and extensions, MIME type to icon mapping, and MIME type alias resolution. It supports the Shared MIME-Info database format and can be configured with custom database paths.
+
+#### Usage Example
+```php
+// Create a Mime object with custom database paths
+$mime = new Mime();
+
+// Get MIME type from file
+$mimeType = $mime->file2Mime('/path/to/file.jpg');
+
+// Get icon for MIME type
+$icon = $mime->mime2Icon('image/jpeg');
+
+// Get MIME type from alias
+$mimeType = $mime->alias2Mime('text/plain');
+```
+
+**Properties:**
+- `$globs2File`: Path to MIME globs2 file
+- `$aliasesFile`: Path to MIME aliases file
+- `$genericIconsFile`: Path to MIME generic icons file
+- `$globs2`: Cached globs2 data
+- `$aliases`: Cached aliases data
+- `$genericIcons`: Cached generic icons data
+
+**Public Methods:**
+- `__construct(string $globs2File = "/usr/share/mime/globs2", string $aliasesFile = "/usr/share/mime/aliases", string $genericIconsFile = "/usr/share/mime/generic-icons")`: Initializes MIME handler
+- `file2Mime(mixed $file): string|false`: Gets MIME type from file
+- `mime2Icon(string $mime): string|false`: Gets icon for MIME type
+- `alias2Mime(string $alias, bool $reverse = false): string|false`: Gets MIME type from alias
+
+### 5. Email Sending - Mailer
+The `Mailer` class provides comprehensive email functionality through integration with the [PHPMailer](https://github.com/PHPMailer/PHPMailer) library. It offers a robust solution for sending emails in both direct and asynchronous modes, with extensive support for various email features including HTML content, attachments, and embedded images.
+
+#### Sending Modes
+The `Mailer` class supports two distinct sending modes to accommodate different use cases. In direct mode, emails are sent immediately when the `send()` method is called, providing immediate feedback on the sending status. This mode is ideal for critical emails that require immediate delivery confirmation but the process will be blocked when sending out mail. 
+
+The asynchronous mode, on the other hand, stores emails in a spool directory as JSON files which allowing for deferred or scheduled processing, by execute the function `sendAsync()`. The process would not be blocked when the email is sent. It is better for quick respond application and handling of high-volume email sending scenarios.
+
+#### Email Sending Process
+
+The process of sending an email involves several steps:
+
+1. **Initialization**: Create a Mailer instance with the appropriate configuration settings. The configuration can include SMTP server details, authentication credentials, and paths for logging and spooling.
+
+2. **Email Composition**: Set up the email content using various methods:
+   - Set the sender address using `setFrom()`
+   - Add recipients using `setTo()`, `setCC()`, or `setBCC()`
+   - Define the email subject with `setSubject()`
+   - Create the email body using `setBody()`, supporting both HTML and plain text formats
+   - Optionally add attachments or embedded images
+
+3. **Sending the Email**: 
+   - In direct mode, call the `send()` method to immediately transmit the email
+   - In async mode, the email is stored in the spool directory for later processing
+   - The `sendAsync()` method can be used to process queued emails in the spool directory
+
+4. **Error Handling**: The class provides comprehensive error handling through the `lastError` property and exception throwing capabilities, allowing for proper error management in your application.
+
+#### Usage Example
+
+```php
+// Create a Mailer object with configuration
+$mailer = new Mailer($meow->configTree["mailer"]); 
+/* Where $meow->configTree["mailer"] = [
+    'host' => 'smtp.example.com',
+    'port' => 587,
+    'username' => 'user@example.com',
+    'password' => 'password',
+    'encryption' => 'tls',
+    'from' => ['user@example.com' => 'User Name'],
+    'logPath' => '/var/log/mailer.log',
+    'spoolPath' => '/var/spool/mailer',  // Required for async mode
+    'async' => true                      // Enable async mode
+]; */
+
+// Set email properties
+$mailer->setTo(['recipient@example.com' => 'Recipient Name']);
+$mailer->setSubject('Test Email');
+$mailer->setBody('<h1>Test</h1><p>This is a test email.</p>', true, 'This is a test email.');
+// To and Subject can be set by passwing value to virtual properties
+// $mailer->to = ['recipient@example.com' => 'Recipient Name'];
+// $mailer->subject = 'Test Email';
+
+// Add attachments
+$mailer->addAttachment('/path/to/file.pdf', 'document.pdf');
+$mailer->addStringAttachment('Content of string attachment', 'string.txt');
+
+// Send email (in async mode, this will store the email in spool)
+if ($mailer->send()) {
+    echo "Email queued successfully";
+} else {
+    echo "Failed to queue email: " . $mailer->lastError;
+}
+
+// Process async emails (can be called by other separated process)
+$results = $mailer->sendAsync();
+echo "Processed " . $results['success'] . " emails successfully";
+```
+
+**Properties:**
+- `$mailer`: PHPMailer instance
+- `$logger`: Logger instance
+- `$spoolPath`: Path for async email spooling
+- `$logPath`: Path for email logging
+- `$mode`: Email sending mode
+- `$async`: Async mode flag
+- `$checkDNS`: DNS check flag
+- `$useHTML`: HTML email flag
+- `$embeddedImages`: Embedded images information
+- `$attachments`: Attachment information
+- `$stringAttachments`: String attachment information
+
+**Public Methods:**
+- `__construct(array $config = [])`: Initializes mailer
+- `reset(bool $keepFrom = false, bool $keepSubject = false, bool $keepBody = false, bool $keepAttachments = false): void`: Resets mailer
+- `setConfig(array $setting = []): void`: Sets mailer configuration
+- `setMode(string $mode): bool`: Sets sending mode
+- `setTo(array $address): void`: Sets To addresses
+- `setCC(array $address): void`: Sets CC addresses
+- `setBCC(array $address): void`: Sets BCC addresses
+- `setReplyTo(array $address): void`: Sets Reply-To addresses
+- `setFrom(array $address): void`: Sets From address
+- `setSubject(string $subject): void`: Sets email subject
+- `setBody(string $body, bool $isHTML = true, string $altBody = ''): void`: Sets email body
+- `setAltBody(string $altBody): void`: Sets alternative body
+- `addAddress(string $type, array $address, bool $add = true): bool`: Adds email addresses
+- `addAttachment(string $path, string $name = '', string $encoding = PHPMailer::ENCODING_BASE64, string $type = '', string $disposition = 'attachment'): bool`: Adds file attachment
+- `addStringAttachment(string $string, string $filename, string $encoding = PHPMailer::ENCODING_BASE64, string $type = '', string $disposition = 'attachment'): bool`: Adds string attachment
+- `addEmbeddedImage(string $path, string $cid, string $name = '', string $encoding = PHPMailer::ENCODING_BASE64, string $type = '', string $disposition = 'inline'): bool`: Adds embedded image
+- `send(): bool`: Sends email
+- `sendAsync(): array`: Processes async emails
+- `emailValidate(string $email, bool $checkDNS = false): bool`: Validates email address
+- `getValidAddr(array|string $address, string $name = "", bool $checkDNS = false): array`: Gets valid email addresses
+
+### 11. PHP Utilities - PHP
+
+The `PHP` class is a support class to provide utility functions for PHP environment checks and configuration. It helps in determining the availability and status of PHP functions and features.
+
+#### Features
+
+The `PHP` class offers function availability checking, including detection of disabled functions through PHP configuration.
+
+#### Usage Example
+
+```php
+// Check if a function is available
+$status = PHP::chkDisabledFunction('exec');
+switch ($status) {
+    case 0:
+        echo "Function is available";
+        break;
+    case 1:
+        echo "Function does not exist";
+        break;
+    case 2:
+        echo "Function exists but is disabled";
+        break;
+}
+```
+
+**Public Methods:**
+- `chkDisabledFunction(string $funcName): int`: Checks if a function is disabled
 
 ## System Requirements
 - PHP: 8.2 or higher

@@ -1,7 +1,7 @@
 <?php
-namespace Paheon\MeowBase;
+namespace Paheon\MeowBase\Tools;
 
-use Paheon\MeowBase\DTree;
+use Paheon\MeowBase\Tools\DTree;
 
 // DTreeIterator class //
 class DTreeIterator implements \Iterator {

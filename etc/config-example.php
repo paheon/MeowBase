@@ -66,6 +66,31 @@ $getSysConfig = function (string $docRoot, string $etcPath, string $varPath) {
             "lifeTime" => 604800,				
             "adapter" => "memcached",
         ],
+        "mailer" => [
+            // PHPMailer settings //
+            "host" => "localhost",
+            "port" => 25,
+            "auth" => false,
+            // SMTP settings //
+            /*
+            "helo" => "my.server.com",
+            "host" => "my.smtp-server.com",
+            "port" => 587,
+            "auth" => true,
+            "username" => "my.username",
+            "password" => "my.password",
+            "encryption" => "tls",
+            */
+            "debug" => 0,
+            "exceptions" => true,
+            // Mailer class settings //
+            "mode" => Mailer::MODE_MAIL,           // Mailer::MODE_MAIL, Mailer::MODE_SMTP, Mailer::MODE_SENDMAIL, Mailer::MODE_QMAIL
+            "async" => true,
+            "logPath" => $docRoot.$varPath."/log",
+            "logPrefix" => "mail_",
+            "spoolPath" => $docRoot.$varPath."/spool/mailer",
+            "checkDNS" => false,
+        ],
         // User defined setting //
         "mySetting" => [
             "mySetting1" => "MySetting1",

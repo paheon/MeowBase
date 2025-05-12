@@ -168,7 +168,7 @@ class CacheDB extends Medoo {
     }
 
     // Insert statement with log //
-    public function insert(string $table, array $values, string $primaryKey = null, ?int &$rowInsert = null, bool $autoClear = true): ?PDOStatement {
+    public function insert(string $table, array $values, ?string $primaryKey = null, ?int &$rowInsert = null, bool $autoClear = true): ?PDOStatement {
         $thisFunc = __METHOD__." - ";
         $result = parent::insert($table, $values, $primaryKey);
         $rowCount = 0;
