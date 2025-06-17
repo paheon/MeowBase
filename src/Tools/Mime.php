@@ -4,9 +4,9 @@ namespace Paheon\MeowBase\Tools;
 use Paheon\MeowBase\ClassBase;
 
 // File and Url Class //
-class Mime extends ClassBase {
+class Mime  {
 
-    // Properties //
+    use ClassBase;
 
     // Shared MIME-Info database // 
     // For windows, we need to obtain the files, globs, aliases, and generic-icons, for non-exist files and set the path in config file.

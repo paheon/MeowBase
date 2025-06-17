@@ -4,8 +4,10 @@ namespace Paheon\MeowBase\Tools;
 use Paheon\MeowBase\ClassBase;
 
 // File and Url Class //
-class Url extends ClassBase {
+class Url  {
 
+    use ClassBase;
+    
     // Properties //
     protected ?string   $home;              // Home base Url
     protected bool      $fullUrl;           // Default not to use full Url

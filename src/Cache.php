@@ -15,7 +15,9 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 use Symfony\Component\Cache\CacheItem;
 
-class Cache extends ClassBase {
+class Cache {
+
+	use ClassBase;
 
     public const DEFAULT_LIFETIME	= 86400;					// Cache lift time = 1 day (in seconds)
 	

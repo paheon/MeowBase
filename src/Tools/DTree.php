@@ -5,7 +5,10 @@ use Paheon\MeowBase\ClassBase;
 use Paheon\MeowBase\Tools\DTreeIterator;
 
 // DTree class //
-class DTree extends ClassBase {
+class DTree {
+
+    use ClassBase;
+    
     protected   ?DTree  $parent;
     protected   mixed   $data;
     protected   string  $name;

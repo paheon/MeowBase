@@ -4,15 +4,18 @@
 //
 // Version: 1.0.0   - 2024-12-02
 // Author: Vincent Leung
-// Copyright: 2023-2024 Vincent Leung
+// Copyright: 2023-2025 Vincent Leung
 // License: MIT
 //
 namespace Paheon\MeowBase;
 
 use Katzgrau\KLogger\Logger;
 use Psr\Log\LogLevel;
+use Paheon\MeowBase\ClassBase;
 
 class SysLog extends Logger{
+
+    use ClassBase;
 
     // Properties //
     public	bool	$enable = true;	// Enable Log by default

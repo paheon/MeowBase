@@ -128,10 +128,34 @@ The class maintains references to all core components through its properties, wi
 - `__get(string $prop): mixed`: Magic method for property access and lazy loading
 
 ### 2. Fundamental class - ClassBase
-`ClassBase` is a fundamental class that is used as base class for all MeowBase components. It mainly provides the properties access control, mass properties access ability and property name mapping for all MeowBase components.
+`ClassBase` is a fundamental trait that provides property access control, mass properties access ability and property name mapping for all MeowBase components. It is designed to be used as a trait rather than a base class, allowing for multiple inheritance and more flexible code organization.
+
+#### Using ClassBase as a Trait
+To use ClassBase in your own classes, simply use the trait in your class definition:
+
+```php
+use Paheon\MeowBase\ClassBase;
+
+class MyClass {
+    use ClassBase;
+    
+    protected $denyRead = ['sensitiveData'];
+    protected $denyWrite = ['readOnlyData'];
+    protected $varMap = ['lastError' => 'error'];
+    
+    public function __construct() {
+        // Initialize your class
+    }
+}
+```
+
+This approach allows you to:
+1. Use ClassBase functionality in any class
+2. Combine ClassBase with other traits or classes
+3. Maintain better code organization and flexibility
 
 #### Property Access Control
-The class property `$denyRead` and `$denyWrite` are used to control the property access by putting the property name into these arrays. For example, the following statement denied write access to properties, `profiler`, `config`, `log`, `cache`, `db`, `configTree` and `lazyLoad`.
+The trait property `$denyRead` and `$denyWrite` are used to control the property access by putting the property name into these arrays. For example, the following statement denied write access to properties, `profiler`, `config`, `log`, `cache`, `db`, `configTree` and `lazyLoad`:
 ```php
 $this->denyWrite = array_merge($this->denyWrite, [ 'profiler', 'config', 'log', 'cache', 'db', 'configTree', 'lazyLoad' ]);
 ```
@@ -1018,6 +1042,24 @@ $mimeType = $mime->alias2Mime('text/plain');
 ### 5. Email Sending - Mailer
 The `Mailer` class provides comprehensive email functionality through integration with the [PHPMailer](https://github.com/PHPMailer/PHPMailer) library. It offers a robust solution for sending emails in both direct and asynchronous modes, with extensive support for various email features including HTML content, attachments, and embedded images.
 
+#### Configuration Options
+The `Mailer` class supports various configuration options that can be set in the constructor or through the `setConfig()` method:
+
+```php
+$mailer->setConfig([
+    'host' => 'smtp.example.com',       // SMTP host
+    'port' => 587,                      // SMTP port
+    'username' => 'user@example.com',   // Login user
+    'password' => 'password',           // Login password
+    'encryption' => 'tls',              // Encryption type 
+    'async' => true,                    // Using async mode
+    'autoTLS' => true,                  // Enable automatic TLS encryption
+    'keepalive' => true,                // Keep SMTP connection alive
+    'timeout' => 30,                    // Connection timeout in seconds
+    'debug' => 0                        // Debug level (0-4)
+]);
+```
+
 #### Sending Modes
 The `Mailer` class supports two distinct sending modes to accommodate different use cases. In direct mode, emails are sent immediately when the `send()` method is called, providing immediate feedback on the sending status. This mode is ideal for critical emails that require immediate delivery confirmation but the process will be blocked when sending out mail. 
 
@@ -1064,7 +1106,7 @@ $mailer = new Mailer($meow->configTree["mailer"]);
 $mailer->setTo(['recipient@example.com' => 'Recipient Name']);
 $mailer->setSubject('Test Email');
 $mailer->setBody('<h1>Test</h1><p>This is a test email.</p>', true, 'This is a test email.');
-// To and Subject can be set by passwing value to virtual properties
+// To and Subject can be set by passing value to virtual properties
 // $mailer->to = ['recipient@example.com' => 'Recipient Name'];
 // $mailer->subject = 'Test Email';
 
@@ -1119,7 +1161,7 @@ echo "Processed " . $results['success'] . " emails successfully";
 - `emailValidate(string $email, bool $checkDNS = false): bool`: Validates email address
 - `getValidAddr(array|string $address, string $name = "", bool $checkDNS = false): array`: Gets valid email addresses
 
-### 11. PHP Utilities - PHP
+### 6. PHP Utilities - PHP
 
 The `PHP` class is a support class to provide utility functions for PHP environment checks and configuration. It helps in determining the availability and status of PHP functions and features.
 
@@ -1148,12 +1190,184 @@ switch ($status) {
 **Public Methods:**
 - `chkDisabledFunction(string $funcName): int`: Checks if a function is disabled
 
+### 7. CSV Database - CsvDB
+
+The `CsvDB` class provides a efficient solution for managing CSV files as a database system for small dataset. For large dataset, please consider other database system. This class is designed to handle CSV files with automatic metadata management, ensuring data integrity and providing search capabilities.
+
+#### Features
+
+The `CsvDB` class significantly elevates the management of CSV files by introducing a set of advanced, thoughtfully designed features. One of its most essential capabilities is automatic metadata management. Upon loading CSV files, the system seamlessly appends and handles three key metadata columns: `csvRowID`, a unique identifier for each row; `csvCreate`, which captures the timestamp of a record's creation; and `csvUpdate`, which logs the timestamp of the most recent update. This not only enhances traceability but also adds valuable structure to otherwise flat data.
+
+Another hallmark of the `CsvDB` class is its efficient queue-based system for handling Create, Update, and Delete (CUD) operations. Instead of writing changes directly to disk with every modification, these operations are queued and executed in batches. This strategic approach minimizes file I/O, reduces strain on system resources, and improves overall performance.
+
+The class also excels in search functionality, enabling users to craft sophisticated queries using a variety of operators and conditional logic. The resulting data set can be sorted in either ascending or descending order.
+
+To safeguard data accuracy and consistency, concurrency control mechanisms are built in. These mechanisms include file locking to prevent race conditions and data corruption when the CSV is accessed by multiple processes at the same time.
+
+Moreover, the `CsvDB` class supports custom search filtering through user-defined functions. This feature allows developers to tailor the behavior of searches according to specific project needs or complex application logic, granting an exceptional level of customization.
+
+Finally, by implementing the Iterator interface, the class offers seamless compatibility with standard PHP iteration constructs. This not only simplifies record traversal but also aligns neatly with familiar programming patterns, making the class both powerful and intuitive for developers.
+
+#### Search Criteria Format
+
+The search functionality supports a rich set of operators and logical conditions:
+
+**Basic Operators:**
+- `=` : Equal to
+- `!=` : Not equal to
+- `>` : Greater than
+- `>=` : Greater than or equal to
+- `<` : Less than
+- `<=` : Less than or equal to
+- `~` : Contains (LIKE)
+- `!~` : Does not contain (NOT LIKE)
+- `<>` : Between
+- `><` : Not between
+
+**Logical Operators:**
+The system supports complex logical conditions using `AND` and `OR` operators. These can be nested to create sophisticated search criteria:
+
+```php
+$results = $csv->search([
+    'OR' => [
+        "status" => "active",
+        'AND' => [
+            "age[>]" => 40,
+            "email[~]" => "example.com"
+        ],
+        "csvCreate[<>]" => ["2024-01-01", "2024-12-31"]
+    ]
+]);
+```
+
+In this example:
+- The `AND` operator requires all conditions within its array to be true
+- The nested `OR` operator allows either condition to be true
+- The `<>` operator checks if the value falls between the specified range
+
+#### Usage Example
+
+```php
+// Initialize CsvDB with field definitions
+$csv = new CsvDB('/path/to/data.csv', [
+    "name",
+    "age",
+    "email",
+    "status"
+]);
+
+// Add records with automatic metadata
+$records = [
+    [
+        "name" => "John Doe",
+        "age" => "30",
+        "email" => "john@example.com",
+        "status" => "active"
+    ],
+    [
+        "name" => "Jane Smith",
+        "age" => "25",
+        "email" => "jane@example.com",
+        "status" => "inactive"
+    ]
+];
+
+foreach ($records as $record) {
+    $rowID = $csv->setRow($record);
+    echo "Added record with rowID: " . $rowID;
+}
+
+// Save changes to file
+$csv->save();
+
+// Queue operations for batch processing
+$csv->queueAppend([
+    "name" => "Paul John",
+    "age" => "35",
+    "email" => "new@example.com",
+    "status" => "pending"
+]);
+
+$csv->queueUpdate(
+    ["email" => "john@example.com"],
+    ["status" => "inactive"]
+);
+
+$csv->queueDelete(["email" => "jane@example.com"]);
+
+// Execute queued operations
+$results = $csv->runQueue();
+
+// Perform complex search
+$results = $csv->search([
+    'OR' => [
+        "age[>]" => 20,
+        "status" => "active",
+    ],
+    'AND' => [
+        "email[~]" => "example.com",
+        "name[~]" => "John"
+    ]
+]);
+
+```
+
+#### Properties
+
+- `$csvFile` (string): The path to the CSV file being managed.
+- `$header` (array): Array containing the field definitions for the CSV file.
+- `$data` (array): Array storing all records with their metadata.
+- `$queue` (array): Queue for batch operations (Create, Update, Delete).
+
+#### Protected Methods
+
+- `_loadHeader()`: Internal method to load and validate the CSV file header.
+- `_saveHeader()`: Internal method to save the header to the CSV file.
+- `_lockFile()`: Internal method to acquire file lock for safe operations.
+- `_unlockFile()`: Internal method to release file lock.
+- `_validateRow()`: Internal method to validate row data against header definitions.
+- `_updateMetadata()`: Internal method to update row metadata (create/update timestamps).
+
+#### Public Methods
+
+- `__construct(string $csvFile, ?array $header = null)`: Initializes the CSV database with file path and optional header definition.
+- `setRow(array $rowRec, ?int $rowID = null): int`: Adds or updates a record, returns the row ID.
+- `getRow(int $rowID = 0): array|false`: Retrieves a record by its row ID.
+- `search(array $criteria, ?string $field = null, bool $asc = true): array|false`: Performs search with complex criteria and sorting.
+- `queueAppend(array $rowRec): void`: Queues a record for addition.
+- `queueUpdate(array $criteria, array $rowRec): void`: Queues a record for update.
+- `queueDelete(array $criteria): void`: Queues a record for deletion.
+- `runQueue(bool $forceUseHeader = false): array`: Executes all queued operations.
+- `save(?string $fileName = null): int`: Saves current data to file.
+- `load(?string $fileName = null): int`: Loads data from file.
+- `sortByRowID(bool $asc = true): void`: Sorts records by row ID.
+- `getHeader(): array`: Returns the current header definition.
+- `getRowCount(): int`: Returns the total number of records.
+- `clearQueue(): void`: Clears the operation queue.
+- `isQueueEmpty(): bool`: Checks if the operation queue is empty.
+- `getLastError(): string`: Returns the last error message.
+- `setCustomFilter(callable $filter): void`: Sets a custom filter function for search operations.
+
+
+## Directory Structure
+The framework uses the following directory structure:
+- `/etc`: Configuration directory
+- `/var`: Variable data directory
+  - `/var/cache`: Cache files
+  - `/var/log`: Log files
+  - `/var/spool`: Spool directory 
+  - `/var/spool/mailer`: Mail spool (for Async mode)
+  - `/var/tmp`: Local temporary folder
+- `/Tools`: Tool classes
+
 ## System Requirements
 - PHP: 8.2 or higher
 - Required extensions depend on cache adapter and database configuration
 - catfan/medoo: 2.1.6 or higher
-- katzgrau/klogger: dev-master
+- katzgrau/klogger: 1.2.2 or higher
 - symfony/cache: 6.4.12 or higher
+- phpmailer/phpmailer: 6.9.3 or higher
+- guzzlehttp/guzzle: 7.9.2 or higher
 
 ## License
 MIT License

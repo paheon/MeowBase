@@ -1,3 +1,14 @@
+v1.2.1
+- ClassBase:
+    - Changed from class to trait and let it can be used in any class for multiple inheritances
+    - Other classes changed from inherit ClassBase to use ClassBase trait
+- Mailer:
+    - Added more options, like autoTLS, keepalive, and timeout, in setConfig() method to set the configuration for phpmailer/phpmailer   
+- New tools classes:
+    - CsvDB: CSV database class for very simple database operations
+- tmp folder:
+    - Added 'tmp' folder under var folder for temporary files
+    
 v1.2.0
 - Introduced core class and tool class concept. 
   Core class is most important class for whole application. It creates a single instance for whole application. 

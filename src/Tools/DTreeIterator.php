@@ -1,13 +1,17 @@
 <?php
 namespace Paheon\MeowBase\Tools;
 
+use Paheon\MeowBase\ClassBase;
 use Paheon\MeowBase\Tools\DTree;
 
 // DTreeIterator class //
 class DTreeIterator implements \Iterator {
+
+    use ClassBase;
+
     protected   DTree   $treeRoot;
-    protected   ?DTree   $treeCurr;
-    protected   ?DTree   $rootParent;
+    protected   ?DTree  $treeCurr;
+    protected   ?DTree  $rootParent;
     protected   array   $nodeStack = [];
     protected   int     $position = 0;
     protected   bool    $global = true;

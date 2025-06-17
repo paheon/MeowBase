@@ -9,7 +9,7 @@
 //
 namespace Paheon\MeowBase;
 
-class ClassBase {
+trait ClassBase {
     protected	array	$denyRead  = [];                // Read deny list
     protected	array	$denyWrite = ["lastError"];     // Write deny list
     protected	array	$varMap    = [];                // Variable Mapping [ "srcProp" => "destProp" ]

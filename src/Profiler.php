@@ -9,7 +9,11 @@
 //
 namespace Paheon\MeowBase;
 
+use Paheon\MeowBase\ClassBase;
+
 class Profiler {
+
+    use ClassBase;
 
     // Properties //
     protected int     $serial = 0;

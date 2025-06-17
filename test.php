@@ -17,6 +17,7 @@ use Paheon\MeowBase\Tools\File;
 use Paheon\MeowBase\Tools\Url;
 use Paheon\MeowBase\Tools\Mime;
 use Paheon\MeowBase\Tools\Mailer;
+use Paheon\MeowBase\Tools\CsvDB;
 
 // Profiler will read this global variable for the application start time, 
 //   so it should be run at the beginning of the application
@@ -60,7 +61,8 @@ echo "Read lazyLoad = ".var_export($meow->lazyLoad, true).$br;
 echo $br;
 
 // Mass Getter and Mass Setter //
-class test extends ClassBase {
+class test {
+    use ClassBase;
     protected string $a = "a";
     protected string $b = "b";
     protected string $c = "c";
@@ -944,6 +946,405 @@ $meow->profiler->record("Send email with direct mode", "Mailer Test");
 echo $br;
 
 $meow->profiler->record("Mailer Test Completed", "Mailer Test");
+
+// Test CsvDB class //
+echo $br."Test CsvDB class".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("CsvDB Test Start", "CsvDB Test");
+
+// Create test CSV file path
+$testCsvFile = $meow->config->docRoot . $meow->config->varPath . "/tmp/test_data.csv";
+
+// Create CsvDB object
+$csv = new CsvDB($testCsvFile, [
+    "name",
+    "age",
+    "email",
+    "status"
+]);
+echo "CsvDB object created with test file: ".$testCsvFile.$br;
+
+// Test basic operations
+echo $br."Testing basic operations:".$br;
+
+// Test adding records
+$records = [
+    [
+        "name" => "John Doe",
+        "age" => "30",
+        "email" => "john@example.com",
+        "status" => "inactive"
+    ],
+    [
+        "name" => "Jane Smith",
+        "age" => "25",
+        "email" => "jane@mydomain.com",
+        "status" => "active"
+    ],
+    [
+        "csvRowID" => 3,
+        "name" => "Bob Johnson",
+        "age" => "45",
+        "email" => "bob@example.com",
+        "status" => "pending"
+    ]
+];
+
+echo "Adding test records:".$br;
+foreach ($records as $record) {
+    $rowID = $csv->setRow($record);
+    echo "Added record with rowID: ".$rowID.$br;
+}
+
+var_dump($csv->data);
+
+// Show records //
+echo $br."Show records:".$br;
+foreach ($csv as $idx => $row) {
+    echo "ID($idx): ".$row['csvRowID']." - name=".$row["name"].", age=".$row['age']. ", email=".$row['email'].", status=".$row['status'].$br;
+}
+$meow->profiler->record("Prepare test records", "CsvDB Test");
+
+// Test saving to file
+$errCode = $csv->save();
+echo $br."Saving records to file: ".($errCode == 0 ? "Success" : "Failed($errCode) - ".$csv->lastError).$br;
+
+$meow->profiler->record("First time save records", "CsvDB Test");
+
+// Test loading from file
+$errCode = $csv->load();
+echo $br."Loading records from file: ".($errCode == 0 ? "Success" : "Failed($errCode) - ".$csv->lastError).$br;
+
+// Show records //
+echo $br."Show records:".$br;
+foreach ($csv as $idx => $row) {
+    echo "ID($idx): ".$row['csvRowID']." - name=".$row["name"].", age=".$row['age']. ", email=".$row['email'].", status=".$row['status'].$br;
+}
+
+$meow->profiler->record("First time load records", "CsvDB Test");
+
+// Test searching records
+echo $br."Testing search functionality:".$br;
+
+// Test simple equality
+echo $br."Testing simple equality (status = active):".$br;
+$searchResults = $csv->search(["status" => "active"]);
+echo "Found ".count($searchResults)." active records:".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (status: ".$result["status"].")".$br;
+}
+
+// Test comparison operators
+echo $br."Testing comparison operators (age > 30):".$br;
+$searchResults = $csv->search([
+    "age[>]" => 30
+]);
+echo "Found ".count($searchResults)." records with age > 30:".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (age: ".$result["age"].")".$br;
+}
+
+// Test multiple conditions
+echo $br."Testing multiple conditions (status = active AND age >= 15):".$br;
+$searchResults = $csv->search([
+    "status" => "active",
+    "age[>=]" => 15
+]);
+echo "Found ".count($searchResults)." active records with status = active AND age >= 15:".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (age: ".$result["age"].")".$br;
+}
+
+// Test LIKE operator
+echo $br."Testing LIKE operator (email ~ example.com):".$br;
+$searchResults = $csv->search([
+    "email[~]" => "example.com"
+]);
+echo "Found ".count($searchResults)." records with email LIKE example.com:".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (".$result["email"].")".$br;
+}
+
+// Test NOT LIKE operator
+echo $br."Testing NOT LIKE operator (name !~ Smith):".$br;
+$searchResults = $csv->search([
+    "name[!~]" => "Smith"
+]);
+echo "Found ".count($searchResults)." records with name NOT LIKE Smith:".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (".$result["email"].")".$br;
+}
+
+// Test IN operator
+echo $br."Testing equality operator with array (status = [ 'active', 'pending' ]):".$br;
+$searchResults = $csv->search([
+    "status" => ["active", "pending"]
+]);
+echo "Found ".count($searchResults)." records with status = active OR status = pending:".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (status: ".$result["status"].")".$br;
+}
+
+// Test BETWEEN operator
+echo $br."Testing BETWEEN operator (age <> [ 25, 35 ]):".$br;
+$searchResults = $csv->search([
+    "age[<>]" => [25, 35]
+]);
+echo "Found ".count($searchResults)." records with age between 25 AND 35:".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (age: ".$result["age"].")".$br;
+}
+
+// Test BETWEEN operator
+echo $br."Testing NOT BETWEEN operator (age >< [ 25, 35 ]):".$br;
+$searchResults = $csv->search([
+    "age[><]" => [25, 35]
+]);
+echo "Found ".count($searchResults)." records with age not between 25 AND 35:".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (age: ".$result["age"].")".$br;
+}
+
+// Test NOT operators
+echo $br."Testing NOT equal and NOT LIKE operators (status != active AND email !~ example.com):".$br;
+$searchResults = $csv->search([
+    "status[!=]" => "active",
+    "email[!~]" => "example.com"
+]);
+echo "Found ".count($searchResults)." records with status != active AND email NOT LIKE example.com:".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (status: ".$result["status"].", email: ".$result["email"].")".$br;
+}
+
+// Test AND operator
+echo $br."Testing AND operator (status = active AND age > 30):".$br;
+$searchResults = $csv->search([
+    'AND' => [
+        "status" => "active",
+        "age[>]" => 30
+    ]
+]);
+echo "Found ".count($searchResults)." records with status = active AND age > 30:".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (status: ".$result["status"].", age: ".$result["age"].")".$br;
+}
+
+// Test OR operator
+echo $br."Testing OR operator (status = active OR age > 40):".$br;
+$searchResults = $csv->search([
+    'OR' => [
+        "status" => "active",
+        "age[>]" => 40
+    ]
+]);
+echo "Found ".count($searchResults)." records with status = active OR age > 40:".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (status: ".$result["status"].", age: ".$result["age"].")".$br;
+}
+
+// Test complex AND/OR combination
+echo $br."Testing complex AND/OR combination (status = pending AND (age > 40 OR email ~ mydomain.com)):".$br;
+$searchResults = $csv->search([
+    'AND' => [
+        "status" => "pending",
+        'OR' => [
+            "age[>]" => 40,
+            "email[~]" => "mydomain.com"
+        ]
+    ]
+]);
+echo "Found ".count($searchResults)." records with status = pending AND (age > 40 OR email ~ mydomain.com):".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (status: ".$result["status"].", age: ".$result["age"].", email: ".$result["email"].")".$br;
+}
+
+// Test AND/OR with comments
+echo $br."Testing complex AND/OR combination with remarks ((status = active OR age > 40) AND (email ~ mydomain.com OR name !~ Smith)):".$br;
+$searchResults = $csv->search([
+    "AND #Main condition" => [
+        "OR #First group" => [
+            "status" => "active",
+            "age[>]" => 40
+        ],
+        "OR #Second group" => [
+            "email[~]" => "mydomain.com",
+            "name[!~]" => "Smith"
+        ]
+    ]
+]);
+echo "Found ".count($searchResults)." records with ((status = active OR age > 40) AND (email ~ mydomain.com OR name !~ Smith)):".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (status: ".$result["status"].", age: ".$result["age"].", email: ".$result["email"].")".$br;
+}
+
+// Test search with sorting
+echo $br."Testing search with sorting (email ~ example.com => sort by age in descending order):".$br;
+$searchResults = $csv->search(["email[~]" => "example.com"], "age", false);
+echo "Found ".count($searchResults)." records sorted by age in descending order:".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (age: ".$result["age"].")".$br;
+}
+echo $br."Testing search with sorting (email ~ example.com => sort by age in ascending order):".$br;
+$searchResults = $csv->search(["email[~]" => "example.com"], "age");
+echo "Found ".count($searchResults)." records sorted by age in ascending order:".$br;
+foreach ($searchResults as $result) {
+    echo "- ".$result["name"]." (age: ".$result["age"].")".$br;
+}
+
+$meow->profiler->record("Search records", "CsvDB Test");
+
+// Test queue operations
+echo $br."Testing queue operations (add, update, delete):".$br;
+
+// Queue append
+$newRec = [
+    "name" => "Alice Brown",
+    "age" => "28",
+    "email" => "alice@example.com",
+    "status" => "active"
+];
+$csv->queueAppend($newRec);
+echo "Queued new record for append: ".json_encode($newRec)."<br>";
+
+// Queue update
+$updateRec = ["status" => "active", "age" => "18"];
+$csv->queueUpdate(
+    ["email" => "john@example.com"],
+    $updateRec
+);
+echo "Queued update for John's record: ".json_encode($updateRec)."<br>";
+
+// Queue delete
+$csv->queueDelete(["email" => "bob@example.com"]);
+echo "Queued deletion of Bob's record".$br;
+
+$meow->profiler->record("Prepare queue operations", "CsvDB Test");
+
+// Run queue
+echo $br."Running queue operations:".$br;
+$queueResult = $csv->runQueue();
+echo "Queue operation results:".$br;
+echo "- Added: ".count($queueResult["add"])." records".$br;
+echo "- Updated: ".count($queueResult["update"])." records".$br;
+echo "- Deleted: ".count($queueResult["del"])." records".$br;
+
+// Show records //
+echo $br."Show records:".$br;
+foreach ($csv as $idx => $row) {
+    echo "ID($idx): ".$row['csvRowID']." - name=".$row["name"].", age=".$row['age']. ", email=".$row['email'].", status=".$row['status'].$br;
+}
+
+$meow->profiler->record("Perform queue operations", "CsvDB Test");
+
+
+// Test iterator functionality
+echo $br."Testing iterator functionality:".$br;
+echo "Iterating through all records:".$br;
+foreach ($csv as $row) {
+    echo "- ".$row["name"]." (".$row["email"].")".$br;
+}
+
+$meow->profiler->record("Use iterator to show records", "CsvDB Test");
+
+// Test getting specific row
+echo $br."Testing getRow functionality:".$br;
+echo "Get Row 1 by getRow(1):".$br;
+$row = $csv->getRow(1);
+if ($row !== false) {
+    echo "Row 1: ".$row["name"]." (".$row["email"].")".$br;
+} else {
+    echo "Row 1 not found".$br;
+}
+echo "Get Row 10 by getRow(10):".$br;
+$row = $csv->getRow(10);
+if ($row !== false) {
+    echo "Row 10: ".$row["name"]." (".$row["email"].")".$br;
+} else {
+    echo "Row 10 not found".$br;
+}
+
+// Test generate empty record
+echo $br."Testing genEmptyRec functionality:".$br;
+$emptyRec = $csv->genEmptyRec();
+echo "Empty record structure:".$br;
+print_r($emptyRec);
+
+// Create record with empty record
+echo $br."Testing create record with empty record:".$br;
+$emptyRec = $csv->genEmptyRec();
+$emptyRec["csvRowID"] = 11;
+$emptyRec["name"] = "Empty Record";
+$emptyRec["age"] = "30";
+$emptyRec["email"] = "empty@example.com";
+$emptyRec["status"] = "empty";
+$csv->setRow($emptyRec);
+echo "Empty record structure:".$br;
+var_dump($emptyRec);
+
+// Show records //
+echo $br."Show records by direct access after create record:".$br;
+var_dump($csv->data);
+
+// Add one more new record
+$newRec = [
+    "name" => "New Record",
+    "age" => "16",
+    "email" => "new@example.com",
+    "status" => "new"
+];
+$csv->setRow($newRec, 7);
+
+// Show records //
+echo $br."Show records:".$br;
+foreach ($csv as $idx => $row) {
+    echo "ID($idx): ".$row['csvRowID']." - name=".$row["name"].", age=".$row['age']. ", email=".$row['email'].", status=".$row['status'].$br;
+}
+
+$meow->profiler->record("Second time prepare test records", "CsvDB Test");
+
+// Save records to file
+echo $br."Saving records to file:".$br;
+$errCode = $csv->save();
+echo "Saving records to file: ".($errCode == 0 ? "Success" : "Failed($errCode) - ".$csv->lastError).$br;
+
+$meow->profiler->record("Second time save records", "CsvDB Test");
+
+// Load records from file
+echo $br."Loading records from file:".$br;
+$errCode = $csv->load();
+echo "Loading records from file: ".($errCode == 0 ? "Success" : "Failed($errCode) - ".$csv->lastError).$br;
+
+// Show records //
+echo $br."Show records:".$br;
+foreach ($csv as $idx => $row) {
+    echo "ID($idx): ".$row['csvRowID']." - name=".$row["name"].", age=".$row['age']. ", email=".$row['email'].", status=".$row['status'].$br;
+}
+
+$meow->profiler->record("Second time load records", "CsvDB Test");
+
+// Test sorting records
+echo $br."Testing rowID sorting:".$br;
+echo "Sorting rowID in dscending order:".$br;
+$csv->sortByRowID(true);
+foreach ($csv as $idx => $row) {
+    echo "ID($idx): ".$row['csvRowID']." - name=".$row["name"].", age=".$row['age']. ", email=".$row['email'].", status=".$row['status'].$br;
+}
+$csv->sortByRowID(false);
+echo "Sorted rowID in ascending order:".$br;
+foreach ($csv as $idx => $row) {
+    echo "ID($idx): ".$row['csvRowID']." - name=".$row["name"].", age=".$row['age']. ", email=".$row['email'].", status=".$row['status'].$br;
+}
+
+$meow->profiler->record("RowID sorting", "CsvDB Test");
+
+// Clean up
+echo $br."Cleaning up test files:".$br;
+if (file_exists($testCsvFile)) {
+    unlink($testCsvFile);
+    echo "Test CSV file deleted".$br;
+}
+
+$meow->profiler->record("CsvDB Test Completed", "CsvDB Test");
 
 // Show report //
 echo $br . $meow->profiler->report($isWeb);

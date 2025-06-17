@@ -7,8 +7,10 @@ use PHPMailer\PHPMailer\PHPMailer;
 use Psr\Log\LogLevel;
 
 // HTML Static Class //
-class Mailer extends ClassBase {
+class Mailer {
 
+    use ClassBase;
+    
     const MODE_MAIL = "mail";
     const MODE_SMTP = "smtp";
     const MODE_SENDMAIL = "sendmail";
@@ -88,6 +90,9 @@ class Mailer extends ClassBase {
         if (isset($setting['auth'])) $this->mailer->SMTPAuth = $setting['auth'];
         if (isset($setting['helo'])) $this->mailer->Helo = $setting['helo'];
         if (isset($setting['debug'])) $this->mailer->SMTPDebug = $setting['debug'];
+        if (isset($setting['autoTLS'])) $this->mailer->SMTPAutoTLS = $setting['autoTLS'];
+        if (isset($setting['timeout'])) $this->mailer->Timeout = $setting['timeout'];
+        if (isset($setting['keepalive'])) $this->mailer->SMTPKeepAlive = $setting['keepalive'];
 
         // Local settings //
         if (isset($setting['spoolPath'])) $this->spoolPath = $setting['spoolPath'];

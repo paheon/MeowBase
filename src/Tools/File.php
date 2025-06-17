@@ -4,7 +4,9 @@ namespace Paheon\MeowBase\Tools;
 use Paheon\MeowBase\ClassBase;
 
 // File and Url Class //
-class File extends ClassBase {
+class File {
+
+    use ClassBase;
 
     // Properties //
     protected ?string   $home;                  // Home path
@@ -49,6 +51,24 @@ class File extends ClassBase {
         $out = preg_replace('/[\\\\|\/]+/', '/', $out);
 
         return $out;
+    }
+
+    // Get file path //
+    public function getFilePath(string $fileWithPath):string {
+        $path_parts = pathinfo($fileWithPath);
+        return $path_parts['dirname'] ?? "";
+    }
+
+    // Get file name //
+    public function getFileName(string $fileWithPath):string {
+        $path_parts = pathinfo($fileWithPath);
+        return $path_parts['basename'] ?? "";
+    }
+
+    // Get file extension //
+    public function getFileExt(string $fileWithPath):string {
+        $path_parts = pathinfo($fileWithPath);
+        return $path_parts['extension'] ?? "";
     }
 
     // Generate a temp file by path and prefix //

@@ -15,10 +15,12 @@ use Paheon\MeowBase\SysLog;
 use Paheon\MeowBase\Cache;
 use Paheon\MeowBase\CacheDB;
 use Paheon\MeowBase\Profiler;
-use Paheon\MeowBase\FileUrl;
-use Paheon\MeowBase\Image;
 
-class MeowBase extends ClassBase {
+class MeowBase {
+
+    use ClassBase {
+        ClassBase::__get as _getBase;
+    }
 
     // Objects //
     protected   ?Profiler        $profiler = null;              // Performance Profiler Object
@@ -102,7 +104,7 @@ class MeowBase extends ClassBase {
         if ($prop == "configTree") {
             return $this->config->config;
         }
-        return parent::__get($prop);
+        return $this->_getBase($prop);
     }
         
 }

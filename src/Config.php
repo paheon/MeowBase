@@ -9,10 +9,13 @@
 //
 namespace Paheon\MeowBase;
 
-use Paheon\MeowBase\ClassBase;
+//use Paheon\MeowBase\ClassBase;
 use Psr\Log\LogLevel;
+use Paheon\MeowBase\ClassBase;
 
-class Config extends ClassBase {
+class Config {
+
+    use ClassBase;
 
     // Properties //
 	protected string  $etcPath;

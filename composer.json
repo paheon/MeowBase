@@ -9,8 +9,7 @@
         "katzgrau/klogger": "^1.2.2",
         "symfony/cache": "^6.4.12", 
         "phpmailer/phpmailer": "^6.9.3",
-        "guzzlehttp/guzzle": "^7.9.2",
-        "intervention/image": "^3.11.0"
+        "guzzlehttp/guzzle": "^7.9.2"
     },
     "autoload": {
         "psr-4": {

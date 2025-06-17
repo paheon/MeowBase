@@ -13,8 +13,11 @@ use Medoo\Medoo;
 use PDOStatement;
 use Paheon\MeowBase\Cache;
 use Paheon\MeowBase\SysLog;
+use Paheon\MeowBase\ClassBase;
 
 class CacheDB extends Medoo {
+
+    use ClassBase;
 
     // Object //
     protected   Cache   $cache;                         // Cache Object
