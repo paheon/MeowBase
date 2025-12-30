@@ -6,7 +6,7 @@
 
 ## Overview
 
-MeowBase is a lightweight PHP framework that provides various functionalities including configuration management, caching, database operations, and performance profiling. It is designed to be simple yet powerful, supporting both CLI and Web environments. MeowBase is the foundation base of Meow Framework, which is a web-based framework for PHP. 
+MeowBase is a lightweight PHP framework that provides various functionalities including configuration management, caching, database operations, and performance profiling. It is designed to be simple yet powerful, supporting both CLI and Web environments. MeowBase is the foundational base of the Meow Framework, which is a web-based framework for PHP. 
 
 MeowBase introduces two types of classes: Core Classes and Tool Classes. Core Classes are foundation classes for the whole application, creating a single instance for the entire application (though they may create multiple instances in some cases). Tool Classes are used to extend the functionality of the MeowBase framework and can create multiple instances as needed. All tool classes are stored in the Tools sub-directory (Tools namespace).
 
@@ -18,13 +18,13 @@ The preload behavior can be controlled by setting the `$preload` parameter to tr
 
 This flexible loading approach helps optimize resource usage - if your application doesn't need logging, caching, or database functionality, these components won't be loaded, resulting in faster execution and lower memory usage.
 
-The MeowBase configuration is an array variable which returns from an anonymous function, `$getSysConfig`, and stored in a PHP file, `etc/config.php`. Developers may override the default configuration by `$localSettings`. The profiler records the time used for each process to help developers to find out the performance bottleneck. It also provided a 'group' option to record the process time for a group of process. These two features, configuration and profiler, are natively supported by MeowBase and can be used by any Meow Framework components. Other features are optional and can be loaded on demand.
+The MeowBase configuration is an array variable that is returned from an anonymous function, `$getSysConfig`, and stored in a PHP file, `etc/config.php`. Developers may override the default configuration using `$localSettings`. The profiler records the time used for each process to help developers find performance bottlenecks. It also provides a 'group' option to record the process time for a group of processes. These two features, configuration and profiler, are natively supported by MeowBase and can be used by any Meow Framework components. Other features are optional and can be loaded on demand.
 
-Logging system, `SysLog` class, uses Katzgrau/KLogger package to provide logging service. It supports multiple log levels and file rotation. Details please refer to the [KLogger's documentation](https://github.com/katzgrau/KLogger).
+The logging system, `SysLog` class, uses the Katzgrau/KLogger package to provide logging services. It supports multiple log levels and file rotation. For details, please refer to the [KLogger documentation](https://github.com/katzgrau/KLogger).
 
-Cache system, `Cache` class, is based on Symfony Cache component and simplied the cache key building process. It also supports multiple cache adapters and keep the data in memory for faster access. However, only file adapter and memcached adapter are supported now. It may add more adapters in the future. Details please refer to the [Symfony Cache documentation](https://symfony.com/doc/current/components/cache.html).
+The cache system, `Cache` class, is based on the Symfony Cache component and simplifies the cache key building process. It also supports multiple cache adapters and keeps data in memory for faster access. However, only the file adapter and memcached adapter are currently supported. More adapters may be added in the future. For details, please refer to the [Symfony Cache documentation](https://symfony.com/doc/current/components/cache.html).
 
-The database system, `CachedDB` class, is inherited from Medoo and added caching and logging abilities on top of it. All cached functions have prefix, 'cached', such as `cachedSelect()`, `cachedGet()`, `cachedCalc()` and `cachedHas()`, to distinguish original non-cached functions. All original functions from Medoo, like `select()` and `get()`, don't have cache access ability but they may use logging function to log the query statement and query result. For more details of Medoo, please refer to the [Medoo documentation](https://medoo.in/api/new).
+The database system, `CachedDB` class, inherits from Medoo and adds caching and logging capabilities on top of it. All cached functions have the prefix 'cached', such as `cachedSelect()`, `cachedGet()`, `cachedCalc()` and `cachedHas()`, to distinguish them from the original non-cached functions. All original functions from Medoo, like `select()` and `get()`, do not have caching capabilities but they may use the logging function to log query statements and query results. For more details about Medoo, please refer to the [Medoo documentation](https://medoo.in/api/new).
 
 ## Tools Classes 
 
@@ -32,7 +32,7 @@ Unlike Core Classes, Tools Classes are designed to be instantiated on demand and
 
 The `DTree` class is a versatile and efficient tree data structure implementation in PHP. It is designed to handle hierarchical data with ease, providing a robust set of features for managing tree nodes. The class supports operations such as adding, replacing, deleting, and sorting nodes, making it suitable for a wide range of applications, from simple data organization to complex hierarchical data management.
 
-The `Mailer` class provides email functionality through PHPMailer integration, supporting both direct mode and asynchronous mode email sending, with features for handling attachments, embedded images, and HTML content. Details for the PHPMailer, please refer to the [PHPMailer](https://github.com/PHPMailer/PHPMailer)
+The `Mailer` class provides email functionality through PHPMailer integration, supporting both direct mode and asynchronous mode email sending, with features for handling attachments, embedded images, and HTML content. For PHPMailer details, please refer to [PHPMailer](https://github.com/PHPMailer/PHPMailer).
 
 The `File` class offers file system operations with path management and temporary file handling capabilities.
 
@@ -40,13 +40,16 @@ The `Url` class provides URL manipulation and validation features, including URL
 
 The `Mime` class handles MIME type detection and conversion, supporting file-to-MIME type mapping and icon association. It integrates with the Shared MIME-Info database for accurate MIME type detection.
 
-The `PHP` class provides utility functions for PHP environment checks.
+The `PHP` class provides utility functions for PHP environment checks. All member functions are static functions that may be called directly.
+
+The `CsvDB` class provides an efficient solution for managing CSV files as a database system for small datasets. For large datasets, please consider using a more robust database system. 
+
 
 ## Getting Started
 
-To use MeowBase, first initialize the `Config` object with user-defined configuration file in etc folder. Then pass the `Config` object to `MeowBase` constructor to generate the `MeowBase` object. `MeowBase` will load the configuration and initialize the other components automatically. Developer can used the `MeowBase` object to access all core components, such as `config`, `log`, `cache`, `db` and `profiler`.
+To use MeowBase, first initialize the `Config` object with a user-defined configuration file in the etc folder. Then pass the `Config` object to the `MeowBase` constructor to generate the `MeowBase` object. `MeowBase` will load the configuration and initialize the other components automatically. Developers can use the `MeowBase` object to access all core components, such as `config`, `log`, `cache`, `db` and `profiler`.
 
-User may copy or rename the `config-example.php` to `config.php` and modify the configuration in it.
+Users may copy or rename `config-example.php` to `config.php` and modify the configuration in it.
 
 Here is a simple example to show how to use MeowBase:
 ```php
@@ -73,7 +76,7 @@ $meow = new MeowBase($config);
 $isWeb = $meow->configTree["sapi"] != "cli";             // Determine if it is web environment
 $br = $isWeb ? "<br>\n" : "\n";
 
-// Strt to log //
+// Start to log //
 echo "Program started!".$br;
 $meow->log->sysLog("Program started!", null, LogLevel::INFO);       // Log a INFO message
 
@@ -128,7 +131,7 @@ The class maintains references to all core components through its properties, wi
 - `__get(string $prop): mixed`: Magic method for property access and lazy loading
 
 ### 2. Fundamental class - ClassBase
-`ClassBase` is a fundamental trait that provides property access control, mass properties access ability and property name mapping for all MeowBase components. It is designed to be used as a trait rather than a base class, allowing for multiple inheritance and more flexible code organization.
+`ClassBase` is a trait that provides property access control, mass property access capability, and property name mapping for all MeowBase components. It is designed to be used as a trait rather than a base class, allowing for multiple inheritance and more flexible code organization.
 
 #### Using ClassBase as a Trait
 To use ClassBase in your own classes, simply use the trait in your class definition:
@@ -137,14 +140,16 @@ To use ClassBase in your own classes, simply use the trait in your class definit
 use Paheon\MeowBase\ClassBase;
 
 class MyClass {
-    use ClassBase;
-    
-    protected $denyRead = ['sensitiveData'];
-    protected $denyWrite = ['readOnlyData'];
-    protected $varMap = ['lastError' => 'error'];
+
+    use ClassBase;          // Add ClassBase here 
+
+    protected   array   $sensitiveData;
+    protected   array   $readOnlyData;
     
     public function __construct() {
-        // Initialize your class
+        $this->denyRead = array_merge($this->denyWrite, ['sensitiveData']);
+        $this->denyWrite = array_merge($this->denyWrite, ['readOnlyData']); 
+        // Initialize your class    
     }
 }
 ```
@@ -154,8 +159,10 @@ This approach allows you to:
 2. Combine ClassBase with other traits or classes
 3. Maintain better code organization and flexibility
 
+* Since v1.2.1, ClassBase is no longer a fundamental class; it has become a trait for multiple inheritance. 
+
 #### Property Access Control
-The trait property `$denyRead` and `$denyWrite` are used to control the property access by putting the property name into these arrays. For example, the following statement denied write access to properties, `profiler`, `config`, `log`, `cache`, `db`, `configTree` and `lazyLoad`:
+The trait properties `$denyRead` and `$denyWrite` are used to control property access by putting property names into these arrays. For example, the following statement denies write access to properties `profiler`, `config`, `log`, `cache`, `db`, `configTree` and `lazyLoad`:
 ```php
 $this->denyWrite = array_merge($this->denyWrite, [ 'profiler', 'config', 'log', 'cache', 'db', 'configTree', 'lazyLoad' ]);
 ```
@@ -168,7 +175,7 @@ $error = $meow->config->error;      // Same as $error = $meow->config->lastError
 ```
 
 #### Property Access
-`ClassBase` use PHP magic methods `__get()` and `__set()` to access class properties and control property access. These methods lookup the property name in `$varMap` first, if not found, then lookup the property name directly. If property has 'get' and 'set' method, the method name has `get` and `set` followed by the property name, no matter the property is defined or not, `ClassBase` will call these 'get' and 'set' method to get and set the property value repestively. For example, to get the `siteID` property:
+`ClassBase` uses PHP magic methods `__get()` and `__set()` to access class properties and control property access. These methods look up the property name in `$varMap` first; if not found, they then look up the property name directly. If a property has 'get' and 'set' methods, the method names have `get` and `set` followed by the property name. Regardless of whether the property is defined, `ClassBase` will call these 'get' and 'set' methods to get and set the property value respectively. For example, to get the `siteID` property:
 ```php
 $siteID = $meow->cache->siteID;
 ```
@@ -189,7 +196,7 @@ For mass property access, `ClassBase` provides `massGetter()` and `massSetter()`
 $propList = $meow->massGetter([ 'email', 'name', 'subject', 'message' ]);
 $unsetList = $meow->massSetter([ 'email' => 'info@email.com', 'name' => 'Vincent Leung', 'subject' => 'Enquire for MeowBase', 'message' => 'Hello, is MeowBase good for your project?' ]);
 ```
-The `massGetter()` method will return the list of properties value which are defined in the class; and the `massSetter()` method will return the list of properties that are not defined in the class.
+The `massGetter()` method will return the list of property values that are defined in the class, and the `massSetter()` method will return the list of properties that are not defined in the class.
 
 For array property access, `ClassBase` provides the `getElemByPath()` and `setElemByPath()` methods to get and set the element of an array property by path string. For example, following code is used to get the `timeZone` element from `$configTree` array property:
 ```php
@@ -212,8 +219,11 @@ if ($meow->isTrue($result)) {
 - Integer: Non-zero value
 - Float: Non-zero value
 - String: begin with "y", "t", "e", "a", ("o" and not followed by "f"), or is "0" (case insensitive), so "yes", "Yup", "true", "enable", "allow", "on" and "0" will return true but "no", "Nope", "false", "disable", "disallow", "off" will return false.
+- Array: Non-empty array
+
 Other values will return false.
-If `$result` is array, object, null and callable, this function will return false.
+
+If `$result` is an object, null and callable, this function will return false.
 
 #### Exception Handling
 The `useException` property controls whether exceptions should be thrown when errors occur. When set to true, errors will be thrown as exceptions; when false, errors will be stored in the `lastError` property. The `exceptionClass` property allows customization of the exception class to be used.
@@ -857,6 +867,7 @@ foreach ($iterator as $position => $node) {
 
 #### Methods
 - `__construct(string $name = "", mixed $data = null, ?DTree $parent = null, bool $replace = true)`: Initializes a new node.
+- `buildNode(array $param): ?DTree`: Builds a new node from parameter array without adding to tree.
 - `addNode(DTree $child, bool $clone = false, bool $replace = true): bool`: Adds a child node.
 - `createNode(array $param): ?DTree`: Creates and adds a new child node.
 - `createByPath(string $path, array $param): ?DTree`: Creates and adds a new child node by path.
@@ -1167,9 +1178,9 @@ The `PHP` class is a support class to provide utility functions for PHP environm
 
 #### Features
 
-The `PHP` class offers function availability checking, including detection of disabled functions through PHP configuration.
+The `PHP` class provides comprehensive utility functions for PHP environment checks and configuration. It offers function availability checking, password hashing cost calculation, CLI environment detection, session management for CLI, debugging tools for class inspection, and error display control.
 
-#### Usage Example
+#### Usage Examples
 
 ```php
 // Check if a function is available
@@ -1185,14 +1196,38 @@ switch ($status) {
         echo "Function exists but is disabled";
         break;
 }
+
+// Check if running in CLI mode
+if (PHP::isCLI()) {
+    echo "Running in CLI mode";
+    // Start CLI session
+    $sessionID = PHP::startCLISession();
+}
+
+// Get optimal password hash cost
+$cost = PHP::checkPwdHashCost(0.25);
+echo "Recommended cost: $cost";
+
+// Dump class structure for debugging
+echo PHP::classDump(MyClass::class);
+
+// Get value type as string
+$type = PHP::valueType($myVariable);
 ```
 
-**Public Methods:**
-- `chkDisabledFunction(string $funcName): int`: Checks if a function is disabled
+**Public Static Methods:**
+- `chkDisabledFunction(string $funcName): int`: Checks if a function is disabled (returns 0=available, 1=not exists, 2=disabled)
+- `checkPwdHashCost(float $timeTarget = 0.350): string`: Calculates optimal password_hash cost for target execution time
+- `showPHPError(bool $show = false): void`: Controls PHP error display settings
+- `valueType(mixed $value): string`: Returns detailed type information of a value
+- `classDump(object|string $class): string`: Generates formatted dump of class structure including properties and methods
+- `startCLISession(?string $sessionID = null, ?string $savePath = null): string|false`: Starts session in CLI environment
+- `isCLI(): bool`: Checks if running in CLI mode
+- `getSessionInfo(): array`: Retrieves current session information
 
 ### 7. CSV Database - CsvDB
 
-The `CsvDB` class provides a efficient solution for managing CSV files as a database system for small dataset. For large dataset, please consider other database system. This class is designed to handle CSV files with automatic metadata management, ensuring data integrity and providing search capabilities.
+The `CsvDB` class offers an efficient solution for managing CSV files as a lightweight database system for small datasets. For larger datasets, it is recommended to use a more robust database system. This class is designed to handle CSV files with automatic metadata management, ensuring data integrity and providing search capabilities.
 
 #### Features
 
@@ -1330,39 +1365,1053 @@ $results = $csv->search([
 
 #### Public Methods
 
-- `__construct(string $csvFile, ?array $header = null)`: Initializes the CSV database with file path and optional header definition.
-- `setRow(array $rowRec, ?int $rowID = null): int`: Adds or updates a record, returns the row ID.
-- `getRow(int $rowID = 0): array|false`: Retrieves a record by its row ID.
-- `search(array $criteria, ?string $field = null, bool $asc = true): array|false`: Performs search with complex criteria and sorting.
-- `queueAppend(array $rowRec): void`: Queues a record for addition.
-- `queueUpdate(array $criteria, array $rowRec): void`: Queues a record for update.
-- `queueDelete(array $criteria): void`: Queues a record for deletion.
-- `runQueue(bool $forceUseHeader = false): array`: Executes all queued operations.
-- `save(?string $fileName = null): int`: Saves current data to file.
-- `load(?string $fileName = null): int`: Loads data from file.
-- `sortByRowID(bool $asc = true): void`: Sorts records by row ID.
-- `getHeader(): array`: Returns the current header definition.
-- `getRowCount(): int`: Returns the total number of records.
-- `clearQueue(): void`: Clears the operation queue.
-- `isQueueEmpty(): bool`: Checks if the operation queue is empty.
-- `getLastError(): string`: Returns the last error message.
-- `setCustomFilter(callable $filter): void`: Sets a custom filter function for search operations.
+**Initialization and Configuration:**
+- `__construct(string $csvFile, ?array $header = null)`: Initializes the CSV database with file path and optional header definition
+- `setCsvFile(string $fileName): void`: Sets the CSV file path
+- `setSeperator(string $seperator): void`: Sets the field separator character (default: comma)
+- `setEnclosure(string $enclosure): void`: Sets the field enclosure character (default: double quote)
+- `setEscape(string $escape): void`: Sets the escape character (default: backslash)
+- `setTerminator(string $terminator): void`: Sets the line terminator (default: newline)
+- `createCSVFile(bool $overwrite = false): bool`: Creates a new CSV file with current header
+
+**Header Management:**
+- `setHeader(?array $header = null): void`: Sets or updates the CSV header
+- `appendHeader(string $label): void`: Adds a new field to the header
+- `removeHeader(string $label): void`: Removes a field from the header
+
+**Record Operations:**
+- `getRow(int $rowID = 0): array|false`: Retrieves a record by its row ID
+- `setRow(array $rowRec, ?int $rowID = null): int`: Adds or updates a record, returns the row ID
+- `genEmptyRec(mixed $value = ""): array`: Generates an empty record with all header fields
+- `clearRec(): void`: Clears all records from memory
+
+**Queue Operations (Batch Processing):**
+- `queueAppend(array $rowRec): void`: Queues a record for addition
+- `queueUpdate(array $criteria, array $rowRec): void`: Queues a record for update
+- `queueDelete(array $criteria): void`: Queues a record for deletion
+- `clearQueue(): void`: Clears the operation queue
+- `runQueue(bool $forceUseHeader = false): array`: Executes all queued operations
+
+**Search and Query:**
+- `search(array $criteria, ?string $field = null, bool $asc = true): array|false`: Performs search with complex criteria and sorting
+- `customSearch(callable $function): array|false`: Performs custom search using user-defined filter function
+- `getMin(string $field): mixed`: Gets the minimum value of a field
+- `getMax(string $field): mixed`: Gets the maximum value of a field
+- `sortByRowID(bool $asc = true): void`: Sorts records by row ID
+
+**File Operations:**
+- `load(?string $fileName = null): int`: Loads data from CSV file
+- `save(?string $fileName = null): int`: Saves current data to CSV file
+
+**Iterator Interface Methods:**
+- `current(): mixed`: Returns the current record in iteration
+- `key(): mixed`: Returns the current row ID in iteration
+- `next(): void`: Moves to the next record in iteration
+- `rewind(): void`: Resets iterator to the first record
+- `valid(): bool`: Checks if current iterator position is valid
+
+### 8. User Management System - UserManager and Related Classes
+
+The User Management System in MeowBase provides a comprehensive, flexible solution for managing users, groups, and permissions. At its core is the `UserManager` class, which acts as a centralized management layer that coordinates user authentication, session management, group membership, and permission checking. The system is designed with a flexible architecture that allows developers to inject different storage implementations (CSV or Database) without changing application code, making it easy to switch between storage backends or even use different storage types for different components.
+
+#### Architecture Overview
+
+The User Management System follows a layered architecture pattern that separates concerns and provides maximum flexibility. At the top level, the **UserManager class** serves as the main entry point that provides a unified API for all user management operations. UserManager acts as a coordinator that manages sessions, handles authentication flows, and orchestrates interactions between different components. It provides high-level methods for authentication, authorization, and user data management, shielding application code from the complexities of underlying storage implementations.
+
+Beneath UserManager, there are **parent classes** that define the interface contracts for different aspects of user management. The `User` class serves as the abstract base class for user data access operations, defining methods like `getUserByID()`, `createUser()`, and `updateUser()` that must be implemented by concrete storage classes. Similarly, the `UserGroup` class defines the interface for group management operations such as creating groups, adding users to groups, and querying group membership. The `UserPerm` class establishes the contract for permission management, including methods for setting, getting, and deleting both user-specific and group-based permissions.
+
+The actual data storage is handled by **storage implementation classes** that extend these parent classes. For user data, you can choose between `UserCSV` which stores data in CSV files using the CsvDB class, or `UserDB` which uses database storage through the CacheDB class (which extends Medoo). The same pattern applies to groups and permissions: `UserGroupCSV` and `UserGroupDB` handle group storage, while `UserPermCSV` and `UserPermDB` manage permission storage. Each implementation class inherits the interface from its parent class but provides storage-specific implementations.
+
+A **support class** called `Password` handles all password-related operations including encryption using configurable algorithms (default SHA-256), password strength validation, secure password generation, and password verification. This class is used by UserManager to ensure consistent password handling regardless of which storage implementation is chosen.
+
+This architecture provides developers with tremendous flexibility. You can mix and match storage implementations based on your application's specific needs. You could start with CSV storage during development and prototyping, then seamlessly switch to database storage for production without changing any application code that uses UserManager.
+
+#### How UserManager Works
+
+The `UserManager` class employs dependency injection pattern to accept storage implementations at construction time. When you create a UserManager instance, you must provide a `User` implementation (either UserCSV or UserDB) as the first parameter, which handles all user data storage operations. The second parameter is a configuration array that controls UserManager's behavior such as session settings, login policies, and password encryption options. The third parameter is a `Password` object that handles password encryption, validation, and generation according to your security requirements.
+
+Optionally, you can provide a `UserGroup` implementation as the fourth parameter if your application needs group management functionality. Similarly, a `UserPerm` implementation can be passed as the fifth parameter to enable permission management features. These optional parameters allow you to use UserManager even if you only need basic user authentication without groups or permissions.
+
+Once initialized, UserManager delegates all storage operations to these injected objects while maintaining its own session state in PHP's `$_SESSION` superglobal. It provides a unified API that abstracts away the differences between CSV and database storage, so your application code doesn't need to know or care about the underlying storage mechanism. When you call `createUser()` on UserManager, it internally calls the appropriate method on the injected User object (whether it's UserCSV or UserDB), handles password encryption through the Password object, manages session creation, and returns a consistent result.
+
+This design provides several key benefits. First, you can switch from CSV to Database storage (or vice versa) by simply changing which classes you instantiate and pass to UserManager - all your application code that uses UserManager remains completely unchanged. Second, UserManager maintains a cache of the current user's groups and permissions in memory, reducing the need for repeated storage queries and improving performance. Third, UserManager automatically handles the complex logic of combining user-specific permissions with group-based permissions when checking access rights, ensuring consistent permission evaluation across your application.
+
+#### Features
+
+The User Management System provides comprehensive functionality covering all aspects of user authentication, authorization, and data management. Let's explore each area in detail.
+
+**Authentication & Session Management** forms the foundation of the system. UserManager implements secure login mechanisms with password encryption using SHA-256 algorithm with customizable salt, ensuring that passwords are never stored in plain text. The authentication system is session-based and works seamlessly in both CLI and Web environments, automatically handling the differences between command-line scripts and web applications. One particularly useful feature is the continue login capability, which allows users to restore their previous sessions when they return to the application, making the user experience smooth and seamless. For applications requiring strict security, UserManager supports single login enforcement, ensuring that only one active session exists per user at any given time. Administrators can use the force login option to override existing sessions when necessary, such as when resetting a user's account. Session lifetime is fully configurable, and UserManager automatically handles session timeout, logging out users whose sessions have expired.
+
+**User Management** capabilities are comprehensive and intuitive. You can create, read, update, and delete user accounts through UserManager's unified API. The system includes a flexible field mapping system that allows you to customize column names to match your existing data structures, making it easy to integrate with legacy databases or CSV files. Password strength validation is built-in with configurable rules for minimum length, uppercase letters, lowercase letters, numbers, and special characters. When passwords are created or updated, the system automatically encrypts them according to your configuration, so you never need to manually handle password hashing. UserManager tracks user status including login times, logout times, and last active timestamps, which is invaluable for implementing features like automatic logout after inactivity or displaying online user lists. The system also supports additional custom user fields beyond the standard authentication credentials, allowing you to store any user-related data your application needs.
+
+**Group Management** enables you to organize users into logical groups and manage group membership efficiently. You can create user groups with descriptive names and additional metadata, add users to groups or remove them as needed, and query which users belong to specific groups or which groups a user belongs to. The real power of groups becomes apparent when combined with permissions, as groups enable permission inheritance - users automatically inherit permissions assigned to their groups, reducing the need to set permissions for each individual user.
+
+**Permission Management** provides a flexible and powerful authorization system. Permissions can be set at both the user level and group level, with UserManager automatically combining both when checking access rights. The permission system uses a two-level structure: items (like "articles" or "users") and actions (like "read", "write", "delete"), allowing for fine-grained control over what users can do. Permission values are numeric, enabling you to implement permission levels (for example, read permission might be 1, write permission 2, and admin permission 3). When checking permissions, UserManager first checks user-specific permissions, then checks group permissions, returning true if either source grants the required permission level. This design allows you to grant broad permissions through groups while still allowing individual users to have specific overrides.
+
+**Storage Flexibility** is one of the system's greatest strengths. CSV storage is perfect for simple, file-based data management, ideal for small applications with fewer than a few hundred users, CLI tools, or rapid prototyping where you want to avoid database setup complexity. CSV files are human-readable, making debugging and data inspection straightforward. Database storage, on the other hand, provides excellent performance with large user bases, robust concurrent access handling, transaction support for data integrity, and powerful query capabilities through SQL. The system supports multiple database engines including MySQL, PostgreSQL, SQLite, and SQL Server. The beauty of the architecture is that switching between storage types requires no code changes - you simply instantiate different classes and pass them to UserManager. You can even mix storage types, using CSV for one component and database for another, optimizing your storage choices based on each component's specific requirements.
+
+#### Configuration
+
+The User Management System requires configuration for each component. Here's a complete configuration example:
+
+```php
+$config['user'] = [
+    // UserManager configuration
+    'manager' => [
+        'sessionVarName' => 'meow_user',
+        'singleLogin' => true,
+        'forceLogin' => false,
+        'lifeTime' => 3600,
+        'password' => [
+            'type' => 'encrypted',        // 'encrypted' or 'plain'
+            'algorithm' => 'sha256',
+            'salt' => 'your-secret-salt',
+            'minLength' => 8,
+            'maxLength' => 20,
+            'minUppercase' => 1,
+            'minLowercase' => 1,
+            'minNumber' => 1,
+            'minSpecial' => 1,
+        ],
+    ],
+    
+    // User storage configuration
+    'user' => [
+        'userTable' => 'user',
+        'userFields' => [
+            'userID' => 'user_id',
+            'userName' => 'user_name',
+            'loginName' => 'login_name',
+            'password' => 'password',
+            'email' => 'email',
+            'status' => 'status',
+            'loginTime' => 'login_time',
+            'logoutTime' => 'logout_time',
+            'lastActive' => 'last_active',
+            'sessionID' => 'session_id',
+        ],
+        'csvDB' => [                       // For CSV storage
+            'path' => '/path/to/csv/files',
+        ],
+    ],
+    
+    // UserGroup storage configuration
+    'userGroup' => [
+        'userGroupTable' => 'users_groups',
+        'userGroupLinkTable' => 'users_groups_link',
+        'userGroupFields' => [
+            'groupID' => 'group_id',
+            'groupName' => 'group_name',
+            'groupDesc' => 'group_desc',
+        ],
+        'userGroupLinkFields' => [
+            'userID' => 'user_id',
+            'groupID' => 'group_id',
+        ],
+        'csvDB' => [                       // For CSV storage
+            'path' => '/path/to/csv/files',
+        ],
+    ],
+    
+    // UserPerm storage configuration
+    'userPerm' => [
+        'userPermTable' => 'users_perm',
+        'userGroupPermTable' => 'users_groups_perm',
+        'userPermFields' => [
+            'userID' => 'user_id',
+            'item' => 'item',
+            'permission' => 'permission',
+            'value' => 'value',
+        ],
+        'userGroupPermFields' => [
+            'groupID' => 'group_id',
+            'item' => 'item',
+            'permission' => 'permission',
+            'value' => 'value',
+        ],
+        'csvDB' => [                       // For CSV storage
+            'path' => '/path/to/csv/files',
+        ],
+    ],
+];
+```
+
+#### Usage Examples
+
+Understanding how to use the User Management System effectively requires seeing it in action. Let's walk through practical examples that demonstrate common use cases and best practices.
+
+**Initializing UserManager with CSV Storage**
+
+When starting a new project or building a small application, CSV storage provides the quickest path to getting user management working. The following example from `test.php` demonstrates how to initialize UserManager with CSV storage for all components. This setup is ideal for development, testing, or small applications where you want to avoid database setup.
+
+First, you create a Password object that will be shared across all storage implementations. This ensures consistent password handling whether you're using CSV or database storage. The Password object reads its configuration from your config file, including encryption algorithm, salt, and password strength requirements.
+
+Next, you instantiate the storage classes for users, groups, and permissions, all using CSV storage. Each class reads its specific configuration from the config tree, including table names, field mappings, and CSV file paths. Finally, you create the UserManager instance, passing in all these components along with the UserManager-specific configuration that controls session behavior and login policies.
+
+```php
+use Paheon\MeowBase\Tools\UserManager;
+use Paheon\MeowBase\Tools\UserCSV;
+use Paheon\MeowBase\Tools\UserGroupCSV;
+use Paheon\MeowBase\Tools\UserPermCSV;
+use Paheon\MeowBase\Tools\Password;
+
+// Initialize Password (shared between different storage types)
+$password = new Password($meow->configTree['user']['manager']['password'] ?? []);
+
+// Initialize User, UserGroup, UserPerm with CSV storage
+$userManagerUserCSV = new UserCSV($meow->configTree['user']['user'] ?? []);
+$userManagerGroupCSV = new UserGroupCSV($meow->configTree['user']['userGroup'] ?? []);
+$userManagerPermCSV = new UserPermCSV($meow->configTree['user']['userPerm'] ?? []);
+
+// Initialize UserManager with CSV components
+$userManagerConfig = $meow->configTree['user']['manager'] ?? [];
+$userManagerCSV = new UserManager($userManagerUserCSV, $userManagerConfig, $password, $userManagerGroupCSV, $userManagerPermCSV);
+```
+
+**Initializing UserManager with Database Storage**
+
+When your application grows or you need better performance and scalability, switching to database storage is straightforward. The process is nearly identical to CSV initialization - you simply change which classes you instantiate. Notice how the Password object remains the same, and the UserManager configuration is identical. This demonstrates the power of the dependency injection pattern: your application logic doesn't need to change at all.
+
+The key difference is that database storage classes require a database connection object (typically `$meow->db` which is a CacheDB instance) as their first parameter. This connection is used for all database operations, and the CacheDB layer provides automatic query caching to improve performance. Once initialized, UserManager works exactly the same way regardless of whether it's using CSV or database storage.
+
+```php
+use Paheon\MeowBase\Tools\UserManager;
+use Paheon\MeowBase\Tools\UserDB;
+use Paheon\MeowBase\Tools\UserGroupDB;
+use Paheon\MeowBase\Tools\UserPermDB;
+use Paheon\MeowBase\Tools\Password;
+
+// Initialize Password (same as CSV)
+$password = new Password($meow->configTree['user']['manager']['password'] ?? []);
+
+// Initialize User, UserGroup, UserPerm with Database storage
+$userDB = new UserDB($meow->db, $meow->configTree['user']['user'] ?? []);
+$userGroupDB = new UserGroupDB($meow->db, $meow->configTree['user']['userGroup'] ?? []);
+$userPermDB = new UserPermDB($meow->db, $meow->configTree['user']['userPerm'] ?? []);
+
+// Initialize UserManager with Database components
+$userManagerConfig = $meow->configTree['user']['manager'] ?? [];
+$userManagerDB = new UserManager($userDB, $userManagerConfig, $password, $userGroupDB, $userPermDB);
+```
+
+**Practical Example: User Registration Flow**
+
+In a real web application, user registration typically involves creating a user account, sending a confirmation email, and perhaps assigning default permissions. Here's how you would implement this using UserManager:
+
+```php
+// User registration example
+function registerNewUser($userManager, $loginName, $password, $email, $userName) {
+    // Prepare user data
+    $userData = [
+        'userName' => $userName,
+        'email' => $email,
+    ];
+    
+    // Create the user account
+    $userID = $userManager->createUser($loginName, $password, $userData);
+    
+    if ($userID > 0) {
+        // User created successfully
+        // You might want to assign them to a default group
+        $defaultGroup = $userManager->getUserGroupByName('members');
+        if ($defaultGroup) {
+            $userManager->addUserToGroup($userID, $defaultGroup['groupID']);
+        }
+        
+        // Set default permissions for new users
+        $userManager->setUserPermission($userID, "profile", "read", 1);
+        $userManager->setUserPermission($userID, "profile", "write", 1);
+        
+        return $userID;
+    } else {
+        // Registration failed
+        error_log("User registration failed: " . $userManager->lastError);
+        return false;
+    }
+}
+```
+
+**Practical Example: Login and Session Management**
+
+Handling user login in a web application requires checking credentials, creating a session, and potentially redirecting the user. Here's a complete example:
+
+```php
+// Login handler example
+function handleUserLogin($userManager, $loginName, $password) {
+    // Attempt login
+    $loginResult = $userManager->login($loginName, $password);
+    
+    if ($loginResult) {
+        // Login successful
+        $userID = $userManager->resolveUserID();
+        $user = $userManager->user;
+        
+        // Update last login time (optional - UserManager does this automatically)
+        $userManager->touchSession();
+        
+        // You might want to log the login event
+        error_log("User logged in: $loginName (ID: $userID)");
+        
+        // Return success with user information
+        return [
+            'success' => true,
+            'userID' => $userID,
+            'userName' => $user['userName'] ?? $loginName,
+            'sessionID' => $userManager->getSessionID()
+        ];
+    } else {
+        // Login failed
+        return [
+            'success' => false,
+            'error' => $userManager->lastError
+        ];
+    }
+}
+
+// On subsequent page loads, restore session
+function restoreUserSession($userManager) {
+    if ($userManager->continueLogin()) {
+        // Session restored successfully
+        return $userManager->resolveUserID();
+    }
+    return null;
+}
+```
+
+**Practical Example: Permission-Based Access Control**
+
+One of the most powerful features of UserManager is its ability to check permissions that combine user-specific and group-based permissions. Here's how you would use this in a content management system:
+
+```php
+// Check if user can edit an article
+function canUserEditArticle($userManager, $articleID, $userID = null) {
+    // Check if user has write permission for articles
+    $hasWritePerm = $userManager->checkUserPermission("articles", "write", 0, $userID);
+    
+    if (!$hasWritePerm) {
+        return false;
+    }
+    
+    // You might also check if this is the user's own article
+    // (additional business logic beyond permissions)
+    $user = $userManager->getUserByID($userID ?? $userManager->resolveUserID());
+    // ... additional checks ...
+    
+    return true;
+}
+
+// Use in your application
+if ($userManager->isLoggedIn()) {
+    $currentUserID = $userManager->resolveUserID();
+    
+    if (canUserEditArticle($userManager, $articleID, $currentUserID)) {
+        // Show edit button
+        echo "<a href='edit.php?id=$articleID'>Edit Article</a>";
+    }
+    
+    // Check delete permission (might come from group)
+    if ($userManager->checkUserPermission("articles", "delete", 0, $currentUserID)) {
+        echo "<a href='delete.php?id=$articleID'>Delete Article</a>";
+    }
+}
+```
+
+**Creating Users via UserManager**
+
+UserManager provides a unified API regardless of storage backend. The following example from `test.php` works identically for both CSV and Database storage:
+
+```php
+// Create User via UserManager
+$userData = [
+    'userName' => "csvmgruser1",
+    'email' => "csvmgruser1@test.com",
+];
+$userID = $userManagerCSV->createUser("csvmgruser1", "CSVPass123!", $userData);
+if ($userID > 0) {
+    echo "User created successfully with ID: $userID";
+} else {
+    echo "Failed to create user: " . $userManagerCSV->lastError;
+}
+```
+
+**User Authentication and Login**
+
+The login process is handled by UserManager, which coordinates with the injected User object:
+
+```php
+// Login Tests via UserManager
+$loginResult = $userManagerCSV->login("csvmgruser1", "CSVPass123!");
+if ($loginResult) {
+    echo "User logged in successfully";
+    $userID = $userManagerCSV->resolveUserID();
+    echo "Logged in User ID: " . ($userID ?? 'N/A');
+    echo "Is logged in: " . ($userManagerCSV->isLoggedIn() ? 'Yes' : 'No');
+    echo "Current user:";
+    var_dump($userManagerCSV->user);
+    echo "\$_SESSION[".$userManagerCSV->sessionVarName."]:";
+    var_dump($_SESSION[$userManagerCSV->sessionVarName] ?? null);
+} else {
+    echo "Login failed: " . $userManagerCSV->lastError;
+}
+```
+
+**Continue Login (Session Restoration)**
+
+UserManager can restore previous sessions, useful for maintaining login state across page reloads:
+
+```php
+// Simulate page reload by creating new UserManager instance with same session
+$userManagerCSV2 = new UserManager($userCSV, $userManagerConfig, $password, $userManagerGroupCSV, $userManagerPermCSV);
+$continueLoginResult = $userManagerCSV2->continueLogin();
+if ($continueLoginResult) {
+    echo "Continue login after session: Success";
+    echo "Is logged in after continueLogin: " . ($userManagerCSV2->isLoggedIn() ? "Yes" : "No");
+    $continuedUserID = $userManagerCSV2->resolveUserID();
+    echo "Continued login User ID: " . ($continuedUserID ?? 'N/A');
+} else {
+    echo "Continue login failed: " . $userManagerCSV2->lastError;
+}
+```
+
+**Group Management via UserManager**
+
+UserManager provides methods for managing groups and group membership:
+
+```php
+// Create UserGroup via UserManager
+$group1ID = $userManagerCSV->createUserGroup('csvadmin', ['groupDesc' => 'CSV Admin group']);
+if ($group1ID > 0) {
+    echo "Admin group created via UserManager with ID: $group1ID";
+}
+
+// Add User to Group via UserManager
+if ($userID > 0 && $group1ID > 0) {
+    $addGroupResult = $userManagerCSV->addUserToGroup($userID, $group1ID);
+    echo "Add User to Admin group: " . ($addGroupResult ? "Success" : "Failed - " . $userManagerCSV->lastError);
+    
+    // Get User groups
+    $userGroups = $userManagerCSV->getGroupsByUser($userID);
+    echo "User groups: ";
+    var_dump($userGroups);
+}
+```
+
+**Permission Management via UserManager**
+
+UserManager handles both user-specific and group-based permissions:
+
+```php
+// Set User Permissions via UserManager
+if ($userID > 0) {
+    $permResult1 = $userManagerCSV->setUserPermission($userID, "articles", "read", 1);
+    echo "Set User articles read permission: " . ($permResult1 ? "Success" : "Failed - " . $userManagerCSV->lastError);
+    
+    $permResult2 = $userManagerCSV->setUserPermission($userID, "articles", "write", 0);
+    echo "Set User articles write permission: " . ($permResult2 ? "Success" : "Failed - " . $userManagerCSV->lastError);
+}
+
+// Set Group Permissions via UserManager
+if ($group1ID > 0) {
+    $groupPermResult = $userManagerCSV->setGroupPermission($group1ID, "articles", "delete", 1);
+    echo "Set Group articles delete permission: " . ($groupPermResult ? "Success" : "Failed - " . $userManagerCSV->lastError);
+}
+
+// Check Permissions via UserManager (combines user and group permissions)
+if ($userID > 0) {
+    $hasReadPerm = $userManagerCSV->checkUserPermission("articles", "read", 0, $userID);
+    echo "User has articles read permission: " . ($hasReadPerm ? "Yes" : "No");
+    
+    // User inherits delete permission from group even though direct permission is 0
+    $hasDeletePerm = $userManagerCSV->checkUserPermission("articles", "delete", 0, $userID);
+    echo "User has articles delete permission (from group): " . ($hasDeletePerm ? "Yes" : "No");
+    
+    // Get permission values (returns array with user permission [0] and group permissions [groupID])
+    $permValue = $userManagerCSV->getUserPermissionValue("articles", "read", $userID);
+    echo "User articles read permission value: " . print_r($permValue, true);
+}
+```
+
+**Logout via UserManager**
+
+UserManager handles logout and clears all session data:
+
+```php
+// Logout via UserManager
+echo "Before logout:";
+echo "Is logged in: " . ($userManagerCSV->isLoggedIn() ? "Yes" : "No");
+echo "Current user:";
+var_dump($userManagerCSV->user);
+echo "Current Groups:";
+var_dump($userManagerCSV->userGroup);
+echo "Current Permissions:";
+var_dump($userManagerCSV->userPerm);
+
+$userManagerCSV->logout();
+
+echo "After logout:";
+echo "Is logged in: " . ($userManagerCSV->isLoggedIn() ? "Yes" : "No");
+echo "Current user:";
+var_dump($userManagerCSV->user);
+// All user data is cleared
+```
+
+#### Parent Classes and Implementation Classes
+
+Understanding the relationship between parent classes and their implementations is crucial for effectively using the User Management System. The architecture follows a pattern where abstract parent classes define interfaces, and concrete implementation classes provide storage-specific functionality.
+
+**User Class Hierarchy**
+
+The `User` class serves as an abstract base class that defines the interface contract for all user data operations. It provides method signatures for essential operations like `getUserByID()`, `createUser()`, `updateUser()`, `delUser()`, and others, but these methods return null or false by default. This design forces concrete implementation classes to provide actual functionality while ensuring a consistent API.
+
+When you create `UserCSV`, it extends the `User` class and implements CSV file-based storage using the `CsvDB` class. All user data operations are translated into CSV file reads and writes, with the CsvDB layer handling file locking, data parsing, and search operations. Similarly, `UserDB` extends `User` but implements database storage using `CacheDB` (which extends Medoo), translating operations into SQL queries that leverage database indexing and transaction support.
+
+Both `UserCSV` and `UserDB` inherit common functionality from the `User` parent class, including session management logic, password handling methods, and field mapping utilities. This inheritance means that whether you're using CSV or database storage, you get the same high-level methods for session operations, password validation, and user status tracking. The only difference is in how the data is actually stored and retrieved.
+
+**UserGroup Class Hierarchy**
+
+The `UserGroup` class follows the same pattern as `User`. It defines the interface for group management operations including `createUserGroup()`, `addUserToGroup()`, `getGroupsByUser()`, `getUsersInGroup()`, and related methods. The parent class provides field mapping utilities and method signatures, but concrete implementations must provide the actual storage logic.
+
+`UserGroupCSV` implements group storage by maintaining two CSV files: one for group definitions (group ID, name, description) and another for user-group relationships (which users belong to which groups). This simple structure makes it easy to inspect and modify group data directly in text editors during development. `UserGroupDB` uses database tables with proper foreign key relationships, enabling efficient queries like "find all users in multiple groups" or "find all groups a user belongs to" through SQL joins.
+
+**UserPerm Class Hierarchy**
+
+Permission management follows the same architectural pattern. The `UserPerm` parent class defines methods for setting, getting, and deleting permissions at both user and group levels. Permissions are organized by items (like "articles" or "users") and actions (like "read", "write", "delete"), with numeric values allowing for permission levels.
+
+`UserPermCSV` stores permissions in CSV files, with separate files for user permissions and group permissions. Each row represents a single permission assignment, making it straightforward to see all permissions at a glance. `UserPermDB` uses database tables with indexes on user/group ID and item columns, enabling fast permission lookups even with thousands of permission records.
+
+**Password Class**
+
+The `Password` class stands apart from the hierarchy pattern as a standalone utility class. It doesn't extend any parent class or have multiple implementations because password operations are storage-agnostic - the same encryption algorithm and validation rules apply regardless of where user data is stored. The Password class handles password hashing using configurable algorithms (default SHA-256 with salt), validates passwords against strength rules you configure, generates secure random passwords that meet your requirements, and verifies passwords against stored hashes. UserManager uses this class internally, so you typically only need to instantiate it once and pass it to UserManager during initialization.
+
+#### Storage Implementation Comparison
+
+Choosing between CSV and database storage depends on your application's specific requirements, scale, and operational constraints. Each approach has distinct advantages and trade-offs that make them suitable for different scenarios.
+
+**CSV Storage (UserCSV, UserGroupCSV, UserPermCSV)** offers simplicity and ease of setup that makes it ideal for certain use cases. The most significant advantage is that no database server is required - you simply specify a directory path where CSV files will be stored, and the system handles the rest. This makes CSV storage perfect for small applications with fewer than a thousand users, CLI tools that need user management without database dependencies, or rapid prototyping where you want to focus on application logic rather than infrastructure setup.
+
+CSV files are human-readable, which means you can open them in any text editor or spreadsheet application to inspect, debug, or manually modify data during development. This transparency is invaluable when troubleshooting issues or understanding how the system stores data. Data migration is also straightforward - you can simply copy CSV files between environments or backup locations without needing database export/import tools.
+
+However, CSV storage has limitations that become apparent as applications grow. Performance degrades noticeably with large datasets because operations may require scanning entire files. Concurrent write operations can be problematic in high-traffic web applications, as file locking mechanisms are less robust than database-level locking. There's no built-in transaction support, so complex multi-step operations can't be rolled back if something fails partway through. Query capabilities are limited compared to SQL - you can't easily perform complex joins or aggregations that might be needed for administrative dashboards or reporting.
+
+**Database Storage (UserDB, UserGroupDB, UserPermDB)** provides enterprise-grade capabilities that scale with your application. Performance remains excellent even with large user bases because databases use indexes to locate records quickly, and query optimization ensures fast response times. The system handles concurrent access robustly through database-level locking mechanisms, allowing multiple web server processes to safely read and write user data simultaneously without corruption risks.
+
+Transaction support ensures data integrity in complex operations. For example, when creating a user account with default group membership and initial permissions, the database can ensure that either all records are created successfully or none at all, preventing partial data states. SQL's powerful query capabilities enable sophisticated operations like finding all users who belong to multiple specific groups, generating reports on user activity patterns, or performing bulk updates efficiently.
+
+The CacheDB layer provides automatic query caching, storing frequently accessed user data in memory and dramatically reducing database load in high-traffic applications. Database storage scales to millions of users while maintaining consistent performance, and supports multiple database engines (MySQL, PostgreSQL, SQLite, SQL Server) so you can choose based on your infrastructure preferences.
+
+The trade-off is increased complexity. Database storage requires a database server to be installed, configured, and maintained. Database credentials must be managed securely, and schema migrations need to be planned when changing data structures. However, for production applications expecting growth or requiring high reliability, this added complexity is typically well worth the benefits. Many teams start with CSV storage during development and prototyping, then migrate to database storage for production, taking advantage of UserManager's architecture that makes this transition seamless.
+
+#### Class Reference
+
+**UserManager Class**
+
+**Properties:**
+- `$userObj`: User object instance (UserCSV or UserDB)
+- `$userGroupObj`: UserGroup object instance (UserGroupCSV or UserGroupDB)
+- `$userPermObj`: UserPerm object instance (UserPermCSV or UserPermDB)
+- `$passwordObj`: Password object instance
+- `$user`: Current logged-in user data array
+- `$userGroup`: Cached user group data array
+- `$userGroupLink`: Cached user-group link data array
+- `$userPerm`: Cached user permission data array
+- `$userPermGroup`: Cached group permission data array
+- `$singleLogin`: Boolean flag for single login enforcement
+- `$forceLogin`: Boolean flag for force login option
+- `$encrypted`: Boolean flag for password encryption
+- `$lifeTime`: Session lifetime in seconds
+- `$sessionID`: Current session identifier
+- `$sessionVarName`: Session variable name
+- `$lastError`: Last error message
+
+**Protected Methods:**
+- `loadCurrentUserData(int $userID): void`: Loads current user's groups and permissions into cache
+
+**Public Methods:**
+- `__construct(User $userObj, array $config = [], ?Password $pwdObj = null, ?UserGroup $userGroupObj = null, ?UserPerm $userPermObj = null)`: Initializes UserManager with injected components
+- `login(string $loginName, string $password, ?bool $forceLogin = null): bool`: Authenticates user and creates session
+- `logout(): void`: Logs out current user and clears session
+- `continueLogin(): bool`: Continues previous login session
+- `isLoggedIn(bool $forceLogout = true): bool`: Checks if user is currently logged in
+- `resolveUserID(?int $userID = null): ?int`: Resolves user ID (current user or provided ID)
+- `touchSession(?int $currTime = null): void`: Updates session activity timestamp
+- `getSessionID(): ?string`: Retrieves session ID
+- `changePassword(?string $newPassword = null, ?string $oldPassword = null): string|false`: Changes user password with optional validation
+- `checkPassword(string $password, string $hash): bool`: Verifies password against hash
+- `getPasswordHash(string $password): string`: Generates password hash
+- `genPassword(): string`: Generates a secure password following configured rules
+- `getUserByID(int $userID, bool $forceLoad = false, bool $checkExists = false): ?array`: Retrieves user data by ID
+- `getUserByLoginName(string $loginName, bool $forceLoad = false): ?array`: Retrieves user data by login name
+- `updateUserStatus(bool $login, int $lastActiveTime, ?string $sessionID = null, ?int $loginTime = null, ?int $userID = null): bool`: Updates user login status
+- `updatePassword(string $passwordHash, ?int $userID = null): bool`: Updates user password
+- `createUser(string $loginName, string $password, array $fieldList = []): int`: Creates new user and returns user ID
+- `updateUser(array $fieldList, ?int $userID = null): bool`: Updates user information
+- `delUser(?int $userID = null): bool`: Deletes user account
+- `createUserGroup(string $userGroupName, array $fieldList = []): int`: Creates new user group and returns group ID
+- `getUserGroupByID(int $userGroupID, bool $forceLoad = false, bool $checkExists = false): ?array`: Retrieves group data by ID
+- `getUserGroupByName(string $userGroupName, bool $forceLoad = false): ?array`: Retrieves group data by name
+- `updateUserGroup(array $fieldList, ?int $userGroupID = null): bool`: Updates group information
+- `delUserGroup(?int $userGroupID = null): bool`: Deletes group
+- `addUserToGroup(int $userID, int $userGroupID): bool`: Adds user to group
+- `delUserFromGroup(int $userID, ?int $userGroupID = null): bool`: Removes user from group
+- `getUsersInGroup(?int $userGroupID = null, bool $forceLoad = false): ?array`: Gets users in group
+- `getGroupsByUser(int $userID, bool $forceLoad = false): ?array`: Gets groups for user
+- `getUserPermission(int $userID, string $item): ?array`: Gets user permissions for item
+- `setUserPermission(int $userID, string $item, string $permission, int $value): bool`: Sets user permission
+- `delUserPermission(int $userID, string $item, ?string $permission = null): bool`: Deletes user permission
+- `getGroupPermission(int $userGroupID, string $item, ?int $userID = null): ?array`: Gets group permissions for item
+- `setGroupPermission(int $userGroupID, string $item, string $permission, int $value): bool`: Sets group permission
+- `delGroupPermission(int $userGroupID, string $item, ?string $permission = null): bool`: Deletes group permission
+- `checkUserPermission(string $item, string $permission, string|int $level = 0, ?int $userID = null): bool`: Checks if user has permission (combines user and group permissions)
+- `getUserPermissionValue(string $item, string $permission, ?int $userID = null): array`: Gets permission values (user and group permissions)
+
+**User Class (Parent)**
+
+**Properties:**
+- `$userTable`: User table name
+- `$userFields`: User field mappings array
+
+**Public Methods:**
+- `__construct(array $config = [])`: Initializes User with configuration
+- `getUserField(string $fieldName, ?string $default = null): string`: Gets mapped field name
+- `reset(): void`: Resets user data (dummy method)
+- `getUserByID(int $userID, bool $forceLoad = false, bool $checkExists = false): ?array`: Gets user by ID (dummy - must be overridden)
+- `getMultiUserByID(array $userID = [], bool $forceLoad = false): ?array`: Gets multiple users by ID (dummy - must be overridden)
+- `getUserByLoginName(string $loginName, bool $forceLoad = false): ?array`: Gets user by login name (dummy - must be overridden)
+- `createUser(string $loginName, string $userPassword, array $fieldList = []): int`: Creates user (dummy - must be overridden)
+- `updateUser(array $fieldList, ?int $userID = null): bool`: Updates user (dummy - must be overridden)
+- `delUser(?int $userID = null): bool`: Deletes user (dummy - must be overridden)
+- `updatePassword(string $passwordHash, ?int $userID = null): bool`: Updates password (dummy - must be overridden)
+- `updateUserStatus(bool $login, int $lastActiveTime, ?string $sessionID = null, ?int $loginTime = null, ?int $userID = null): bool`: Updates user status (dummy - must be overridden)
+
+**UserCSV Class**
+
+**Properties:**
+- `$userDB`: CsvDB instance for user data storage
+- `$dbLoaded`: Flag indicating whether the CSV database has been loaded
+- `$csvPath`: Path to the CSV storage directory
+- `$userTableFile`: Full path to user CSV file
+- `$config`: User configuration array (inherited from User)
+- `$user`: Current user data array (inherited from User)
+- `$sessionID`: Current session identifier (inherited from User)
+- `$sessionVarName`: Session variable name (inherited from User)
+- `$userTable`: User table name (inherited from User)
+- `$userFields`: User field mappings (inherited from User)
+- `$encrypted`: Password encryption flag (inherited from User)
+- `$lastError`: Last error message (inherited from User)
+
+**Protected Methods:**
+- `copyUserFromDB(?string $userID = null): bool`: Copies user data from CSV database to current user object
+
+**Public Methods:**
+- `__construct(array $config)`: Initializes UserCSV with configuration and sets up CSV database connection
+- `loadUserRec(bool $forceLoad = false): bool`: Loads user records from CSV file into memory
+- `getField(string $field, ?string $default = null): string`: Gets mapped field name from configuration
+- `getUserByID(int $userID, bool $forceLoad = false): ?array`: Retrieves user data by ID
+- `getUserByLoginName(string $loginName, bool $forceLoad = false): ?array`: Retrieves user data by login name
+- `createUser(string $loginName, string $userPassword, array $fieldList = []): int`: Creates new user and returns user ID
+- `updateUser(array $fieldList, ?string $userID = null): bool`: Updates user information
+- `delUser(?string $userID = null): bool`: Deletes user account
+- `updatePassword(string $password, ?string $userID = null): bool`: Updates user password
+- `updateUserStatus(bool $login, int $lastActiveTime, ?int $loginTime = null, ?string $userID = null): bool`: Updates user login status
+
+**Inherited Public Methods from User class:**
+- `login(string $loginName, string $password, ?bool $forceLogin = null): bool`: Authenticates user and creates session
+- `continueLogin(): bool`: Continues previous login session
+- `logout(): void`: Logs out current user and clears session
+- `isLoggedIn(bool $forceLogout = false): bool`: Checks if user is currently logged in
+- `touchSession(int $currTime): void`: Updates session activity timestamp
+- `getSessionID(): ?string`: Retrieves session ID from database
+- `validatePassword(string $password): bool`: Validates password against configured rules
+- `genPassword(): string`: Generates a secure password following configured rules
+- `getPasswordHash(string $password, ?string $algorithm = null): string`: Generates password hash
+- `checkPassword(string $password, string $hash): bool`: Verifies password against hash
+- `changePassword(?string $newPassword = null, ?string $oldPassword = null): string|false`: Changes user password with optional validation
+
+**UserDB Class**
+
+**Properties:**
+- `$userDB`: CacheDB instance for database operations
+- `$userTable`: Database table name for user data
+- `$dbLoaded`: Flag indicating database load status (always true for database backend)
+- `$config`: User configuration array (inherited from User)
+- `$user`: Current user data array (inherited from User)
+- `$sessionID`: Current session identifier (inherited from User)
+- `$sessionVarName`: Session variable name (inherited from User)
+- `$userFields`: User field mappings (inherited from User)
+- `$encrypted`: Password encryption flag (inherited from User)
+- `$lastError`: Last error message (inherited from User)
+
+**Protected Methods:**
+- `copyUserFromDB(?string $userID = null): bool`: Copies user data from database to current user object
+
+**Public Methods:**
+- `__construct(array $config, CacheDB &$cacheDB)`: Initializes UserDB with configuration and database connection
+- `getUserByID(int $userID, bool $forceLoad = false): ?array`: Retrieves user data from database by ID
+- `getUserByLoginName(string $loginName, bool $forceLoad = false): ?array`: Retrieves user data from database by login name
+- `createUser(string $loginName, string $userPassword, array $fieldList = []): int`: Creates new user in database and returns user ID
+- `updateUser(array $fieldList, ?string $userID = null): bool`: Updates user information in database
+- `delUser(?string $userID = null): bool`: Deletes user account from database
+- `updatePassword(string $password, ?string $userID = null): bool`: Updates user password in database
+- `updateUserStatus(bool $login, int $lastActiveTime, ?int $loginTime = null, ?string $userID = null): bool`: Updates user login status in database
+
+**Inherited Public Methods from User class:**
+- `login(string $loginName, string $password, ?bool $forceLogin = null): bool`: Authenticates user and creates session
+- `continueLogin(): bool`: Continues previous login session from database
+- `logout(): void`: Logs out current user and clears session
+- `isLoggedIn(bool $forceLogout = false): bool`: Checks if user is currently logged in
+- `touchSession(int $currTime): void`: Updates session activity timestamp
+- `getSessionID(): ?string`: Retrieves session ID from database
+- `getField(string $field, ?string $default = null): string`: Gets mapped field name from configuration
+- `validatePassword(string $password): bool`: Validates password against configured rules
+- `genPassword(): string`: Generates a secure password following configured rules
+- `getPasswordHash(string $password, ?string $algorithm = null): string`: Generates password hash
+- `checkPassword(string $password, string $hash): bool`: Verifies password against hash
+- `changePassword(?string $newPassword = null, ?string $oldPassword = null): string|false`: Changes user password with optional validation
+
+**UserGroup Class (Parent)**
+
+**Properties:**
+- `$userGroupFields`: Group field mappings array
+- `$userGroupTable`: Group table name
+- `$userGroupLinkTable`: User-group link table name
+- `$userGroupLinkFields`: Link field mappings array
+
+**Public Methods:**
+- `__construct(array $config = [])`: Initializes UserGroup with configuration
+- `getUserGroupField(string $fieldName, ?string $default = null): string`: Gets mapped group field name
+- `getUserGroupLinkField(string $fieldName, ?string $default = null): string`: Gets mapped link field name
+- `getUserGroupByID(int $userGroupID, bool $forceLoad = false, bool $checkExists = false): ?array`: Gets group by ID (dummy - must be overridden)
+- `getUserGroupByName(string $userGroupName, bool $forceLoad = false): ?array`: Gets group by name (dummy - must be overridden)
+- `createUserGroup(string $userGroupName, array $fieldList = []): int`: Creates group (dummy - must be overridden)
+- `updateUserGroup(array $fieldList, ?int $userGroupID = null): bool`: Updates group (dummy - must be overridden)
+- `delUserGroup(?int $userGroupID = null): bool`: Deletes group (dummy - must be overridden)
+- `isUserInGroup(int $userID, int $userGroupID, bool $forceLoad = false): bool`: Checks if user is in group (dummy - must be overridden)
+- `getUsersInGroup(int $userGroupID, bool $forceLoad = false): ?array`: Gets users in group (dummy - must be overridden)
+- `getGroupsByUser(int $userID, bool $forceLoad = false): ?array`: Gets groups for user (dummy - must be overridden)
+- `addUserToGroup(int $userID, int $userGroupID): bool`: Adds user to group (dummy - must be overridden)
+- `delUserFromGroup(int $userID, ?int $userGroupID = null): bool`: Removes user from group (dummy - must be overridden)
+
+**UserPerm Class (Parent)**
+
+**Properties:**
+- `$userPermTable`: User permission table name
+- `$userGroupPermTable`: Group permission table name
+- `$userPermFields`: User permission field mappings array
+- `$userGroupPermFields`: Group permission field mappings array
+
+**Public Methods:**
+- `__construct(array $config = [])`: Initializes UserPerm with configuration
+- `getUserPermField(string $fieldName, ?string $default = null): string`: Gets mapped user permission field name
+- `getUserGroupPermField(string $fieldName, ?string $default = null): string`: Gets mapped group permission field name
+- `reset(): void`: Resets permission records (dummy method)
+- `getUserPerm(int $userID, string $item): ?array`: Gets user permissions for item (dummy - must be overridden)
+- `setUserPerm(int $userID, string $item, string $permission, int $value): bool`: Sets user permission (dummy - must be overridden)
+- `delUserPerm(int $userID, string $item, ?string $permission = null): bool`: Deletes user permission (dummy - must be overridden)
+- `getGroupPerm(int $userGroupID, string $item): ?array`: Gets group permissions for item (dummy - must be overridden)
+- `setGroupPerm(int $userGroupID, string $item, string $permission, int $value): bool`: Sets group permission (dummy - must be overridden)
+- `delGroupPerm(int $userGroupID, string $item, ?string $permission = null): bool`: Deletes group permission (dummy - must be overridden)
+
+**Password Class**
+
+**Properties:**
+- `$minLength`: Minimum password length
+- `$maxLength`: Maximum password length
+- `$minUppercase`: Minimum uppercase letters required
+- `$minLowercase`: Minimum lowercase letters required
+- `$minNumber`: Minimum numbers required
+- `$minSpecial`: Minimum special characters required
+- `$algorithm`: Hash algorithm (default: 'sha256')
+- `$salt`: Salt for password hashing
+
+**Public Methods:**
+- `__construct(array $config)`: Initializes Password with configuration
+- `setMinLength(int $minLength): void`: Sets minimum password length
+- `setMaxLength(int $maxLength): void`: Sets maximum password length
+- `setMinUppercase(int $minUppercase): void`: Sets minimum uppercase letters
+- `setMinLowercase(int $minLowercase): void`: Sets minimum lowercase letters
+- `setMinNumber(int $minNumber): void`: Sets minimum numbers
+- `setMinSpecial(int $minSpecial): void`: Sets minimum special characters
+- `setAlgorithm(string $algorithm): void`: Sets hash algorithm
+- `setSalt(string $salt = ""): void`: Sets salt for hashing
+- `getPasswordHash(string $password, ?string $algorithm = null): string`: Generates password hash
+- `genPassword(): string`: Generates a secure password following configured rules
+- `validatePassword(string $password): bool`: Validates password against configured rules
+- `checkPassword(string $password, string $hash): bool`: Verifies password against hash
+- `genSalt(int $length = 0): string`: Generates a random salt string
+
+#### Features
+
+The `UserCSV` class provides a complete user management system built on top of the efficient `CsvDB` class. At its core, the class handles authentication through secure login mechanisms that support both plain text and encrypted passwords. The default encryption uses SHA-256 algorithm with customizable salt, ensuring password security while maintaining flexibility for different security requirements. The authentication system is session-based with configurable lifetime, automatically managing sessions for both CLI and Web environments. This means developers don't need to worry about the underlying session handling differences between command-line scripts and web applications.
+
+One of the standout features is the continue login capability, which allows users to seamlessly restore their previous sessions. This is particularly useful for web applications where users might close their browsers and return later, or for CLI scripts that need to maintain authentication across multiple executions. The class also supports single login enforcement, ensuring that only one active session exists per user at any given time, which is critical for applications requiring strict access control. Additionally, a force login option allows administrators to override existing sessions when necessary.
+
+User data management is comprehensive and intuitive. The class supports creating new user accounts with customizable fields beyond the standard authentication credentials, allowing applications to store additional user information such as display names, email addresses, and any custom data needed. User information can be retrieved efficiently either by unique user ID or by login name, with the underlying CsvDB providing fast search capabilities. Updating user records is flexible – the system can update the currently logged-in user's information, or administrators can update any user by specifying their ID. When users are deleted, the system ensures proper cleanup of associated sessions and data.
+
+Password management is robust and user-friendly. The class automatically handles password encryption when the encrypted mode is enabled, and includes built-in password strength validation. Developers can configure minimum requirements for password length, uppercase letters, lowercase letters, numbers, and special characters. When passwords are updated, the system automatically re-encrypts them, maintaining security without requiring additional code.
+
+Session and status tracking provides valuable insights into user behavior. The class automatically tracks login and logout times as Unix timestamps (integer values), monitors the last active time for detecting idle sessions, associates each login with a unique session ID for security, and maintains user status flags to quickly determine if a user is currently logged in or logged out. This information is crucial for implementing features like automatic logout after inactivity or displaying online user lists.
+
+The flexible field mapping system is one of the class's most powerful features. Instead of forcing developers to use predefined column names in their CSV files, the system allows complete customization through configuration. Default mappings include `userID` for unique user identification, `userName` for display names, `loginName` for authentication credentials, `password` for encrypted or plain passwords, `email` for email addresses, `status` for tracking login/logout state, `loginTime` and `logoutTime` for session timestamps, `lastActive` for activity monitoring, and `sessionID` for session association. Developers can override any of these mappings to match their existing data structures, making the class adaptable to various project requirements.
+
+#### Configuration
+
+The UserCSV class requires configuration similar to the User class. Here's an example configuration:
+
+```php
+$userConfig = [
+    'sessionVarName' => 'meowUser',          // Session variable name
+    'sessionPath' => '/path/to/sessions',    // Session storage path
+    'singleLogin' => false,                  // Allow multiple sessions
+    'forceLogin' => false,                   // Don't force login
+    'lifeTime' => 3600,                      // Session lifetime in seconds
+    'password' => [
+        'type' => 'encrypted',               // 'encrypted' or 'plain'
+        'algorithm' => 'sha256',             // Hash algorithm
+        'salt' => 'your-secret-salt',        // Salt for encryption
+        'minLength' => 8,                    // Minimum password length
+        'maxLength' => 20,                   // Maximum password length
+        'minUppercase' => 1,                 // Minimum uppercase letters
+        'minLowercase' => 1,                 // Minimum lowercase letters
+        'minNumber' => 1,                    // Minimum numbers
+        'minSpecial' => 1,                   // Minimum special characters
+    ],
+    'csvDB' => [
+        'path' => '/path/to/csv/files',      // CSV storage directory
+    ],
+    'userTable' => 'user',                   // CSV filename (without .csv)
+    'userFields' => [                        // Field name mapping
+        'userID' => 'user_id',
+        'userName' => 'user_name',
+        'loginName' => 'login_name',
+        'password' => 'password',
+        'email' => 'email',
+        'status' => 'status',
+        'loginTime' => 'login_time',
+        'logoutTime' => 'logout_time',
+        'lastActive' => 'last_active',
+        'sessionID' => 'session_id',
+    ],
+];
+```
+
+#### Usage Examples
+
+**Initialization and Setup**
+
+Before using any user management features, you need to initialize the UserCSV class with your configuration. The configuration is typically stored in your main config file and includes settings for password encryption, session management, and field mappings.
+
+```php
+use Paheon\MeowBase\Tools\UserCSV;
+
+// Initialize UserCSV with configuration from MeowBase
+$userCSV = new UserCSV($meow->configTree['user']);
+
+// Get field mappings for easy access
+$userFields = $userCSV->config['userFields'];
+```
+
+**Creating New Users**
+
+Creating a new user account is straightforward. You provide a login name, password, and any additional user data fields. The system automatically handles password encryption if enabled in your configuration. The method returns the new user's ID on success, or -1 on failure with error details available in `lastError`.
+
+```php
+// Prepare user data with additional fields
+$userData = [
+    $userFields['userName'] => "John Doe",
+    $userFields['email'] => "john@example.com",
+];
+
+// Create the user account
+$userID = $userCSV->createUser("johndoe", "SecurePass123!", $userData);
+if ($userID > 0) {
+    echo "User created successfully with ID: $userID";
+} else {
+    echo "Failed to create user: " . $userCSV->lastError;
+}
+```
+
+**User Authentication and Login**
+
+The login process verifies credentials against the stored data and establishes a session. Upon successful login, the user's information is loaded into the `$user` property, and the session is maintained automatically. You can check login status at any time using the `isLoggedIn()` method.
+
+```php
+// Attempt to login with credentials
+$loginResult = $userCSV->login("johndoe", "SecurePass123!");
+if ($loginResult) {
+    echo "Login successful!";
+    echo "User ID: " . $userCSV->user[$userFields['userID']];
+    echo "Username: " . $userCSV->user[$userFields['userName']];
+    echo "Is logged in: " . ($userCSV->isLoggedIn() ? 'Yes' : 'No');
+} else {
+    echo "Login failed: " . $userCSV->lastError;
+}
+```
+
+**Retrieving User Information**
+
+You can retrieve user information either by user ID or by login name. This is useful for displaying user profiles, validating user existence, or loading user data for administrative purposes. Both methods return an associative array with all user fields, or null if the user is not found.
+
+```php
+// Get user by ID
+$user = $userCSV->getUserByID($userID);
+if ($user) {
+    echo "Username: " . $user[$userFields['userName']];
+    echo "Email: " . $user[$userFields['email']];
+    echo "Status: " . $user[$userFields['status']];
+}
+
+// Get user by login name
+$user = $userCSV->getUserByLoginName("johndoe");
+if ($user) {
+    echo "Found user: " . $user[$userFields['userName']];
+    echo "User ID: " . $user[$userFields['userID']];
+}
+```
+
+**Updating User Information**
+
+User updates can be performed in two ways: updating the currently logged-in user (by calling `updateUser()` without a user ID parameter), or updating any specific user by providing their ID. When updating the current user, the system automatically refreshes the `$user` property with the new data from the CSV file.
+
+```php
+// Update current logged-in user
+$updateData = [
+    $userFields['userName'] => "John Updated",
+    $userFields['email'] => "john.updated@example.com",
+];
+if ($userCSV->updateUser($updateData)) {
+    echo "User updated successfully";
+    // Current user object is automatically refreshed
+    echo "New username: " . $userCSV->user[$userFields['userName']];
+}
+
+// Update specific user by ID (administrative function)
+$updateData = [
+    $userFields['email'] => "newemail@example.com"
+];
+if ($userCSV->updateUser($updateData, $userID)) {
+    echo "User $userID updated successfully";
+}
+```
+
+**Password Management**
+
+Passwords can be updated securely using the `updatePassword()` method. The system automatically handles encryption based on your configuration settings, so you never need to manually encrypt passwords. After a password update, the user will need to use the new password for subsequent logins.
+
+```php
+// Update password for a specific user
+if ($userCSV->updatePassword("NewSecurePass456!", $userID)) {
+    echo "Password updated successfully";
+    
+    // User can now login with the new password
+    if ($userCSV->login("johndoe", "NewSecurePass456!")) {
+        echo "Login with new password successful";
+    }
+}
+```
+
+**Session Management and Logout**
+
+The class provides methods to check login status and properly log out users. When a user logs out, the session is cleared and the user's status is updated in the CSV file. The continue login feature allows users to restore their sessions across page loads or script executions.
+
+```php
+// Check current login status
+if ($userCSV->isLoggedIn()) {
+    echo "User is currently logged in";
+    echo "Session ID: " . $userCSV->sessionID;
+    echo "Login Name: " . $userCSV->user[$userFields['loginName']];
+}
+
+// Logout current user
+$userCSV->logout();
+echo "User logged out successfully";
+
+// Later, restore previous session
+if ($userCSV->continueLogin()) {
+    echo "Previous session restored";
+    echo "Logged in as: " . $userCSV->user[$userFields['loginName']];
+}
+```
+
+**Deleting User Accounts**
+
+Deleting a user removes their record from the CSV file and cleans up any associated session data. If the deleted user is currently logged in, the system automatically logs them out. You can delete either the current user or specify a user by their ID.
+
+```php
+// Delete a specific user
+if ($userCSV->delUser($userID)) {
+    echo "User deleted successfully";
+} else {
+    echo "Failed to delete user: " . $userCSV->lastError;
+}
+
+// If you want to delete the currently logged-in user
+if ($userCSV->isLoggedIn()) {
+    if ($userCSV->delUser()) {
+        echo "Current user account deleted";
+    }
+}
+```
+
+**Properties:**
+- `$userDB`: CsvDB instance for user data storage
+- `$dbLoaded`: Flag indicating whether the CSV database has been loaded
+- `$csvPath`: Path to the CSV storage directory
+- `$userTableFile`: Full path to user CSV file
+- `$config`: User configuration array (inherited from User)
+- `$user`: Current user data array (inherited from User)
+- `$sessionID`: Current session identifier (inherited from User)
+- `$sessionVarName`: Session variable name (inherited from User)
+- `$userTable`: User table name (inherited from User)
+- `$userFields`: User field mappings (inherited from User)
+- `$encrypted`: Password encryption flag (inherited from User)
+- `$lastError`: Last error message (inherited from User)
+
+**Protected Methods:**
+- `copyUserFromDB(?string $userID = null): bool`: Copies user data from CSV database to current user object
+
+**Public Methods:**
+- `__construct(array $config)`: Initializes UserCSV with configuration and sets up CSV database connection
+- `loadUserRec(bool $forceLoad = false): bool`: Loads user records from CSV file into memory
+- `getField(string $field, ?string $default = null): string`: Gets mapped field name from configuration
+- `getUserByID(int $userID, bool $forceLoad = false): ?array`: Retrieves user data by ID
+- `getUserByLoginName(string $loginName, bool $forceLoad = false): ?array`: Retrieves user data by login name
+- `createUser(string $loginName, string $userPassword, array $fieldList = []): int`: Creates new user and returns user ID
+- `updateUser(array $fieldList, ?string $userID = null): bool`: Updates user information
+- `delUser(?string $userID = null): bool`: Deletes user account
+- `updatePassword(string $password, ?string $userID = null): bool`: Updates user password
+- `updateUserStatus(bool $login, int $lastActiveTime, ?int $loginTime = null, ?string $userID = null): bool`: Updates user login status
+
+**Inherited Public Methods from User class:**
+- `login(string $loginName, string $password, ?bool $forceLogin = null): bool`: Authenticates user and creates session
+- `continueLogin(): bool`: Continues previous login session
+- `logout(): void`: Logs out current user and clears session
+- `isLoggedIn(bool $forceLogout = false): bool`: Checks if user is currently logged in
+- `touchSession(int $currTime): void`: Updates session activity timestamp
+- `getSessionID(): ?string`: Retrieves session ID from database
+- `validatePassword(string $password): bool`: Validates password against configured rules
+- `genPassword(): string`: Generates a secure password following configured rules
+- `getPasswordHash(string $password, ?string $algorithm = null): string`: Generates password hash
+- `checkPassword(string $password, string $hash): bool`: Verifies password against hash
+- `changePassword(?string $newPassword = null, ?string $oldPassword = null): string|false`: Changes user password with optional validation
+
 
 
 ## Directory Structure
 The framework uses the following directory structure:
 - `/etc`: Configuration directory
+- `/src`: Core class directory
+  - `/src/Tools`: Tools components directory
 - `/var`: Variable data directory
   - `/var/cache`: Cache files
+  - `/var/db` : CsvDB data files
   - `/var/log`: Log files
+  - `/var/session` : Session files
   - `/var/spool`: Spool directory 
   - `/var/spool/mailer`: Mail spool (for Async mode)
   - `/var/tmp`: Local temporary folder
-- `/Tools`: Tool classes
 
 ## System Requirements
 - PHP: 8.2 or higher
-- Required extensions depend on cache adapter and database configuration
 - catfan/medoo: 2.1.6 or higher
 - katzgrau/klogger: 1.2.2 or higher
 - symfony/cache: 6.4.12 or higher

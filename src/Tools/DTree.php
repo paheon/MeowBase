@@ -1,4 +1,14 @@
 <?php
+/**
+ * DTree class
+ * 
+ * This class is used to manage a tree structure.
+ * 
+ * @author Vincent Leung <meow@paheon.com>
+ * @version 1.3.0
+ * @license MIT
+ * @package Paheon\MeowBase\Tools
+ */
 namespace Paheon\MeowBase\Tools;
 
 use Paheon\MeowBase\ClassBase;

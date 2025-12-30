@@ -1,0 +1,273 @@
+Error Codes and Error Messages Documentation
+============================================
+
+This document lists all error codes and their corresponding error messages, organized by class.
+Each class has its own error code range starting from 1.
+
+Error Codes and Messages by Class
+==================================
+
+## UserDB / UserCSV (User Database/CSV Storage)
+------------------------------------------------
+Error Code Range: 1-11
+
+Error Code 1:
+    Error: User ID is invalid
+    Return Code: null
+    Used in: getUserByID() when userID < 0
+
+Error Code 2:
+    Error: User ID not found
+    Return Code: null
+    Used in: getUserByID() when user not found
+
+Error Code 3:
+    Error: Empty login name
+    Return Code: null / -3
+    Used in: getUserByLoginName(), createUser() when login name is empty
+
+Error Code 4:
+    Error: Login name not found / Login name already exists
+    Return Code: null / -4
+    Used in: getUserByLoginName(), createUser() when login name not found or already exists
+
+Error Code 5:
+    Error: Failed to create user record
+    Return Code: -5
+    Used in: createUser() when insert failed (SQL error appended)
+
+Error Code 6:
+    Error: Failed to get new user record
+    Return Code: -6
+    Used in: createUser() when failed to get new user ID
+
+Error Code 7:
+    Error: Failed to update user record
+    Return Code: false
+    Used in: updateUser() when update failed (SQL error appended)
+
+Error Code 8:
+    Error: User ID must be provided / Current user ID not found
+    Return Code: false
+    Used in: updateUser(), delUser(), updateUserStatus() when user ID not provided or not found
+
+Error Code 9:
+    Error: Failed to delete user record
+    Return Code: false
+    Used in: delUser() when delete failed (SQL error appended)
+
+Error Code 10:
+    Error: Failed to load user data (UserCSV only)
+    Return Code: null
+    Used in: UserCSV specific methods when failed to load CSV database
+
+Error Code 11:
+    Error: Failed to delete duplicated user record (UserCSV only)
+    Return Code: false
+    Used in: UserCSV delDupUserRec() when failed to delete duplicated records
+
+
+## UserGroupDB / UserGroupCSV (User Group Database/CSV Storage)
+----------------------------------------------------------------
+Error Code Range: 1-16
+
+Error Code 1:
+    Error: User group ID is invalid
+    Return Code: null
+    Used in: getUserGroupByID() when userGroupID < 0
+
+Error Code 2:
+    Error: User group ID not found
+    Return Code: null
+    Used in: getUserGroupByID() when user group not found
+
+Error Code 3:
+    Error: Empty user group name
+    Return Code: null / -3
+    Used in: getUserGroupByName(), createUserGroup() when group name is empty
+
+Error Code 4:
+    Error: User group name not found / User group name already exists
+    Return Code: null / -4
+    Used in: getUserGroupByName(), createUserGroup() when group name not found or already exists
+
+Error Code 5:
+    Error: Failed to create user group record
+    Return Code: -5
+    Used in: createUserGroup() when insert failed (SQL error appended)
+
+Error Code 6:
+    Error: Failed to get new user group record
+    Return Code: -6
+    Used in: createUserGroup() when failed to get new group ID
+
+Error Code 7:
+    Error: Current user group ID not found / User group ID not provided
+    Return Code: false / null
+    Used in: updateUserGroup(), delUserGroup(), isUserInGroup(), getUsersInGroup(), addUserToGroup(), delUserFromGroup() when group ID not provided
+
+Error Code 8:
+    Error: User group not found
+    Return Code: false / null
+    Used in: updateUserGroup(), delUserGroup() when group not found
+
+Error Code 9:
+    Error: Failed to update user group
+    Return Code: false
+    Used in: updateUserGroup() when update failed (SQL error appended)
+
+Error Code 10:
+    Error: Failed to delete user group
+    Return Code: false
+    Used in: delUserGroup() when delete failed (SQL error appended)
+
+Error Code 11:
+    Error: Failed to add user to group
+    Return Code: false
+    Used in: addUserToGroup() when insert failed (SQL error appended)
+
+Error Code 12:
+    Error: Failed to remove user from group
+    Return Code: false
+    Used in: delUserFromGroup() when delete failed (SQL error appended)
+
+Error Code 13:
+    Error: Failed to load user group data (UserGroupCSV only)
+    Return Code: null
+    Used in: UserGroupCSV specific methods when failed to load CSV database
+
+Error Code 14:
+    Error: Failed to load user group link database (UserGroupCSV only)
+    Return Code: false / null
+    Used in: UserGroupCSV isUserInGroup(), getUsersInGroup(), getGroupsByUser() when failed to load link database
+
+Error Code 15:
+    Error: Failed to delete duplicated user group record (UserGroupCSV only)
+    Return Code: false
+    Used in: UserGroupCSV delDupUserGroupRec() when failed to delete duplicated records
+
+
+## UserPermDB / UserPermCSV (User Permission Database/CSV Storage)
+-------------------------------------------------------------------
+Error Code Range: 1-6
+
+Error Code 1:
+    Error: Failed to load user permission database / Failed to insert user permission
+    Return Code: false / null
+    Used in: UserPermCSV getUserPerm(), delUserPerm() when failed to load database, or UserPermDB setUserPerm() when insert failed (SQL error appended)
+
+Error Code 2:
+    Error: Failed to update user permission
+    Return Code: false
+    Used in: UserPermDB setUserPerm() when update failed (SQL error appended)
+
+Error Code 3:
+    Error: Failed to remove user permission / Failed to load user permission database
+    Return Code: false
+    Used in: UserPermCSV delUserPerm() when delete failed, or UserPermCSV setUserPerm() when failed to load database
+
+Error Code 4:
+    Error: Failed to load group permission database / Failed to insert group permission
+    Return Code: false / null
+    Used in: UserPermCSV getGroupPerm(), setGroupPerm(), delGroupPerm() when failed to load database, or UserPermDB setGroupPerm() when insert failed (SQL error appended)
+
+Error Code 5:
+    Error: Failed to update group permission / Failed to save group permission
+    Return Code: false
+    Used in: UserPermDB setGroupPerm() when update failed (SQL error appended), or UserPermCSV setGroupPerm() when save failed
+
+Error Code 6:
+    Error: Failed to remove group permission
+    Return Code: false
+    Used in: delGroupPerm() when delete failed (SQL error appended)
+
+
+## UserManager (User Management Main Interface)
+------------------------------------------------
+Error Code Range: 1-12
+
+Error Code 1:
+    Error: Failed to update user status
+    Return Code: false
+    Used in: login(), logout() when failed to update user status
+
+Error Code 2:
+    Error: User not found
+    Return Code: false
+    Used in: login(), continueLogin() when user not found
+
+Error Code 3:
+    Error: Invalid password
+    Return Code: false
+    Used in: login() when password mismatch
+
+Error Code 4:
+    Error: Login life time expired
+    Return Code: false
+    Used in: continueLogin() when session expired
+
+Error Code 5:
+    Error: Login name or user ID not found
+    Return Code: false
+    Used in: continueLogin() when session data incomplete
+
+Error Code 6:
+    Error: User not logged in
+    Return Code: null / false
+    Used in: resolveUserID(), getSessionID(), changePassword() when user not logged in
+
+Error Code 7:
+    Error: User ID not found
+    Return Code: null
+    Used in: resolveUserID() when user ID not found in current user data
+
+Error Code 8:
+    Error: Invalid old password
+    Return Code: false
+    Used in: changePassword() when old password mismatch
+
+Error Code 9:
+    Error: Failed to update password
+    Return Code: false
+    Used in: changePassword() when failed to update password
+
+Error Code 10:
+    Error: User object not initialized
+    Return Code: -10 / false
+    Used in: createUser(), updateUser(), delUser() when User object not available
+
+Error Code 11:
+    Error: UserGroup object not initialized
+    Return Code: -11 / false / null
+    Used in: All UserGroup related methods when UserGroup object not available
+
+Error Code 12:
+    Error: UserPerm object not initialized
+    Return Code: false / null
+    Used in: All UserPerm related methods when UserPerm object not available
+
+
+## Error Code Usage Notes
+=========================
+
+1. SQL Error Messages
+   - After calling CacheDB methods (insert, update, delete), if the result is null, SQL error information will be appended to the error message
+   - Format: "Original error message [SQL Error: SQL error message]"
+   - Example: "Failed to create user record [SQL Error: Duplicate entry 'xxx' for key 'PRIMARY']"
+
+2. Return Codes
+   - Positive error codes: Used in throwException() method
+   - Negative error codes: Used in return values (e.g., createUser() returns -5 to indicate failure)
+   - null/false: Used in return values to indicate failure
+
+3. Error Code Ranges
+   - UserDB/UserCSV: 1-11 (each class starts from 1)
+   - UserGroupDB/UserGroupCSV: 1-15 (each class starts from 1)
+   - UserPermDB/UserPermCSV: 1-6 (each class starts from 1)
+   - UserManager: 1-12 (each class starts from 1)
+
+4. Notes
+   - Each class has its own error code range starting from 1
+   - Error codes are organized sequentially within each class to avoid conflicts
+   - CSV and DB versions may have some specific error codes
+   - The same error code number can appear in different classes with different meanings

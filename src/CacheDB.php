@@ -1,12 +1,14 @@
 <?php
-//
-// CacheDB.php - CacheDB class
-//
-// Version: 1.0.0   - 2024-12-02
-// Author: Vincent Leung
-// Copyright: 2023-2024 Vincent Leung
-// License: MIT
-//
+/**
+ * CacheDB Class
+ * 
+ * This class is used to manage cache with CacheDB.
+ * 
+ * @author Vincent Leung <meow@paheon.com>
+ * @version 1.3.0
+ * @license MIT
+ * @package Paheon\MeowBase
+ */
 namespace Paheon\MeowBase;
 
 use Medoo\Medoo;
@@ -24,6 +26,7 @@ class CacheDB extends Medoo {
     protected   SysLog  $log;                           // Log Object
 	
 	// Log //
+    public      bool    $enableCache    = true;         // Enable flag for Cache    
     public      bool    $enableLog      = false;        // Enable flag for Log
 	public		bool	$logResult		= false;		// Enable show query result
 
@@ -32,6 +35,36 @@ class CacheDB extends Medoo {
         parent::__construct($dbConfig);
         $this->cache    = $cache;
         $this->log      = $log;
+    }
+
+    // Get SQL error message from PDO //
+    public function getSQLError(): ?string {
+        if (isset($this->pdo) && $this->pdo instanceof \PDO) {
+            $errorInfo = $this->pdo->errorInfo();
+            if ($errorInfo && isset($errorInfo[2]) && $errorInfo[2] !== '') {
+                return $errorInfo[2];
+            }
+        }
+        return null;
+    }
+
+    // Get SQL error code from PDO //
+    public function getSQLErrorCode(): ?string {
+        if (isset($this->pdo) && $this->pdo instanceof \PDO) {
+            $errorInfo = $this->pdo->errorInfo();
+            if ($errorInfo && isset($errorInfo[1]) && $errorInfo[1] !== '') {
+                return $errorInfo[1];
+            }
+        }
+        return null;
+    }
+
+    // Append SQL error message to lastError if exists //
+    protected function appendSQLError(string &$errorMessage): void {
+        $sqlError = $this->getSQLError();
+        if ($sqlError) {
+            $errorMessage .= " [SQL Error: " . $sqlError . "]";
+        }
     }
 
     // Extract join tables //
@@ -68,8 +101,10 @@ class CacheDB extends Medoo {
     // Cached select statement //
     public function cachedSelect(string $table, mixed $columns, ?array $where = null, ?array $join = null, ?callable $fetchFunc = null, ?array $tags = null, ?int $expire = null):?array {
         $thisFunc = __METHOD__." - ";
+        // Generate cache key //
         $key = $this->getCacheKey($table, $columns, $where, $join, "Sel");
-        if ($this->cache->isHit($key)) {
+        // Check if cache is hit //
+        if ($this->cache->isHit($key) && $this->enableCache) {
             // Cache hit, get data //
             $data = $this->cache->get();
             if ($this->enableLog) $this->log->sysLog($thisFunc."Cache Hit!", $this->logResult ? $data : null);
@@ -107,8 +142,10 @@ class CacheDB extends Medoo {
     // Cached get statement //
     public function cachedGet(string $table, mixed $columns, ?array $where = null, ?array $join = null, ?array $tags = null, ?int $expire = null):?array {
         $thisFunc = __METHOD__." - ";
+        // Generate cache key //
         $key = $this->getCacheKey($table, $columns, $where, $join, "Get");
-        if ($this->cache->isHit($key)) {
+        // Check if cache is hit //
+        if ($this->cache->isHit($key) && $this->enableCache) {
             // Cache hit, get data //
             $data = $this->cache->get();
             if ($this->enableLog) $this->log->sysLog($thisFunc."Cache Hit!", $this->logResult ? $data : null);
@@ -155,9 +192,9 @@ class CacheDB extends Medoo {
     }
 
     // Select statement with log //
-    public function select(string $table, mixed $join, mixed $columns = null, mixed $where = null):?array {
+    public function select(string $table, mixed $join, mixed $columns = null, mixed $where = null, ?callable $fetchFunc = null):?array {
         $thisFunc = __METHOD__." - ";
-        $result = parent::select($table, $join, $columns, $where);        
+        $result = parent::select($table, $join, $columns, $where, $fetchFunc);        
         if ($this->enableLog)   $this->log->sysLog($thisFunc."Select Statement: ".$this->last(), (($this->logResult) ? $result : null));
         return $result;
     }
@@ -281,15 +318,18 @@ class CacheDB extends Medoo {
     // Cached value of count, avg, max, min, sum //
     public function cachedCalc(string $type, string $table, mixed $join = null, mixed $columns = null, mixed $where = null, ?array $tags = null, ?int $expire = null): ?int {
         $thisFunc = __METHOD__;
+        // check value type //
         $typeList = ["count" => "Cnt", "avg" => "Avg", "max" => "Max", "min" => "Min", "sum" => "Sum"];
         if (!isset($typeList[$type])) {
             if ($this->enableLog) $this->log->sysLog($thisFunc." - Invalid value type '$type'!");
             return null;
         }
+        
+        // Generate cache key //
         $thisFunc .= ">$type - ";
-
         $key = $this->getCacheKey($table, $columns, $where, $join, $typeList[$type]);
-        if ($this->cache->isHit($key)) {
+        // Check if cache is hit //
+        if ($this->cache->isHit($key) && $this->enableCache) {
             // Cache hit, get data //
             $data = $this->cache->get();
             if ($this->enableLog) $this->log->sysLog($thisFunc."Cache Hit!", $this->logResult ? $data : null);
@@ -376,8 +416,10 @@ class CacheDB extends Medoo {
 
     public function cachedHas(string $table, mixed $where = null, mixed $join = null, ?array $tags = null, ?int $expire = null): ?bool {
         $thisFunc = __METHOD__." - ";
+        // Generate cache key //
         $key = $this->getCacheKey($table, null, $where, $join, "Has");
-        if ($this->cache->isHit($key)) {
+        // Check if cache is hit //
+        if ($this->cache->isHit($key) && $this->enableCache) {
             // Cache hit, get data //
             $data = $this->cache->get();
             if ($this->enableLog) $this->log->sysLog($thisFunc."Cache Hit!", $this->logResult ? $data : null);

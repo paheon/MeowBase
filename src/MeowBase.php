@@ -1,12 +1,15 @@
 <?php
-//
-// MeowBase.php - MeowBase Class
-//
-// Version: 1.0.0   - 2024-12-02
-// Author: Vincent Leung
-// Copyright: 2023-2024 Vincent Leung
-// License: MIT
-//
+/**
+ * MeowBase.php - MeowBase Class
+ * 
+ * This class is the main class for MeowBase.
+ * 
+ * @author Vincent Leung <meow@paheon.com>
+ * @version 1.3.0
+ * @license MIT
+ * @package Paheon\MeowBase
+ * 
+ */
 namespace Paheon\MeowBase;
 
 use Paheon\MeowBase\ClassBase;
@@ -41,7 +44,7 @@ class MeowBase {
     public function __construct(Config $config, bool $preload = true) {
 
         $this->denyWrite = array_merge($this->denyWrite, [ 'profiler', 'config', 'log', 'cache', 'db', 'image', 'configTree', 'lazyLoad' ]);
-
+        
         // Init Profiler //
         $this->profiler = new Profiler();
 
@@ -52,6 +55,8 @@ class MeowBase {
         // Set time zone //
         $timeZone = $this->config->config['general']['timeZone'];
         if (!is_null($timeZone))  date_default_timezone_set($timeZone);
+
+        // Init Session //
 
         // Preload objects (no lazy loading)//
         if ($preload) {

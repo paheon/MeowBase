@@ -1,12 +1,13 @@
 <?php
-//
-// minstart.php - MeowBase Minimal Start Script
-//
-// Version: 1.0.0   - 2025-05-04
-// Author: Vincent Leung
-// Copyright: 2023-2025 Vincent Leung
-// License: MIT
-//
+/**
+ * minstart.php - MeowBase Minimal Start Script
+ * 
+ * Start the MeowBase application with minimal code.
+ * 
+ * @author Vincent Leung <meow@paheon.com>
+ * @version 1.3.0
+ * @license MIT
+ */
 use Paheon\MeowBase\Config;
 use Paheon\MeowBase\MeowBase;
 
@@ -21,3 +22,5 @@ $config = new Config();
 
 // Run MeowBase //
 $meow = new MeowBase($config);
+
+echo "DONE!";

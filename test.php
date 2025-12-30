@@ -1,23 +1,33 @@
 <?php
-//
-// test.php - MeowBase Test Script
-//
-// Version: 1.0.0   - 2024-12-02
-// Author: Vincent Leung
-// Copyright: 2023-2024 Vincent Leung
-// License: MIT
-//
+/**
+ * test.php - MeowBase Test Script
+ * 
+ * This file is used to test MeowBase framework functionality.
+ * 
+ * @author Vincent Leung <meow@paheon.com>
+ * @version 1.3.0
+ * @license MIT
+ */
 use Paheon\MeowBase\Config;
 use Paheon\MeowBase\MeowBase;
 use Paheon\MeowBase\ClassBase;
 use Paheon\MeowBase\Tools\DTree;
 use Paheon\MeowBase\Tools\DTreeIterator;
-use Psr\Log\LogLevel;
 use Paheon\MeowBase\Tools\File;
 use Paheon\MeowBase\Tools\Url;
 use Paheon\MeowBase\Tools\Mime;
 use Paheon\MeowBase\Tools\Mailer;
 use Paheon\MeowBase\Tools\CsvDB;
+use Paheon\MeowBase\Tools\PHP;
+use Paheon\MeowBase\Tools\User;
+use Paheon\MeowBase\Tools\UserCSV;
+use Paheon\MeowBase\Tools\UserDB;
+use Paheon\MeowBase\Tools\UserGroupCSV;
+use Paheon\MeowBase\Tools\UserGroupDB;
+use Paheon\MeowBase\Tools\UserPermCSV;
+use Paheon\MeowBase\Tools\UserPermDB;
+use Paheon\MeowBase\Tools\UserManager;
+use Paheon\MeowBase\Tools\Password;
 
 // Profiler will read this global variable for the application start time, 
 //   so it should be run at the beginning of the application
@@ -37,7 +47,7 @@ $config = new Config($localSetting);
 $meow = new MeowBase($config);
 
 // Determine Web or CLI //
-$isWeb = $meow->configTree["sapi"] != "cli";
+$isWeb = !PHP::isCLI();
 $br = $isWeb ? "<br>\n" : "\n";
 
 //--- Test ClassBase function ---//
@@ -142,12 +152,12 @@ function logFunc2(MeowBase $meow, string $data, string $br) {
     $data .= " -> logFunc2";
     echo "logFunc2 Called : data = ".$data.$br;
     logFunc1($meow, $data, $br);
-    $meow->log->sysLog("logFunc2 -> Test Log function", [ "data" => $data ], LogLevel::INFO);
+    $meow->log->sysLog("logFunc2 -> Test Log function", [ "data" => $data ], 'info');
 }
 function logFunc1(MeowBase $meow, string $data, string $br) {
     $data .= " -> logFunc1";
     echo "logFunc1 Called : data = ".$data.$br;
-    $meow->log->sysLog("logFunc1 -> Test Log function", [ "data" => $data ], LogLevel::DEBUG);
+    $meow->log->sysLog("logFunc1 -> Test Log function", [ "data" => $data ], 'debug');
 }
 
 echo "Test Log function".$br;
@@ -159,15 +169,15 @@ echo $br;
 echo "Write debug message".$br;  
 $meow->log->sysLog("Current time zone", [ "timeZone" => $meow->config->getConfigByPath("general/timeZone") ]);     // Log time zone for debug
 echo "Write error message".$br;
-$meow->log->sysLog("Error occured!", [ "error code" => 123 ], LogLevel::ERROR);
+$meow->log->sysLog("Error occured!", [ "error code" => 123 ], 'error');
 echo "Write warning message".$br;
-$meow->log->sysLog("Data type mismatch!", [ "data" => $data ], LogLevel::WARNING);
+$meow->log->sysLog("Data type mismatch!", [ "data" => $data ], 'warning');
 echo "Write info message".$br;
 $meow->log->stack = true;                        // Enable stack tracking to show full calling process
 logFunc2($meow, "Call stack enabled!", $br);     
 $meow->log->stack = false;                       // Disable stack tracking to hide calling process
 logFunc2($meow, "Call stack disabled!", $br);    
-$meow->log->sysLog("Log demo completed!", null, LogLevel::INFO);
+$meow->log->sysLog("Log demo completed!", null, 'info');
 echo $br;
 $meow->profiler->record("Log test completed");
 
@@ -307,8 +317,11 @@ $data5 = $meow->db->cachedGet("test", "*", [
 ]);
 $meow->profiler->record("Get a single record (By cachedGet second time)", "DB Cached Get Test");
 
+echo "data3: (Get a single record by get) get(\"test\", \"*\", [ \"name\" => \"name-00500\" ]) = ".$br;
 var_dump($data3);
+echo "data4: (Get a single record by cachedGet 1st time, result same as data3) cachedGet(\"test\", \"*\", [ \"name\" => \"name-00500\" ]) = ".$br;
 var_dump($data4);
+echo "data5: (Get a single record by cachedGet 2nd time, result same as data4) cachedGet(\"test\", \"*\", [ \"name\" => \"name-00500\" ]) = ".$br;
 var_dump($data5);
 
 $meow->profiler->record("Record read test. Done!", "DB Test");
@@ -346,9 +359,13 @@ $data9 = $meow->db->cachedGet("test", "*", [
 ]);
 $meow->profiler->record("Get a single record (By cachedGet second time)", "DB Test");
 
+echo "data6: (Get a single record by cachedGet 3rd time (ensure cache still exist), result same as data5) cachedGet(\"test\", \"*\", [ \"name\" => \"name-00500\" ]) = ".$br;
 var_dump($data6);
+echo "data7: (Get a single record by get (cleared cache by update record), result same as data6) get(\"test\", \"*\", [ \"name\" => \"name-00500\" ]) = ".$br;
 var_dump($data7);
+echo "data8: (Get a single record by cachedGet 4th time (check whether cache is updated), result same as data7) cachedGet(\"test\", \"*\", [ \"name\" => \"name-00500\" ]) = ".$br;
 var_dump($data8);
+echo "data9: (Get a single record by cachedGet 5th time, result same as data8) cachedGet(\"test\", \"*\", [ \"name\" => \"name-00500\" ]) = ".$br;
 var_dump($data9);
 
 $meow->profiler->record("DB Test Completed!", "DB Test");
@@ -1325,11 +1342,11 @@ $meow->profiler->record("Second time load records", "CsvDB Test");
 // Test sorting records
 echo $br."Testing rowID sorting:".$br;
 echo "Sorting rowID in dscending order:".$br;
-$csv->sortByRowID(true);
+$csv->sortByRowID(false);
 foreach ($csv as $idx => $row) {
     echo "ID($idx): ".$row['csvRowID']." - name=".$row["name"].", age=".$row['age']. ", email=".$row['email'].", status=".$row['status'].$br;
 }
-$csv->sortByRowID(false);
+$csv->sortByRowID(true);
 echo "Sorted rowID in ascending order:".$br;
 foreach ($csv as $idx => $row) {
     echo "ID($idx): ".$row['csvRowID']." - name=".$row["name"].", age=".$row['age']. ", email=".$row['email'].", status=".$row['status'].$br;
@@ -1345,6 +1362,1592 @@ if (file_exists($testCsvFile)) {
 }
 
 $meow->profiler->record("CsvDB Test Completed", "CsvDB Test");
+
+//--- Test UserCSV Function ---//
+echo $br."USER CLASS TEST (CSV Storage)".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("UserCSV Test Start", "UserCsv Test");
+
+// Initialize UserCSV with standard User class configuration //
+echo "Initializing UserCSV...".$br;
+$userCSV = new UserCSV($meow->configTree['user']['user']);
+echo $br;
+
+// Clear old user data //
+$csvFileExists = false;
+if (file_exists($userCSV->userTableFile)) {
+    echo "Remove old user csv file: ".$userCSV->userTableFile.$br;
+    unlink($userCSV->userTableFile);       
+    $csvFileExists = true;
+}
+if (file_exists($userCSV->userGroupTableFile)) {
+    echo "Remove old user group csv file: ".$userCSV->userGroupTableFile.$br;
+    unlink($userCSV->userGroupTableFile);
+    $csvFileExists = true;
+}
+if (file_exists($userCSV->userGroupLinkTableFile)) {
+    echo "Remove old user group link csv file: ".$userCSV->userGroupLinkTableFile.$br;
+    unlink($userCSV->userGroupLinkTableFile);
+    $csvFileExists = true;
+}
+if ($csvFileExists) {
+    echo "User csv file exists, re-initialize UserCSV...".$br;
+    $userCSV = new UserCSV($meow->configTree['user']['user']);
+}
+echo "UserCSV initialized successfully".$br.$br;
+
+// Display field name mapping in UserCSV class
+echo "Field name mapping in UserCSV class:".$br;
+$userFields = $userCSV->userFields;
+foreach ($userFields as $key => $value) {
+    echo "  $key => $value".$br;
+}
+echo $br;
+
+// Test 1.1: Create Users
+$meow->profiler->record("Ready for user testing", "UserCsv Test");
+echo "Test 1.1: Create Users".$br;
+echo "---------------------".$br;
+
+// Create first user in UserCSV class
+$user1Data = [
+    'userName' => "testuser1",
+    'email'    => "user1@test.com",
+];
+
+$user1ID = $userCSV->createUser("user1", "Password123!", $user1Data);
+if ($user1ID > 0) {
+    echo "User 1 created successfully with ID: $user1ID".$br;
+} else {
+    echo "Failed to create User 1: " . $userCSV->lastError . $br;
+}
+
+// Create second user using standard userFields
+$user2Data = [
+    'userName' => "testuser2", 
+    'email'    => "user2@test.com"
+];
+$user2ID = $userCSV->createUser("user2", "SecurePass456!", $user2Data);
+if ($user2ID > 0) {
+    echo "User 2 created successfully with ID: $user2ID".$br;
+} else {
+    echo "Failed to create User 2: " . $userCSV->lastError . $br;
+}
+
+// Create third user using standard userFields
+$user3Data = [
+    'userName' => "testuser3",
+    'email'    => "user3@test.com"
+];
+$user3ID = $userCSV->createUser("user3", "MyPass789!", $user3Data);
+if ($user3ID > 0) {
+    echo "User 3 created successfully with ID: $user3ID".$br;
+} else {
+    echo "Failed to create User 3: " . $userCSV->lastError . $br;
+}
+
+$meow->profiler->record("Create user test completed", "UserCsv Test");
+
+// Get User Information
+echo "Read User Information:".$br;
+
+// Get user by ID (normalization function handles field name conversion)
+$user1 = $userCSV->getUserByID($user1ID);
+if ($user1) {
+    echo "Get User 1 by ID: $user1ID".$br;
+    var_dump($user1);
+} else {
+    echo "Failed to get User 1 by ID".$br;
+}
+
+// Get user by login name (normalization function handles field name conversion)
+$loginName = "user2";
+$user2 = $userCSV->getUserByLoginName($loginName);
+if ($user2) {
+    echo "Get User 2 by login name: '$loginName'".$br;
+    var_dump($user2);
+} else {
+    echo "Failed to get User 2 by login name '$loginName'".$br;
+}
+echo $br;
+
+$meow->profiler->record("Read user test completed", "UserCsv Test");
+echo $br;
+
+// Test 4: Update User Tests
+echo "Update User Tests:".$br;
+
+echo "Updating user 1 by ID: $user1ID...".$br;
+$updateData = [
+    'userName' => "updateduser1",
+    'email' => "updated1@test.com",
+    'extraData' => "This is extra data for user 1"
+];
+echo "Update data:".$br;
+var_dump($updateData);
+$updateResult = $userCSV->updateUser($updateData, $user1ID);
+if ($updateResult) {
+    echo "User 1 updated successfully by ID $user1ID".$br;
+    // Get updated user info
+    $updatedUser = $userCSV->getUserByID($user1ID);
+    if ($updatedUser) {
+        var_dump($updatedUser);
+    }
+    
+    // Get updated user to verify
+    $updatedUserCheck = $userCSV->getUserByID($user1ID, true);
+    if ($updatedUserCheck) {
+        echo "Updated user verification:".$br;
+        var_dump($updatedUserCheck);
+    }
+} else {
+    echo "Failed to update User 1 as current user: " . $userCSV->lastError . $br;
+}
+echo $br;
+
+// Update user by specific ID (use logical field names)
+echo "Updating user 2 by ID: $user2ID...".$br;
+$updateData2 = [
+    'userName' => "updateduser2",
+    'email' => "updated2@test.com"
+];
+echo "Update data:".$br;
+var_dump($updateData2);
+echo $br;
+$updateResult2 = $userCSV->updateUser($updateData2, $user2ID);
+if ($updateResult2) {
+    echo "User 2 updated successfully by ID $user2ID".$br;
+    // Get updated user info (normalization function handles field name conversion)
+    $updatedUser2 = $userCSV->getUserByID($user2ID);
+    if ($updatedUser2) {
+        echo "Updated userName: " . $updatedUser2['userName'] . $br;
+        echo "Updated email: " . $updatedUser2['email'] . $br;
+    }
+} else {
+    echo "Failed to update User 2 by ID: " . $userCSV->lastError . $br;
+}
+echo $br;
+
+// Test updating current user with additional fields (use logical field names)
+echo "Testing update current user with additional fields...".$br;
+$additionalUpdateData = [
+    'status' => User::USER_STATUS_ACTIVE,
+    'lastActive' => time() - 10,
+];
+var_dump($additionalUpdateData);
+// Note: updateUser now requires userID parameter
+$additionalUpdateResult = $userCSV->updateUser($additionalUpdateData, $user1ID);
+if ($additionalUpdateResult) {
+    echo "Current user additional fields updated successfully by ID $user1ID".$br;
+    // Get updated user info (normalization function handles field name conversion)
+    $updatedUser = $userCSV->getUserByID($user1ID);
+    if ($updatedUser) {
+        echo "Updated status: " . ($updatedUser['status'] ?? 'N/A') . $br;
+        echo "Updated last_active: " . ($updatedUser['lastActive'] ?? 'N/A') . $br;
+    }
+} else {
+    echo "Failed to update current user additional fields by ID $user1ID: " . $userCSV->lastError . $br;
+}
+
+$meow->profiler->record("Update user test completed", "UserCsv Test");
+echo $br;
+
+// Delete User Tests
+echo "Delete User Tests:".$br;
+
+// Show all records before delete test
+echo "Records before delete test:".$br;
+$remainingUsers = $userCSV->getMultiUserByID();
+if (is_array($remainingUsers)) {
+    var_dump($remainingUsers);
+} else {
+    echo "Cannot load user records!".$br;
+}   
+echo $br;
+
+// Delete user by specific ID
+echo "Deleting user 3 by specific ID $user3ID...".$br;
+$deleteResult = $userCSV->delUser($user3ID);
+if ($deleteResult) {
+    echo "User 3 deleted successfully".$br;
+    
+    // Verify user is deleted
+    $deletedUser = $userCSV->getUserByID($user3ID);
+    if (!$deletedUser) {
+        echo "User 3 confirmed deleted (not found in database)".$br;
+    } else {
+        echo "User 3 still exists in database (unexpected)".$br;
+    }
+} else {
+    echo "Failed to delete User 3: " . $userCSV->lastError . $br;
+}
+
+echo "Records after delete User 3:".$br;
+$remainingUsers = $userCSV->getMultiUserByID();
+if (is_array($remainingUsers)) {
+    var_dump($remainingUsers);
+} else {
+    echo "Cannot load user records!".$br;
+}   
+echo $br;
+
+// Delete user by ID directly
+echo "Deleting user 1 by ID $user1ID...".$br;
+$deleteUser1Result = $userCSV->delUser($user1ID);
+if ($deleteUser1Result) {
+    echo "User 1 deleted successfully by ID".$br;
+    // Verify user is deleted
+    $deletedUser1 = $userCSV->getUserByID($user1ID);
+    if (!$deletedUser1) {
+        echo "User 1 confirmed deleted (not found in database)".$br;
+    } else {
+        echo "User 1 still exists in database (unexpected)".$br;
+    }
+} else {
+    echo "Failed to delete User 1: " . $userCSV->lastError . $br;
+}
+echo "Records after delete current user:".$br;
+
+// Note: userDB is protected, using getUserByID to verify instead
+$remainingUsers = $userCSV->getMultiUserByID();
+if (is_array($remainingUsers)) {
+    var_dump($remainingUsers);
+} else {
+    echo "Cannot load user records!".$br;
+}   
+
+$meow->profiler->record("Delete user test completed", "UserCsv Test");
+echo $br;
+
+// Final Verification
+echo "Final Verification".$br;
+// Check remaining users
+echo "Checking remaining users in database...".$br;
+$remainingUser = $userCSV->getUserByID($user2ID);
+if ($remainingUser) {
+    echo "User 2 still exists: " . $remainingUser['userName'] . " (" . $remainingUser['email'] . ")".$br;
+} else {
+    echo "User 2 not found (may have been deleted)".$br;
+}
+echo $br;
+
+//--- Test UserGroupCSV Function ---//
+echo $br."USERGROUP CLASS TEST (CSV Storage)".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("UserGroupCSV Test Start", "UserGroupCsv Test");
+
+// Initialize UserGroupCSV //
+$userGroupCSVConfig = $meow->configTree['user']['userGroup'] ?? [];
+$userGroupCSV = new UserGroupCSV($userGroupCSVConfig);
+
+// Clean up old CSV files if they exist //
+$csvGroupTableFile = $userGroupCSV->userGroupTableFile ?? "";
+$csvGroupLinkFile = $userGroupCSV->userGroupLinkTableFile ?? "";
+if ($csvGroupTableFile && file_exists($csvGroupTableFile)) {
+    unlink($csvGroupTableFile);
+    echo "Removed old group csv file: $csvGroupTableFile".$br;
+}
+if ($csvGroupLinkFile && file_exists($csvGroupLinkFile)) {
+    unlink($csvGroupLinkFile);
+    echo "Removed old group link csv file: $csvGroupLinkFile".$br;
+}
+
+// Re-initialize after cleanup so CsvDB rebuilds headers //
+$userGroupCSV = new UserGroupCSV($userGroupCSVConfig);
+
+// Create user groups //
+echo "Creating CSV user groups...".$br;
+$csvAdminGroupID = $userGroupCSV->createUserGroup("csv_admin_group", ['groupDesc' => "CSV Admin Group"]);
+if ($csvAdminGroupID > 0) {
+    echo "CSV admin group created successfully with ID: $csvAdminGroupID".$br;
+} else {
+    echo "Failed to create CSV admin group: " . $userGroupCSV->lastError . $br;
+}
+$csvEditorGroupID = $userGroupCSV->createUserGroup("csv_editor_group", ['groupDesc' => "CSV Editor Group"]);
+if ($csvEditorGroupID > 0) {
+    echo "CSV editor group created successfully with ID: $csvEditorGroupID".$br;
+} else {
+    echo "Failed to create CSV editor group: " . $userGroupCSV->lastError . $br;
+}
+echo $br;
+
+// Read user groups //
+echo "Reading CSV user groups by ID $csvAdminGroupID...".$br;
+$csvAdminGroup = $userGroupCSV->getUserGroupByID($csvAdminGroupID);
+echo "Admin group record:".$br;
+var_dump($csvAdminGroup);
+echo "Reading CSV user groups by name 'csv_editor_group'...".$br;
+$csvEditorGroup = $userGroupCSV->getUserGroupByName("csv_editor_group");
+echo "Editor group record (by name):".$br;
+var_dump($csvEditorGroup);
+echo $br;
+
+// Determine a user ID to test links with //
+echo "Determining a user ID to test links with...".$br;
+$csvGroupUserID = $user2ID ?? $user1ID ?? null;
+if (!$csvGroupUserID) {
+    $helperData = [
+        'userName' => "csvgroupuser",
+        'email' => "csvgroupuser@test.com"
+    ];
+    $csvGroupUserID = $userCSV->createUser("csvgroupuser", "CsvGroupPass123!", $helperData);
+    echo "Created helper user for group testing with ID: $csvGroupUserID".$br;
+}
+
+// Add user to groups //
+echo "Adding user $csvGroupUserID to CSV admin group...".$br;
+$csvAddAdmin = $userGroupCSV->addUserToGroup($csvGroupUserID, $csvAdminGroupID);
+echo "Add to admin group result: " . ($csvAddAdmin ? "Success" : "Failed - " . $userGroupCSV->lastError) . $br;
+
+echo "Adding user $csvGroupUserID to CSV editor group...".$br;
+$csvAddEditor = $userGroupCSV->addUserToGroup($csvGroupUserID, $csvEditorGroupID);
+echo "Add to editor group result: " . ($csvAddEditor ? "Success" : "Failed - " . $userGroupCSV->lastError) . $br;
+
+// Check membership //
+$csvIsInAdmin = $userGroupCSV->isUserInGroup($csvGroupUserID, $csvAdminGroupID);
+echo "Is user $csvGroupUserID in admin group? " . ($csvIsInAdmin ? "Yes" : "No") . $br;
+$csvIsInEditor = $userGroupCSV->isUserInGroup($csvGroupUserID, $csvEditorGroupID);
+echo "Is user $csvGroupUserID in editor group? " . ($csvIsInEditor ? "Yes" : "No") . $br;
+
+// List groups for user //
+$csvGroupsForUser = $userGroupCSV->getGroupsByUser($csvGroupUserID);
+echo "Groups for user $csvGroupUserID:".$br;
+var_dump($csvGroupsForUser);
+
+// List users for admin group //
+$csvUsersInAdmin = $userGroupCSV->getUsersInGroup($csvAdminGroupID);
+echo "Users in admin group $csvAdminGroupID:".$br;
+var_dump($csvUsersInAdmin);
+
+// Remove user from group //
+echo "Removing user $csvGroupUserID from CSV admin group...".$br;
+$csvRemoveResult = $userGroupCSV->delUserFromGroup($csvGroupUserID, $csvAdminGroupID);
+echo "Remove result: " . ($csvRemoveResult ? "Success" : "Failed - " . $userGroupCSV->lastError) . $br;
+$csvIsInAdminAfter = $userGroupCSV->isUserInGroup($csvGroupUserID, $csvAdminGroupID);
+echo "Is user still in admin group? " . ($csvIsInAdminAfter ? "Yes (unexpected)" : "No (expected)") . $br;
+
+$meow->profiler->record("UserGroupCSV Test Completed", "UserGroupCsv Test");
+echo $br;
+
+//--- Test UserPermCSV Function ---//
+echo $br."USERPERM CLASS TEST (CSV Storage)".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("UserPermCSV Test Start", "UserPermCSV Test");
+
+// Initialize UserPermCSV with standard configuration //
+echo "Initializing UserPermCSV...".$br;
+$userPermConfig = $meow->configTree['user']['userPerm'] ?? [];
+$userPermCSV = new UserPermCSV($userPermConfig);
+// Clear old permission data //
+if (file_exists($userPermCSV->userPermTableFile)) {
+    echo "Remove old user permission csv file: ".$userPermCSV->userPermTableFile.$br;
+    unlink($userPermCSV->userPermTableFile);
+}
+if (file_exists($userPermCSV->userGroupPermTableFile)) {
+    echo "Remove old user group permission csv file: ".$userPermCSV->userGroupPermTableFile.$br;
+    unlink($userPermCSV->userGroupPermTableFile);
+}
+
+$userPermAdminGroupID = 1;
+$userPermEditorGroupID = 2;
+$userPermViewerGroupID = 3;
+$userPermCSV = new UserPermCSV($userPermConfig);
+echo "UserPermCSV initialized successfully".$br.$br;
+$meow->profiler->record("Ready for user permission testing", "UserPermCSV Test");
+
+// This section tests basic UserPerm CRUD operations
+
+// Get a userID from previous tests (use user2ID if available, otherwise use 1)
+$testUserID = $user2ID;
+
+// Test 1: User Permission Management (basic CRUD)
+echo "User Permission Management (Basic CRUD):".$br;
+
+// Set user permissions (new API requires userID as first parameter)
+echo "Setting user permissions for user ID $testUserID, 'articles' item...".$br;
+$setResult1 = $userPermCSV->setUserPerm($testUserID, "articles", "read", 1);
+if ($setResult1) {
+    echo "Set articles read permission: Success (read permission: 1)".$br;
+} else {
+    echo "Set articles read permission failed: " . $userPermCSV->lastError . $br;
+}
+
+$setResult2 = $userPermCSV->setUserPerm($testUserID, "articles", "write", 1);
+if ($setResult2) {
+    echo "Set articles write permission: Success (write permission: 1)".$br;
+} else {
+    echo "Set articles write permission failed: " . $userPermCSV->lastError . $br;
+}
+
+$setResult3 = $userPermCSV->setUserPerm($testUserID, "articles", "delete", 0);
+if ($setResult3) {
+    echo "Set articles delete permission: Success (delete permission: 0)".$br;
+} else {
+    echo "Set articles delete permission failed: " . $userPermCSV->lastError . $br;
+}
+
+// Set permissions for another item
+echo "Setting user permissions for user ID $testUserID, 'users' item...".$br;
+$setResult4 = $userPermCSV->setUserPerm($testUserID, "users", "read", 1);
+$setResult5 = $userPermCSV->setUserPerm($testUserID, "users", "write", 0);
+$setResult6 = $userPermCSV->setUserPerm($testUserID, "users", "delete", 0);
+
+echo "Set users read permission (read permission: 1): " . ($setResult4 ? "Success" : "Failed - " . $userPermCSV->lastError) . $br;
+echo "Set users write permission (write permission: 0): " . ($setResult5 ? "Success" : "Failed - " . $userPermCSV->lastError) . $br;
+echo "Set users delete permission (delete permission: 0): " . ($setResult6 ? "Success" : "Failed - " . $userPermCSV->lastError) . $br;
+
+$meow->profiler->record("Set user permissions", "UserPermCSV Test");
+echo $br;
+
+// Test 2: Get User Permissions (new API returns array)
+echo "Get User Permissions:".$br;
+
+// Get all permissions for an item (new API requires userID as first parameter)
+$articlePerms = $userPermCSV->getUserPerm($testUserID, "articles");
+echo "All article permissions for user $testUserID: ".$br;
+if ($articlePerms && is_array($articlePerms)) {
+    echo "  read: " . ($articlePerms['read'] ?? "NULL") . $br;
+    echo "  write: " . ($articlePerms['write'] ?? "NULL") . $br;
+    echo "  delete: " . ($articlePerms['delete'] ?? "NULL") . $br;
+    echo "articlePerms:<br>";
+    var_dump($articlePerms);
+} else {
+    echo "  No permissions found".$br;
+}
+
+$userPerms = $userPermCSV->getUserPerm($testUserID, "users");
+echo "All user permissions for user $testUserID: ".$br;
+if ($userPerms && is_array($userPerms)) {
+    echo "  read: " . ($userPerms['read'] ?? "NULL") . $br;
+    echo "  write: " . ($userPerms['write'] ?? "NULL") . $br;
+    echo "  delete: " . ($userPerms['delete'] ?? "NULL") . $br;
+    echo "userPerms:<br>";
+    var_dump($userPerms);
+} else {
+    echo "  No permissions found".$br;
+}
+
+$meow->profiler->record("Get user permissions", "UserPermCSV Test");
+echo $br;
+
+// Group Permissions
+echo "Group Permissions:".$br;
+
+// Set group permissions
+echo "Setting admin group ($userPermAdminGroupID) permissions for 'articles'...".$br;
+$setGroupResult1 = $userPermCSV->setGroupPerm($userPermAdminGroupID, "articles", "read", 1);
+$setGroupResult2 = $userPermCSV->setGroupPerm($userPermAdminGroupID, "articles", "write", 1);
+$setGroupResult3 = $userPermCSV->setGroupPerm($userPermAdminGroupID, "articles", "delete", 1);
+
+echo "Set admin articles read permission to 1: " . ($setGroupResult1 ? "Success" : "Failed - " . $userPermCSV->lastError) . $br;
+echo "Set admin articles write permission to 1: " . ($setGroupResult2 ? "Success" : "Failed - " . $userPermCSV->lastError) . $br;
+echo "Set admin articles delete permission to 1: " . ($setGroupResult3 ? "Success" : "Failed - " . $userPermCSV->lastError) . $br;
+
+echo "Setting editor group ($userPermEditorGroupID) permissions for 'articles'...".$br;
+$setGroupResult4 = $userPermCSV->setGroupPerm($userPermEditorGroupID, "articles", "read", 1);
+$setGroupResult5 = $userPermCSV->setGroupPerm($userPermEditorGroupID, "articles", "write", 1);
+$setGroupResult6 = $userPermCSV->setGroupPerm($userPermEditorGroupID, "articles", "delete", 0);
+
+echo "Set editor articles read permission to 1: " . ($setGroupResult4 ? "Success" : "Failed - " . $userPermCSV->lastError) . $br;
+echo "Set editor articles write permission to 1: " . ($setGroupResult5 ? "Success" : "Failed - " . $userPermCSV->lastError) . $br;
+echo "Set editor articles delete permission to 0: " . ($setGroupResult6 ? "Success" : "Failed - " . $userPermCSV->lastError) . $br;
+echo $br;
+
+// Get group permissions
+$adminArticlePerms = $userPermCSV->getGroupPerm($userPermAdminGroupID, "articles");
+echo "Admin article permissions: ".$br;
+if ($adminArticlePerms && is_array($adminArticlePerms)) {
+    var_dump($adminArticlePerms);
+} else {
+    echo "  No permissions found".$br;
+}
+
+$editorArticlePerms = $userPermCSV->getGroupPerm($userPermEditorGroupID, "articles");
+echo "Editor article permissions: ".$br;
+if ($editorArticlePerms && is_array($editorArticlePerms)) {
+    var_dump($editorArticlePerms);
+} else {
+    echo "  No permissions found".$br;
+}
+
+$meow->profiler->record("Group permissions", "UserPermCSV Test");
+echo $br;
+
+// Delete Operations (basic CRUD)
+echo "Delete Operations:".$br;
+
+// Delete specific permission
+echo "Deleting articles write permission for user $testUserID...".$br;
+$deleteResult1 = $userPermCSV->delUserPerm($testUserID, "articles", "write");
+
+// Verify the delete
+echo "Verify the delete:".$br;
+$articlePermsAfterDelete = $userPermCSV->getUserPerm($testUserID, "articles");
+echo "Articles permissions after delete: ".$br;
+if ($articlePermsAfterDelete && is_array($articlePermsAfterDelete)) {
+    echo "  read: " . ($articlePermsAfterDelete['read'] ?? "NULL") . $br;
+    echo "  write: " . ($articlePermsAfterDelete['write'] ?? "NULL") . $br;
+    echo "  delete: " . ($articlePermsAfterDelete['delete'] ?? "NULL") . $br;
+    echo "articlePermsAfterDelete:<br>";
+    var_dump($articlePermsAfterDelete);
+} else {
+    echo "  No permissions found".$br;
+}
+echo $br;
+
+// Check if permission is deleted
+$articlePermsAfterDelete = $userPermCSV->getUserPerm($testUserID, "articles");
+echo "Articles permissions after delete: ".$br;
+if ($articlePermsAfterDelete && is_array($articlePermsAfterDelete)) {
+    echo "  read: " . ($articlePermsAfterDelete['read'] ?? "NULL") . $br;
+    echo "  write: " . ($articlePermsAfterDelete['write'] ?? "NULL") . $br;
+    echo "  delete: " . ($articlePermsAfterDelete['delete'] ?? "NULL") . $br;
+    echo "articlePermsAfterDelete:<br>";
+    var_dump($articlePermsAfterDelete);
+} else {
+    echo "  No permissions found".$br;
+}
+
+// Delete all permissions for an item
+echo "Deleting all permissions for user $testUserID...".$br;
+$deleteResult2 = $userPermCSV->delUserPerm($testUserID, "users");
+echo "Delete all permissions: " . ($deleteResult2 ? "Success" : "Failed - " . $userPermCSV->lastError) . $br;
+echo "Verify the delete:".$br;
+$userPermsAfterDelete = $userPermCSV->getUserPerm($testUserID, "users");
+echo "Users permissions after delete: ".$br;
+if ($userPermsAfterDelete && is_array($userPermsAfterDelete)) {
+    echo "  read: " . ($userPermsAfterDelete['read'] ?? "NULL") . $br;
+    echo "  write: " . ($userPermsAfterDelete['write'] ?? "NULL") . $br;
+    echo "  delete: " . ($userPermsAfterDelete['delete'] ?? "NULL") . $br;
+    echo "userPermsAfterDelete:<br>";
+    var_dump($userPermsAfterDelete);
+} else {
+    echo "  No permissions found".$br;
+}
+echo $br;
+
+// Delete group permission
+echo "Deleting editor group articles delete permission ...".$br;
+$deleteGroupResult = $userPermCSV->delGroupPerm($userPermEditorGroupID, "articles", "delete");
+echo "Delete editor group articles delete permission: " . ($deleteGroupResult ? "Success" : "Failed - " . $userPermCSV->lastError) . $br;
+echo "Verify the delete:".$br;
+$editorGroupArticlePermsAfterDelete = $userPermCSV->getGroupPerm($userPermEditorGroupID, "articles");
+echo "Editor group article permissions after delete: ".$br;
+if ($editorGroupArticlePermsAfterDelete && is_array($editorGroupArticlePermsAfterDelete)) {
+    echo "  read: " . ($editorGroupArticlePermsAfterDelete['read'] ?? "NULL") . $br;
+    echo "  write: " . ($editorGroupArticlePermsAfterDelete['write'] ?? "NULL") . $br;
+    echo "  delete: " . ($editorGroupArticlePermsAfterDelete['delete'] ?? "NULL") . $br;
+    echo "editorGroupArticlePermsAfterDelete:<br>";
+    var_dump($editorGroupArticlePermsAfterDelete);
+} else {
+    echo "  No permissions found".$br;
+}
+echo $br;
+
+$meow->profiler->record("Delete operations", "UserPermCSV Test");
+echo $br;
+
+$meow->profiler->record("UserPermCSV Test Completed", "UserPermCSV Test");
+
+//--- Test UserDB Function ---//
+echo $br."USER CLASS TEST (Database Storage)".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("UserDB Test Start", "UserDB Test");
+
+// Initialize UserDB with standard User class configuration //
+echo "Initializing UserDB...".$br;
+$userDB = new UserDB($meow->db, $meow->configTree['user']['user']);
+echo $br;
+
+// Clear old user data from database //
+echo "Clearing old user data from database...".$br;
+$meow->db->delete($userDB->userTable, []);
+echo "UserDB initialized successfully".$br.$br;
+
+// Display standard user fields configuration
+echo "Using standard User class userFields configuration:".$br;
+$userFields = $userDB->userFields;
+foreach ($userFields as $key => $value) {
+    echo "  $key => $value".$br;
+}
+echo $br;
+
+// Create Users Test //
+$meow->profiler->record("Ready for user testing", "UserDB Test");
+echo "Creating Users:".$br;
+
+// Create first user (use logical field names - normalization function handles conversion)
+$user1Data = [
+    'userName' => "testuser1",
+    'email'    => "user1@test.com",
+];
+var_dump($user1Data);
+$user1ID = $userDB->createUser("user1", "Password123!", $user1Data);
+if ($user1ID > 0) {
+    echo "User 1 created successfully with ID: $user1ID".$br;
+} else {
+    echo "Failed to create User 1: " . $userDB->lastError . $br;
+}
+
+// Create second user (use logical field names)
+$user2Data = [
+    'userName' => "testuser2", 
+    'email' => "user2@test.com"
+];
+var_dump($user2Data);
+$user2ID = $userDB->createUser("user2", "SecurePass456!", $user2Data);
+if ($user2ID > 0) {
+    echo "User 2 created successfully with ID: $user2ID".$br;
+} else {
+    echo "Failed to create User 2: " . $userDB->lastError . $br;
+}
+
+// Create third user (use logical field names)
+$user3Data = [
+    'userName' => "testuser3",
+    'email' => "user3@test.com"
+];
+var_dump($user3Data);
+$user3ID = $userDB->createUser("user3", "MyPass789!", $user3Data);
+if ($user3ID > 0) {
+    echo "User 3 created successfully with ID: $user3ID".$br;
+} else {
+    echo "Failed to create User 3: " . $userDB->lastError . $br;
+}
+
+$meow->profiler->record("Create user test completed", "UserDB Test");
+echo $br;
+
+// Test 2: Get User Information
+echo "Read User Information:".$br;
+
+// Get user by ID (normalization function handles field name conversion)
+$user1 = $userDB->getUserByID($user1ID);
+if ($user1) {
+    echo "Get User 1 by ID $user1ID: " . $user1['userName'] . " (" . $user1['email'] . ")".$br;
+} else {
+    echo "Failed to get User 1 by ID $user1ID".$br;
+}
+var_dump($user1);
+
+// Get user by login name (normalization function handles field name conversion)
+$loginName = "user2";
+$user2 = $userDB->getUserByLoginName($loginName);
+if ($user2) {
+    echo "Get User 2 by login name $loginName: " . $user2['userName'] . " (" . $user2['email'] . ")".$br;
+} else {
+    echo "Failed to get User 2 by login name $loginName".$br;
+}
+var_dump($user2);
+
+$meow->profiler->record("Read user test completed", "UserDB Test");
+
+// Test 3: Update User Tests
+echo "Update User Tests:".$br;
+
+echo "Updating user 1 by ID $user1ID...".$br;
+$updateData = [
+    'userName' => "updateduser1",
+    'email' => "updated1@test.com",
+    'extraData' => "This is extra data for user 1"
+];
+var_dump($updateData);
+$updateResult = $userDB->updateUser($updateData, $user1ID);
+if ($updateResult) {
+    echo "User 1 updated successfully by ID $user1ID".$br;
+    // Get updated user to verify
+    $updatedUserCheck = $userDB->getUserByID($user1ID);
+    if ($updatedUserCheck) {
+        echo "Updated user verification:".$br;
+        var_dump($updatedUserCheck);
+    }
+} else {
+    echo "Failed to update User 1 as current user: " . $userDB->lastError . $br;
+}
+echo $br;
+
+// Update user by specific ID (use logical field names)
+echo "Updating user 2 by specific ID $user2ID...".$br;
+$updateData2 = [
+    'userName' => "updateduser2",
+    'email' => "updated2@test.com"
+];
+var_dump($updateData2);
+$updateResult2 = $userDB->updateUser($updateData2, $user2ID);
+if ($updateResult2) {
+    echo "User 2 updated successfully by ID $user2ID".$br;
+    // Get updated user info (normalization function handles field name conversion)
+    $updatedUser2 = $userDB->getUserByID($user2ID);
+    if ($updatedUser2) {
+        echo "Updated userName: " . $updatedUser2['userName'] . $br;
+        echo "Updated email: " . $updatedUser2['email'] . $br;
+    }
+} else {
+    echo "Failed to update User 2 by ID $user2ID: " . $userDB->lastError . $br;
+}
+echo $br;
+
+// Test updating current user with additional fields (use logical field names)
+echo "Testing update current user with additional fields...".$br;
+$additionalUpdateData = [
+    'status' => "active",
+    'lastActive' => time() - 10,
+];
+var_dump($additionalUpdateData);
+$additionalUpdateResult = $userDB->updateUser($additionalUpdateData, $user1ID);
+if ($additionalUpdateResult) {
+    echo "Current user additional fields updated successfully".$br;
+    // Get updated user info (normalization function handles field name conversion)
+    $updatedUser = $userDB->getUserByID($user1ID);
+    if ($updatedUser) {
+        echo "Updated status: " . ($updatedUser['status'] ?? 'N/A') . $br;
+        echo "Updated last_active: " . ($updatedUser['lastActive'] ?? 'N/A') . $br;
+    }
+} else {
+    echo "Failed to update current user additional fields: " . $userDB->lastError . $br;
+}
+
+$meow->profiler->record("Update user test completed", "UserDB Test");
+echo $br;
+
+// Test 7: Delete User Tests
+echo "Delete User Tests:".$br;
+// Show all records before delete test
+echo "Records before delete test:".$br;
+$remainingUsers = $userDB->getMultiUserByID();
+if (is_array($remainingUsers)) {
+    var_dump($remainingUsers);
+} else {
+    echo "Cannot load user records!".$br;
+}   
+echo $br;
+
+// Delete user by specific ID
+echo "Deleting user 3 by specific ID $user3ID...".$br;
+$deleteResult = $userDB->delUser($user3ID);
+if ($deleteResult) {
+    echo "User 3 deleted successfully by ID $user3ID".$br;
+    
+    // Verify user is deleted
+    $deletedUser = $userDB->getUserByID($user3ID);
+    if (!$deletedUser) {
+        echo "User 3 confirmed deleted (not found in database) by ID $user3ID".$br;
+    } else {
+        echo "User 3 still exists in database (unexpected) by ID $user3ID".$br;
+    }
+} else {
+    echo "Failed to delete User 3 by ID $user3ID: " . $userDB->lastError . $br;
+}
+echo "Records after delete User 3:".$br;
+$remainingUsers = $userDB->getMultiUserByID();
+if (is_array($remainingUsers)) {
+    var_dump($remainingUsers);
+} else {
+    echo "Cannot load user records!".$br;
+}   
+echo $br;
+
+// Delete user by ID directly
+echo "Deleting user 1 by ID $user1ID...".$br;
+$deleteUser1Result = $userDB->delUser($user1ID);
+if ($deleteUser1Result) {
+    echo "User 1 deleted successfully by ID $user1ID".$br;
+    // Verify user is deleted
+    $deletedUser1 = $userDB->getUserByID($user1ID);
+    if (!$deletedUser1) {
+        echo "User 1 confirmed deleted (not found in database) by ID $user1ID".$br;
+    } else {
+        echo "User 1 still exists in database (unexpected) by ID $user1ID".$br;
+    }
+} else {
+    echo "Failed to delete User 1 by ID $user1ID: " . $userDB->lastError . $br;
+}
+
+echo "Records after delete User 1:".$br;
+$remainingUsers = $userDB->getMultiUserByID();
+if (is_array($remainingUsers)) {
+    var_dump($remainingUsers);
+} else {
+    echo "Cannot load user records!".$br;
+}   
+
+$meow->profiler->record("Delete user test completed by ID $user1ID", "UserDB Test");
+echo $br;
+
+// Test 8: Final Verification
+echo "Final Verification".$br;
+// Check remaining users
+echo "Checking remaining users in database...".$br;
+$remainingUser = $userDB->getUserByID($user2ID);
+if ($remainingUser) {
+    echo "User 2 still exists: " . $remainingUser['userName'] . " (" . $remainingUser['email'] . ")".$br;
+} else {
+    echo "User 2 not found (may have been deleted)".$br;
+}
+
+echo $br;
+$meow->profiler->record("UserDB Test Completed", "UserDB Test");
+
+//--- Test UserGroupDB Function ---//
+echo $br."USERGROUP CLASS TEST (Database Storage)".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("UserGroupDB Test Start", "UserGroupDB Test");
+
+// Initialize UserGroupDB //
+$userGroupDBConfig = $meow->configTree['user']['userGroup'] ?? [];
+$userGroupDB = new UserGroupDB($meow->db, $userGroupDBConfig);
+
+// Clear previous database records //
+echo "Clearing old group data from database...".$br;
+$meow->db->delete($userGroupDB->userGroupTable, []);
+$meow->db->delete($userGroupDB->userGroupLinkTable, []);
+
+// Create user groups //
+echo "Creating DB user groups...".$br;
+$dbAdminGroupID = $userGroupDB->createUserGroup("db_admin_group", ['groupDesc' => "DB Admin Group"]);
+$dbEditorGroupID = $userGroupDB->createUserGroup("db_editor_group", ['groupDesc' => "DB Editor Group"]);
+echo "DB admin group ID: $dbAdminGroupID".$br;
+echo "DB editor group ID: $dbEditorGroupID".$br;
+
+// Read user groups //
+$dbAdminGroup = $userGroupDB->getUserGroupByID($dbAdminGroupID);
+echo "DB admin group record:".$br;
+var_dump($dbAdminGroup);
+$dbEditorGroup = $userGroupDB->getUserGroupByName("db_editor_group");
+echo "DB editor group record (by name):".$br;
+var_dump($dbEditorGroup);
+
+// Add user to groups //
+$dbGroupUserID = $user2ID;
+echo "Adding user $dbGroupUserID to DB admin group...".$br;
+$dbAddAdmin = $userGroupDB->addUserToGroup($dbGroupUserID, $dbAdminGroupID);
+echo "Add to admin group result: " . ($dbAddAdmin ? "Success" : "Failed - " . $userGroupDB->lastError) . $br;
+
+echo "Adding user $dbGroupUserID to DB editor group...".$br;
+$dbAddEditor = $userGroupDB->addUserToGroup($dbGroupUserID, $dbEditorGroupID);
+echo "Add to editor group result: " . ($dbAddEditor ? "Success" : "Failed - " . $userGroupDB->lastError) . $br;
+
+// Check membership //
+$dbIsInAdmin = $userGroupDB->isUserInGroup($dbGroupUserID, $dbAdminGroupID);
+echo "Is user $dbGroupUserID in DB admin group? " . ($dbIsInAdmin ? "Yes" : "No") . $br;
+
+// List groups for user //
+$dbGroupsForUser = $userGroupDB->getGroupsByUser($dbGroupUserID);
+echo "DB groups for user $dbGroupUserID:".$br;
+var_dump($dbGroupsForUser);
+
+// List users for admin group //
+$dbUsersInAdmin = $userGroupDB->getUsersInGroup($dbAdminGroupID);
+echo "Users in DB admin group $dbAdminGroupID:".$br;
+var_dump($dbUsersInAdmin);
+
+// Remove user from group //
+echo "Removing user $dbGroupUserID from DB admin group...".$br;
+$dbRemoveResult = $userGroupDB->delUserFromGroup($dbGroupUserID, $dbAdminGroupID);
+echo "Remove result: " . ($dbRemoveResult ? "Success" : "Failed - " . $userGroupDB->lastError) . $br;
+$dbIsInAdminAfter = $userGroupDB->isUserInGroup($dbGroupUserID, $dbAdminGroupID);
+echo "Is user still in DB admin group? " . ($dbIsInAdminAfter ? "Yes (unexpected)" : "No (expected)") . $br;
+
+$meow->profiler->record("UserGroupDB Test Completed", "UserGroupDB Test");
+echo $br;
+
+//--- Test UserPermDB Function ---//
+echo $br."USERPERM CLASS TEST (Database Storage)".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("UserPermDB Test Start", "UserPermDB Test");
+
+// Initialize UserPermDB with standard configuration //
+echo "Initializing UserPermDB...".$br;
+$userPermDB = new UserPermDB($meow->db, $meow->configTree['user']['userPerm'] ?? []);
+echo "UserPermDB initialized successfully".$br.$br;
+$userPermDBAdminGroupID = 1;
+$userPermDBEditorGroupID = 2;
+$userPermDBViewerGroupID = 3;
+
+// Clear old permission data from database //
+echo "Clearing old permission data from database...".$br;
+$meow->db->delete($userPermDB->userGroupPermTable, []);
+$meow->db->delete($userPermDB->userPermTable, []);
+
+$meow->profiler->record("Ready for user permission testing", "UserPermDB Test");
+
+// Get a userID from previous tests (use user2ID if available, otherwise use 1)
+$testUserID = $user2ID ?? 1;
+
+// Test 1: User Permission Management (basic CRUD)
+echo "User Permission Management (Basic CRUD):".$br;
+
+// Set user permissions (new API requires userID as first parameter)
+echo "Setting user permissions for user ID $testUserID, 'articles' item...".$br;
+$setResult1 = $userPermDB->setUserPerm($testUserID, "articles", "read", 1);
+if ($setResult1) {
+    echo "Set articles read permission: Success (read permission: 1)".$br;
+} else {
+    echo "Set articles read permission failed: " . $userPermDB->lastError . $br;
+}
+
+$setResult2 = $userPermDB->setUserPerm($testUserID, "articles", "write", 1);
+if ($setResult2) {
+    echo "Set articles write permission: Success (write permission: 1)".$br;
+} else {
+    echo "Set articles write permission failed: " . $userPermDB->lastError . $br;
+}
+
+$setResult3 = $userPermDB->setUserPerm($testUserID, "articles", "delete", 0);
+if ($setResult3) {
+    echo "Set articles delete permission: Success (delete permission: 0)".$br;
+} else {
+    echo "Set articles delete permission failed: " . $userPermDB->lastError . $br;
+}
+
+// Set permissions for another item
+echo "Setting user permissions for user ID $testUserID, 'users' item...".$br;
+$setResult4 = $userPermDB->setUserPerm($testUserID, "users", "read", 1);
+$setResult5 = $userPermDB->setUserPerm($testUserID, "users", "write", 0);
+$setResult6 = $userPermDB->setUserPerm($testUserID, "users", "delete", 0);
+
+echo "Set users read permission (read permission: 1): " . ($setResult4 ? "Success" : "Failed - " . $userPermDB->lastError) . $br;
+echo "Set users write permission (write permission: 0): " . ($setResult5 ? "Success" : "Failed - " . $userPermDB->lastError) . $br;
+echo "Set users delete permission (delete permission: 0): " . ($setResult6 ? "Success" : "Failed - " . $userPermDB->lastError) . $br;
+
+$meow->profiler->record("Set user permissions", "UserPermDB Test");
+echo $br;
+
+// Test 2: Get User Permissions (new API returns array)
+echo "Get User Permissions:".$br;
+
+// Get all permissions for an item (new API requires userID as first parameter)
+$articlePerms = $userPermDB->getUserPerm($testUserID, "articles");
+echo "All article permissions for user $testUserID: ".$br;
+if ($articlePerms && is_array($articlePerms)) {
+    echo "  read: " . ($articlePerms['read'] ?? 0) . $br;
+    echo "  write: " . ($articlePerms['write'] ?? 0) . $br;
+    echo "  delete: " . ($articlePerms['delete'] ?? 0) . $br;
+    var_dump($articlePerms);
+} else {
+    echo "  No permissions found".$br;
+}
+
+$userPerms = $userPermDB->getUserPerm($testUserID, "users");
+echo "All user permissions for user $testUserID: ".$br;
+if ($userPerms && is_array($userPerms)) {
+    echo "  read: " . ($userPerms['read'] ?? "NULL") . $br;
+    echo "  write: " . ($userPerms['write'] ?? "NULL") . $br;
+    echo "  delete: " . ($userPerms['delete'] ?? "NULL") . $br;
+    var_dump($userPerms);
+} else {
+    echo "  No permissions found".$br;
+}
+
+$meow->profiler->record("Get user permissions", "UserPermDB Test");
+echo $br;
+
+// Test 3: Group Permissions (basic CRUD)
+echo "Group Permissions (Basic CRUD):".$br;
+
+// Set group permissions
+echo "Setting admin group ($userPermDBAdminGroupID) permissions for 'articles'...".$br;
+$setGroupResult1 = $userPermDB->setGroupPerm($userPermDBAdminGroupID, "articles", "read", 1);
+$setGroupResult2 = $userPermDB->setGroupPerm($userPermDBAdminGroupID, "articles", "write", 1);
+$setGroupResult3 = $userPermDB->setGroupPerm($userPermDBAdminGroupID, "articles", "delete", 1);
+
+echo "Set admin articles read permission to 1: " . ($setGroupResult1 ? "Success" : "Failed - " . $userPermDB->lastError) . $br;
+echo "Set admin articles write permission to 1: " . ($setGroupResult2 ? "Success" : "Failed - " . $userPermDB->lastError) . $br;
+echo "Set admin articles delete permission to 1: " . ($setGroupResult3 ? "Success" : "Failed - " . $userPermDB->lastError) . $br;
+
+echo "Setting editor group ($userPermDBEditorGroupID) permissions for 'articles'...".$br;
+$setGroupResult4 = $userPermDB->setGroupPerm($userPermDBEditorGroupID, "articles", "read", 1);
+$setGroupResult5 = $userPermDB->setGroupPerm($userPermDBEditorGroupID, "articles", "write", 1);
+$setGroupResult6 = $userPermDB->setGroupPerm($userPermDBEditorGroupID, "articles", "delete", 0);
+
+echo "Set editor articles read permission to 1: " . ($setGroupResult4 ? "Success" : "Failed - " . $userPermDB->lastError) . $br;
+echo "Set editor articles write permission to 1: " . ($setGroupResult5 ? "Success" : "Failed - " . $userPermDB->lastError) . $br;
+echo "Set editor articles delete permission to 0: " . ($setGroupResult6 ? "Success" : "Failed - " . $userPermDB->lastError) . $br;
+
+// Get group permissions (new API requires groupID and item)
+$adminArticlePerms = $userPermDB->getGroupPerm($userPermDBAdminGroupID, "articles");
+echo "Admin article permissions: ".$br;
+if ($adminArticlePerms && is_array($adminArticlePerms)) {
+    var_dump($adminArticlePerms);
+} else {
+    echo "  No permissions found".$br;
+}
+
+$editorArticlePerms = $userPermDB->getGroupPerm($userPermDBEditorGroupID, "articles");
+echo "Editor article permissions: ".$br;
+if ($editorArticlePerms && is_array($editorArticlePerms)) {
+    var_dump($editorArticlePerms);
+} else {
+    echo "  No permissions found".$br;
+}
+
+$meow->profiler->record("Group permissions", "UserPermDB Test");
+echo $br;
+
+// Test 4: Delete Operations (basic CRUD)
+echo "Delete Operations:".$br;
+
+// Delete specific permission
+echo "Deleting articles write permission for user $testUserID...".$br;
+$deleteResult1 = $userPermDB->delUserPerm($testUserID, "articles", "write");
+echo "Delete articles write permission: " . ($deleteResult1 ? "Success" : "Failed - " . $userPermDB->lastError) . $br;
+
+// Check if permission is deleted
+$articlePermsAfterDelete = $userPermDB->getUserPerm($testUserID, "articles");
+echo "Articles permissions after delete: ".$br;
+if ($articlePermsAfterDelete && is_array($articlePermsAfterDelete)) {
+    echo "  read: " . ($articlePermsAfterDelete['read'] ?? "NULL") . $br;
+    echo "  write: " . ($articlePermsAfterDelete['write'] ?? "NULL") . $br;
+    echo "  delete: " . ($articlePermsAfterDelete['delete'] ?? "NULL") . $br;
+    var_dump($articlePermsAfterDelete);
+} else {
+    echo "  No permissions found".$br;
+}
+
+// Delete all permissions for an item
+echo "Deleting all users permissions for user $testUserID...".$br;
+$deleteResult2 = $userPermDB->delUserPerm($testUserID, "users");
+echo "Delete all users permissions: " . ($deleteResult2 ? "Success" : "Failed - " . $userPermDB->lastError) . $br;
+
+// Delete group permission
+echo "Deleting editor articles delete permission...".$br;
+$deleteGroupResult = $userPermDB->delGroupPerm($userPermDBEditorGroupID, "articles", "delete");
+echo "Delete editor articles delete permission: " . ($deleteGroupResult ? "Success" : "Failed - " . $userPermDB->lastError) . $br;
+
+$meow->profiler->record("Delete operations", "UserPermDB Test");
+echo $br;
+
+// Note: Permission checking (checkUserPerm), group management (addUserToGroup, hasGroup, getUserGroups),
+// and permission inheritance are now handled by UserManager and tested in UserManager test section
+
+$meow->profiler->record("Final verification", "UserPermDB Test");
+echo $br;
+
+$meow->profiler->record("UserPermDB Test Completed", "UserPermDB Test");
+
+//--- Test UserManager with UserCSV ---//
+echo $br."USER MANAGER CLASS TEST (with CSV Storage)".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("UserManager CSV Test Start", "UserManager CSV Test");
+
+// Initialize UserManager with UserCSV
+echo "Initializing UserManager with UserCSV...".$br;
+
+// Initialize Password (shared between UserManagerCSV and UserManagerDB)
+$password = new Password($meow->configTree['user']['manager']['password'] ?? []);
+
+// Initialize User, UserGroup, UserPerm with CSV storage
+$userManagerUserCSV = new UserCSV($meow->configTree['user']['user'] ?? []);
+$userManagerGroupCSV = new UserGroupCSV($meow->configTree['user']['userGroup'] ?? []);
+$userManagerPermCSV = new UserPermCSV($meow->configTree['user']['userPerm'] ?? []);
+
+// Initialize UserManager with CSV components
+$userManagerConfig = $meow->configTree['user']['manager'] ?? [];
+$userManagerCSV = new UserManager($userManagerUserCSV, $userManagerConfig, $password, $userManagerGroupCSV, $userManagerPermCSV);
+
+echo "UserManager with UserCSV initialized successfully".$br.$br;
+
+// Create User via UserManager (using UserCSV)
+echo "Create User via UserManager (UserCSV)".$br;
+$csvUser1Data = [
+    'userName' => "csvmgruser1",
+    'email' => "csvmgruser1@test.com",
+];
+$csvUser1ID = $userManagerCSV->createUser("csvmgruser1", "CSVPass123!", $csvUser1Data);
+if ($csvUser1ID > 0) {
+    echo "CSV User 1 created via UserManager with ID: $csvUser1ID".$br;
+} else {
+    echo "Failed to create CSV User 1: " . $userManagerCSV->lastError . $br;
+}
+
+$meow->profiler->record("Create user via UserManager CSV", "UserManager CSV Test");
+echo $br;
+
+// Login Tests via UserManager (using UserCSV)
+echo "Login Tests via UserManager (UserCSV)".$br;
+
+// Test login with correct credentials
+echo "Testing login with correct credentials...".$br;
+$csvLoginResult = $userManagerCSV->login("csvmgruser1", "CSVPass123!");
+if ($csvLoginResult) {
+    echo "CSV User 1 logged in successfully via UserManager".$br;
+    $csvUserID = $userManagerCSV->resolveUserID();
+    echo "Logged in User ID: " . ($csvUserID ?? 'N/A') . $br;
+    echo "Is logged in: " . ($userManagerCSV->isLoggedIn() ? 'Yes' : 'No') . $br;
+    echo "Current user:".$br;
+    var_dump($userManagerCSV->user);
+    echo "\$_SESSION[".$userManagerCSV->sessionVarName."]:".$br;
+    var_dump($_SESSION[$userManagerCSV->sessionVarName] ?? null) . $br;
+} else {
+    echo "CSV User 1 login failed: " . $userManagerCSV->lastError . $br;
+}
+echo $br;
+
+
+// Logout first
+echo "Logging out...".$br;
+$userManagerCSV->logout();
+echo "Is logged in after logout: " . ($userManagerCSV->isLoggedIn() ? "Yes" : "No") . $br;
+echo "Current user:".$br;
+var_dump($userManagerCSV->user);
+echo "\$_SESSION[".$userManagerCSV->sessionVarName."]:".$br;
+var_dump($_SESSION[$userManagerCSV->sessionVarName] ?? null) . $br;
+echo $br;
+
+// Test login with non-exists user
+echo "Testing login with non-exists user...".$br;
+$csvWrongLoginResult = $userManagerCSV->login("NonExistUser", "WrongPassword");
+if ($csvWrongLoginResult) {
+    echo "Login with non-exists user succeeded (unexpected)".$br;
+} else {
+    echo "Login with non-exists user failed as expected: " . $userManagerCSV->lastError . $br;
+}
+echo $br;
+
+// Test login with wrong password
+echo "Testing login with wrong password...".$br;
+$csvWrongLoginResult = $userManagerCSV->login("csvmgruser1", "WrongPassword");
+if ($csvWrongLoginResult) {
+    echo "Login with wrong password succeeded (unexpected)".$br;
+} else {
+    echo "Login with wrong password failed as expected: " . $userManagerCSV->lastError . $br;
+}
+echo $br;
+
+// Test login again with correct credentials
+echo "Testing login again with correct credentials...".$br;
+$csvLoginResult2 = $userManagerCSV->login("csvmgruser1", "CSVPass123!");
+if ($csvLoginResult2) {
+    echo "CSV User 1 logged in successfully again".$br;
+    echo "Is logged in: " . ($userManagerCSV->isLoggedIn() ? 'Yes' : 'No') . $br;
+} else {
+    echo "CSV User 1 login failed: " . $userManagerCSV->lastError . $br;
+}
+$meow->profiler->record("Login via UserManager CSV", "UserManager CSV Test");
+echo $br;
+
+// Continue Login via UserManager (using UserCSV)
+echo "Continue Login via UserManager (UserCSV)".$br;
+// Simulate page reload by creating new UserManager instance with same session
+$userManagerCSV2 = new UserManager($userCSV, $userManagerConfig, $password, $userManagerGroupCSV, $userManagerPermCSV);
+$csvContinueLoginResult = $userManagerCSV2->continueLogin();
+echo "Continue login after session: " . ($csvContinueLoginResult ? "Success" : "Failed - " . $userManagerCSV2->lastError) . $br;
+if ($csvContinueLoginResult) {
+    echo "Is logged in after continueLogin: " . ($userManagerCSV2->isLoggedIn() ? "Yes" : "No") . $br;
+    $csvContinuedUserID = $userManagerCSV2->resolveUserID();
+    echo "Continued login User ID: " . ($csvContinuedUserID ?? 'N/A') . $br;
+    echo "Current user:".$br;
+    var_dump($userManagerCSV2->user);
+    echo "\$_SESSION[".$userManagerCSV2->sessionVarName."]:".$br;
+    var_dump($_SESSION[$userManagerCSV2->sessionVarName] ?? null) . $br;
+}
+$meow->profiler->record("Continue Login via UserManager CSV", "UserManager CSV Test");
+echo $br;
+
+// Create UserGroup via UserManager (using UserGroupCSV)
+echo "Create UserGroup via UserManager (UserGroupCSV)".$br;
+$csvGroup1ID = $userManagerCSV->createUserGroup('csvadmin', ['groupDesc' => 'CSV Admin group']);
+if ($csvGroup1ID > 0) {
+    echo "CSV Admin group created via UserManager with ID: $csvGroup1ID".$br;
+} else {
+    echo "Failed to create CSV Admin group: " . $userManagerCSV->lastError . $br;
+}
+$csvGroup2ID = $userManagerCSV->createUserGroup('csveditor', ['groupDesc' => 'CSV Editor group']);
+if ($csvGroup2ID > 0) {
+    echo "CSV Editor group created via UserManager with ID: $csvGroup2ID".$br;
+} else {
+    echo "Failed to create CSV Editor group: " . $userManagerCSV->lastError . $br;
+}
+$meow->profiler->record("Create group via UserManager CSV", "UserManager CSV Test");
+echo $br;
+
+// Add User to Group via UserManager (using UserGroupCSV)
+echo "Add User to Group via UserManager (UserGroupCSV)".$br;
+if ($csvUser1ID > 0 && $csvGroup1ID > 0 && $csvGroup2ID > 0) {
+    // Add User 1 to CSV groups
+    $csvAddGroupResult = $userManagerCSV->addUserToGroup($csvUser1ID, $csvGroup1ID);
+    echo "Add User 1 to CSV Admin group: " . ($csvAddGroupResult ? "Success" : "Failed - " . $userManagerCSV->lastError) . $br;
+    $csvAddGroupResult2 = $userManagerCSV->addUserToGroup($csvUser1ID, $csvGroup2ID);
+    echo "Add User 1 to CSV Editor group: " . ($csvAddGroupResult2 ? "Success" : "Failed - " . $userManagerCSV->lastError) . $br;
+    echo $br;
+
+    // Get User 1 groups
+    $csvUserGroups = $userManagerCSV->getGroupsByUser($csvUser1ID);
+    echo "User 1 groups: ".$br;
+    $csvIsInAdminGroup = (is_array($csvUserGroups) && in_array($csvGroup1ID, $csvUserGroups));
+    echo "Is User 1 in CSV Admin group: " . ($csvIsInAdminGroup ? "Yes" : "No") . $br;
+    $csvIsInEditorGroup = (is_array($csvUserGroups) && in_array($csvGroup2ID, $csvUserGroups));
+    echo "Is User 1 in CSV Editor group: " . ($csvIsInEditorGroup ? "Yes" : "No") . $br;
+} else {
+    echo "Failed to add User 1 to CSV Admin group: csvuser1ID or csvgroup1ID or csvgroup2ID is not valid" . $br;
+}
+$meow->profiler->record("Add user to group via UserManager CSV", "UserManager CSV Test");
+echo $br;
+
+// Set Permissions via UserManager (using UserPermCSV)
+echo "Set Permissions via UserManager (UserPermCSV)".$br;
+if ($csvUser1ID > 0) {
+    $csvPermResult1 = $userManagerCSV->setUserPermission($csvUser1ID, "articles", "read", 1);
+    echo "Set User 1 articles read permission (Articles read permission: 1): " . ($csvPermResult1 ? "Success" : "Failed - " . $userManagerCSV->lastError) . $br;
+    $csvPermResult2 = $userManagerCSV->setUserPermission($csvUser1ID, "articles", "write", 0);
+    echo "Set User 1 articles write permission (Articles write permission: 0): " . ($csvPermResult2 ? "Success" : "Failed - " . $userManagerCSV->lastError) . $br;
+    $csvPermResult3 = $userManagerCSV->setUserPermission($csvUser1ID, "articles", "delete", 0);
+    echo "Set User 1 articles write permission (Articles delete permission: 0): " . ($csvPermResult3 ? "Success" : "Failed - " . $userManagerCSV->lastError) . $br;
+}
+$meow->profiler->record("Set user permissions via UserManager CSV", "UserManager CSV Test");
+echo $br;
+
+// Check Permissions via UserManager (using UserPermCSV)
+echo "Check Permissions via UserManager (UserPermCSV)".$br;
+if ($csvUser1ID > 0) {
+    $csvHasReadPerm = $userManagerCSV->checkUserPermission("articles", "read", 0, $csvUser1ID);
+    echo "User 1 has articles read permission: " . ($csvHasReadPerm ? "Yes" : "No") . $br;
+    $csvHasWritePerm = $userManagerCSV->checkUserPermission("articles", "write", 0, $csvUser1ID);
+    echo "User 1 has articles write permission: " . ($csvHasWritePerm ? "Yes" : "No") . $br;
+    $csvHasDeletePerm = $userManagerCSV->checkUserPermission("articles", "delete", 0, $csvUser1ID);
+    echo "User 1 has articles delete permission: " . ($csvHasDeletePerm ? "Yes" : "No") . $br;
+    echo $br;
+    $csvPermValue = $userManagerCSV->getUserPermissionValue("articles", "read", $csvUser1ID);
+    echo "User 1 articles read permission value: " . print_r($csvPermValue, true) . $br;
+    $csvPermValue = $userManagerCSV->getUserPermissionValue("articles", "write", $csvUser1ID);
+    echo "User 1 articles write permission value: " . print_r($csvPermValue, true) . $br;
+    $csvPermValue = $userManagerCSV->getUserPermissionValue("articles", "delete", $csvUser1ID);
+    echo "User 1 articles delete permission value: " . print_r($csvPermValue, true) . $br;
+} else {
+    echo "Failed to check permissions for User 1: csvuser1ID is not valid" . $br;
+}
+$meow->profiler->record("Check user permissions via UserManager CSV", "UserManager CSV Test");
+echo $br;
+
+// Set Group Permissions via UserManager (using UserPermCSV)
+echo "Set Group Permissions via UserManager (UserPermCSV)".$br;
+if ($csvGroup1ID > 0 && $csvGroup2ID > 0) {
+    $csvGroupPermResult1 = $userManagerCSV->setGroupPermission($csvGroup1ID, "articles", "read", 0);
+    echo "Set CSV Admin group articles read permission (Articles read permission: 0): " . ($csvGroupPermResult1 ? "Success" : "Failed - " . $userManagerCSV->lastError) . $br;
+    $csvGroupPermResult2 = $userManagerCSV->setGroupPermission($csvGroup1ID, "articles", "write", 0);
+    echo "Set CSV Admin group articles write permission (Articles write permission: 0): " . ($csvGroupPermResult2 ? "Success" : "Failed - " . $userManagerCSV->lastError) . $br;
+    $csvGroupPermResult3 = $userManagerCSV->setGroupPermission($csvGroup1ID, "articles", "delete", 1);
+    echo "Set CSV Admin group articles delete permission (Articles delete permission: 1): " . ($csvGroupPermResult3 ? "Success" : "Failed - " . $userManagerCSV->lastError) . $br;
+    
+}
+$meow->profiler->record("Set group permissions via UserManager CSV", "UserManager CSV Test");
+echo $br;
+
+// Check Permissions via UserManager (using UserPermCSV)
+echo "Check Permissions via UserManager again with Group Permissions (UserPermCSV)".$br;
+if ($csvUser1ID > 0) {
+    $csvHasReadPerm = $userManagerCSV->checkUserPermission("articles", "read", 0, $csvUser1ID);
+    echo "User 1 has articles read permission: " . ($csvHasReadPerm ? "Yes" : "No") . $br;
+    $csvHasWritePerm = $userManagerCSV->checkUserPermission("articles", "write", 0, $csvUser1ID);
+    echo "User 1 has articles write permission: " . ($csvHasWritePerm ? "Yes" : "No") . $br;
+    $csvHasDeletePerm = $userManagerCSV->checkUserPermission("articles", "delete", 0, $csvUser1ID);
+    echo "User 1 has articles delete permission: " . ($csvHasDeletePerm ? "Yes" : "No") . $br;
+    echo $br;   
+    $csvPermValue = $userManagerCSV->getUserPermissionValue("articles", "read", $csvUser1ID);
+    echo "User 1 articles read permission value: " . print_r($csvPermValue, true) . $br;
+    $csvPermValue = $userManagerCSV->getUserPermissionValue("articles", "write", $csvUser1ID);
+    echo "User 1 articles write permission value: " . print_r($csvPermValue, true) . $br;
+    $csvPermValue = $userManagerCSV->getUserPermissionValue("articles", "delete", $csvUser1ID);
+    echo "User 1 articles delete permission value: " . print_r($csvPermValue, true) . $br;
+} else {
+    echo "Failed to check permissions for User 1: csvuser1ID is not valid" . $br;
+}
+$meow->profiler->record("Check permissions via UserManager CSV", "UserManager CSV Test");
+echo $br;
+
+// Logout via UserManager
+echo "Logout via UserManager (UserCSV)".$br;
+echo "Before logout:".$br;
+echo "Is logged in after logout: " . ($userManagerCSV->isLoggedIn() ? "Yes" : "No") . $br;
+echo "Current user:".$br;
+var_dump($userManagerCSV->user);
+echo "Current Groups:".$br;
+var_dump($userManagerCSV->userGroup);
+echo "Current Permissions:".$br;
+var_dump($userManagerCSV->userPerm);
+echo "Current Group Links:".$br;
+var_dump($userManagerCSV->userGroupLink);
+echo "Current Perm Group:".$br;
+var_dump($userManagerCSV->userPermGroup);
+echo "\$_SESSION[".$userManagerCSV->sessionVarName."]:".$br;
+var_dump($_SESSION[$userManagerCSV->sessionVarName] ?? null) . $br;
+$userManagerCSV->logout();
+echo "After logout:".$br;
+echo "Is logged in after logout: " . ($userManagerCSV->isLoggedIn() ? "Yes" : "No") . $br;
+echo "Current user:".$br;
+var_dump($userManagerCSV->user);
+echo "Current Groups:".$br;
+var_dump($userManagerCSV->userGroup);
+echo "Current Permissions:".$br;
+var_dump($userManagerCSV->userPerm);
+echo "Current Group Links:".$br;
+var_dump($userManagerCSV->userGroupLink);
+echo "Current Perm Group:".$br;
+var_dump($userManagerCSV->userPermGroup);
+echo "\$_SESSION[".$userManagerCSV->sessionVarName."]:".$br;
+var_dump($_SESSION[$userManagerCSV->sessionVarName] ?? null) . $br;
+
+$meow->profiler->record("Logout via UserManager CSV", "UserManager CSV Test");
+echo $br;
+
+//--- Test UserManager with UserDB ---//
+echo $br."Test UserManager with UserDB".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("UserManager DB Test Start", "UserManager DB Test");
+
+// Initialize UserManager with UserDB
+echo "Initializing UserManager with UserDB...".$br;
+
+// Reuse existing $userDB instance
+$userManagerGroupDB = new UserGroupDB($meow->db, $meow->configTree['user']['userGroup'] ?? []);
+$userManagerPermDB  = new UserPermDB($meow->db, $meow->configTree['user']['userPerm'] ?? []);
+
+// Reuse password config to stay aligned with CSV test
+$userManagerConfigDB = $meow->configTree['user']['manager'] ?? [];
+$userManagerDB       = new UserManager($userDB, $userManagerConfigDB, $password, $userManagerGroupDB, $userManagerPermDB);
+
+echo "UserManager with UserDB initialized successfully".$br.$br;
+
+// Create User via UserManager (using UserDB)
+echo "Create User via UserManager (UserDB)".$br;
+$dbUser1Data = [
+    'userName' => "dbmgruser1",
+    'email'    => "dbmgruser1@test.com",
+];
+$dbUser1ID = $userManagerDB->createUser("dbmgruser1", "DBPass123!", $dbUser1Data);
+if ($dbUser1ID > 0) {
+    echo "DB User 1 created via UserManager with ID: $dbUser1ID".$br;
+} else {
+    echo "Failed to create DB User 1: " . $userManagerDB->lastError . $br;
+}
+
+$meow->profiler->record("Create user via UserManager DB", "UserManager DB Test");
+echo $br;
+
+// Login Tests via UserManager (using UserDB)
+echo "Login Tests via UserManager (UserDB)".$br;
+
+// Test login with correct credentials
+echo "Testing login with correct credentials...".$br;
+$dbLoginResult = $userManagerDB->login("dbmgruser1", "DBPass123!");
+if ($dbLoginResult) {
+    echo "DB User 1 logged in successfully via UserManager".$br;
+    $dbUserID = $userManagerDB->resolveUserID();
+    echo "Logged in User ID: " . ($dbUserID ?? 'N/A') . $br;
+    echo "Is logged in: " . ($userManagerDB->isLoggedIn() ? 'Yes' : 'No') . $br;
+    echo "Current user:".$br;
+    var_dump($userManagerDB->user);
+    echo "\$_SESSION[".$userManagerDB->sessionVarName."]:".$br;
+    var_dump($_SESSION[$userManagerDB->sessionVarName] ?? null) . $br;
+} else {
+    echo "DB User 1 login failed: " . $userManagerDB->lastError . $br;
+}
+echo $br;
+
+// Logout first
+echo "Logging out...".$br;
+$userManagerDB->logout();
+echo "Is logged in after logout: " . ($userManagerDB->isLoggedIn() ? "Yes" : "No") . $br;
+echo "Current user:".$br;
+var_dump($userManagerDB->user);
+echo "\$_SESSION[".$userManagerDB->sessionVarName."]:".$br;
+var_dump($_SESSION[$userManagerDB->sessionVarName] ?? null) . $br;
+echo $br;
+
+// Test login with non-exists user
+echo "Testing login with non-exists user...".$br;
+$dbWrongLoginResult = $userManagerDB->login("NonExistUser", "WrongPassword");
+if ($dbWrongLoginResult) {
+    echo "Login with non-exists user succeeded (unexpected)".$br;
+} else {
+    echo "Login with non-exists user failed as expected: " . $userManagerDB->lastError . $br;
+}
+echo $br;
+
+// Test login with wrong password
+echo "Testing login with wrong password...".$br;
+$dbWrongLoginResult = $userManagerDB->login("dbmgruser1", "WrongPassword");
+if ($dbWrongLoginResult) {
+    echo "Login with wrong password succeeded (unexpected)".$br;
+} else {
+    echo "Login with wrong password failed as expected: " . $userManagerDB->lastError . $br;
+}
+echo $br;
+
+// Test login again with correct credentials
+echo "Testing login again with correct credentials...".$br;
+$dbLoginResult2 = $userManagerDB->login("dbmgruser1", "DBPass123!");
+if ($dbLoginResult2) {
+    echo "DB User 1 logged in successfully again".$br;
+    echo "Is logged in: " . ($userManagerDB->isLoggedIn() ? 'Yes' : 'No') . $br;
+} else {
+    echo "DB User 1 login failed: " . $userManagerDB->lastError . $br;
+}
+$meow->profiler->record("Login via UserManager DB", "UserManager DB Test");
+echo $br;
+
+// Continue Login via UserManager (using UserDB)
+echo "Continue Login via UserManager (UserDB)".$br;
+// Simulate page reload by creating new UserManager instance with same session
+$userManagerDB2 = new UserManager($userDB, $userManagerConfigDB, $password, $userManagerGroupDB, $userManagerPermDB);
+$dbContinueLoginResult = $userManagerDB2->continueLogin();
+echo "Continue login after session: " . ($dbContinueLoginResult ? "Success" : "Failed - " . $userManagerDB2->lastError) . $br;
+if ($dbContinueLoginResult) {
+    echo "Is logged in after continueLogin: " . ($userManagerDB2->isLoggedIn() ? "Yes" : "No") . $br;
+    $dbContinuedUserID = $userManagerDB2->resolveUserID();
+    echo "Continued login User ID: " . ($dbContinuedUserID ?? 'N/A') . $br;
+    echo "Current user:".$br;
+    var_dump($userManagerDB2->user);
+    echo "\$_SESSION[".$userManagerDB2->sessionVarName."]:".$br;
+    var_dump($_SESSION[$userManagerDB2->sessionVarName] ?? null) . $br;
+}
+$meow->profiler->record("Continue Login via UserManager DB", "UserManager DB Test");
+echo $br;
+
+// Create UserGroup via UserManager (using UserGroupDB)
+echo "Create UserGroup via UserManager (UserGroupDB)".$br;
+$dbGroupAdminID = $userManagerDB->createUserGroup('dbadmin', ['groupDesc' => 'DB Admin group']);
+if ($dbGroupAdminID > 0) {
+    echo "DB Admin group created via UserManager with ID: $dbGroupAdminID".$br;
+} else {
+    echo "Failed to create DB Admin group: " . $userManagerDB->lastError . $br;
+}
+$dbGroupEditorID = $userManagerDB->createUserGroup('dbeditor', ['groupDesc' => 'DB Editor group']);
+if ($dbGroupEditorID > 0) {
+    echo "DB Editor group created via UserManager with ID: $dbGroupEditorID".$br;
+} else {
+    echo "Failed to create DB Editor group: " . $userManagerDB->lastError . $br;
+}
+$meow->profiler->record("Create group via UserManager DB", "UserManager DB Test");
+echo $br;
+
+// Add User to Group via UserManager (using UserGroupDB)
+echo "Add User to Group via UserManager (UserGroupDB)".$br;
+if ($dbUser1ID > 0 && $dbGroupAdminID > 0 && $dbGroupEditorID > 0) {
+    // Add User 1 to DB groups
+    $dbAddGroupResult = $userManagerDB->addUserToGroup($dbUser1ID, $dbGroupAdminID);
+    echo "Add User 1 to DB Admin group: " . ($dbAddGroupResult ? "Success" : "Failed - " . $userManagerDB->lastError) . $br;
+    $dbAddGroupResult2 = $userManagerDB->addUserToGroup($dbUser1ID, $dbGroupEditorID);
+    echo "Add User 1 to DB Editor group: " . ($dbAddGroupResult2 ? "Success" : "Failed - " . $userManagerDB->lastError) . $br;
+    echo $br;
+
+    // Get User 1 groups
+    $dbUserGroups = $userManagerDB->getGroupsByUser($dbUser1ID);
+    echo "User 1 groups: ".$br;
+    $dbIsInAdminGroup = (is_array($dbUserGroups) && in_array($dbGroupAdminID, $dbUserGroups));
+    echo "Is User 1 in DB Admin group: " . ($dbIsInAdminGroup ? "Yes" : "No") . $br;
+    $dbIsInEditorGroup = (is_array($dbUserGroups) && in_array($dbGroupEditorID, $dbUserGroups));
+    echo "Is User 1 in DB Editor group: " . ($dbIsInEditorGroup ? "Yes" : "No") . $br;
+} else {
+    echo "Failed to add User 1 to DB groups: dbuser1ID or dbgroup IDs are not valid" . $br;
+}
+$meow->profiler->record("Add user to group via UserManager DB", "UserManager DB Test");
+echo $br;
+
+// Set Permissions via UserManager (using UserPermDB)
+echo "Set Permissions via UserManager (UserPermDB)".$br;
+if ($dbUser1ID > 0) {
+    $dbPermResult1 = $userManagerDB->setUserPermission($dbUser1ID, "articles", "read", 1);
+    echo "Set User 1 articles read permission (Articles read permission: 1): " . ($dbPermResult1 ? "Success" : "Failed - " . $userManagerDB->lastError) . $br;
+    $dbPermResult2 = $userManagerDB->setUserPermission($dbUser1ID, "articles", "write", 0);
+    echo "Set User 1 articles write permission (Articles write permission: 0): " . ($dbPermResult2 ? "Success" : "Failed - " . $userManagerDB->lastError) . $br;
+    $dbPermResult3 = $userManagerDB->setUserPermission($dbUser1ID, "articles", "delete", 0);
+    echo "Set User 1 articles delete permission (Articles delete permission: 0): " . ($dbPermResult3 ? "Success" : "Failed - " . $userManagerDB->lastError) . $br;
+}
+$meow->profiler->record("Set user permissions via UserManager DB", "UserManager DB Test");
+echo $br;
+
+// Check Permissions via UserManager (using UserPermDB)
+echo "Check Permissions via UserManager (UserPermDB)".$br;
+if ($dbUser1ID > 0) {
+    $dbHasReadPerm = $userManagerDB->checkUserPermission("articles", "read", 0, $dbUser1ID);
+    echo "User 1 has articles read permission: " . ($dbHasReadPerm ? "Yes" : "No") . $br;
+    $dbHasWritePerm = $userManagerDB->checkUserPermission("articles", "write", 0, $dbUser1ID);
+    echo "User 1 has articles write permission: " . ($dbHasWritePerm ? "Yes" : "No") . $br;
+    $dbHasDeletePerm = $userManagerDB->checkUserPermission("articles", "delete", 0, $dbUser1ID);
+    echo "User 1 has articles delete permission: " . ($dbHasDeletePerm ? "Yes" : "No") . $br;
+    echo $br;
+    $dbPermValue = $userManagerDB->getUserPermissionValue("articles", "read", $dbUser1ID);
+    echo "User 1 articles read permission value: " . print_r($dbPermValue, true) . $br;
+    $dbPermValue = $userManagerDB->getUserPermissionValue("articles", "write", $dbUser1ID);
+    echo "User 1 articles write permission value: " . print_r($dbPermValue, true) . $br;
+    $dbPermValue = $userManagerDB->getUserPermissionValue("articles", "delete", $dbUser1ID);
+    echo "User 1 articles delete permission value: " . print_r($dbPermValue, true) . $br;
+} else {
+    echo "Failed to check permissions for User 1: dbuser1ID is not valid" . $br;
+}
+$meow->profiler->record("Check user permissions via UserManager DB", "UserManager DB Test");
+echo $br;
+
+// Set Group Permissions via UserManager (using UserPermDB)
+echo "Set Group Permissions via UserManager (UserPermDB)".$br;
+if ($dbGroupAdminID > 0 && $dbGroupEditorID > 0) {
+    $dbGroupPermResult1 = $userManagerDB->setGroupPermission($dbGroupAdminID, "articles", "read", 0);
+    echo "Set DB Admin group articles read permission (Articles read permission: 0): " . ($dbGroupPermResult1 ? "Success" : "Failed - " . $userManagerDB->lastError) . $br;
+    $dbGroupPermResult2 = $userManagerDB->setGroupPermission($dbGroupAdminID, "articles", "write", 0);
+    echo "Set DB Admin group articles write permission (Articles write permission: 0): " . ($dbGroupPermResult2 ? "Success" : "Failed - " . $userManagerDB->lastError) . $br;
+    $dbGroupPermResult3 = $userManagerDB->setGroupPermission($dbGroupAdminID, "articles", "delete", 1);
+    echo "Set DB Admin group articles delete permission (Articles delete permission: 1): " . ($dbGroupPermResult3 ? "Success" : "Failed - " . $userManagerDB->lastError) . $br;
+}
+$meow->profiler->record("Set group permissions via UserManager DB", "UserManager DB Test");
+echo $br;
+
+// Check Permissions via UserManager again with Group Permissions (UserPermDB)
+echo "Check Permissions via UserManager again with Group Permissions (UserPermDB)".$br;
+if ($dbUser1ID > 0) {
+    $dbHasReadPerm = $userManagerDB->checkUserPermission("articles", "read", 0, $dbUser1ID);
+    echo "User 1 has articles read permission: " . ($dbHasReadPerm ? "Yes" : "No") . $br;
+    $dbHasWritePerm = $userManagerDB->checkUserPermission("articles", "write", 0, $dbUser1ID);
+    echo "User 1 has articles write permission: " . ($dbHasWritePerm ? "Yes" : "No") . $br;
+    $dbHasDeletePerm = $userManagerDB->checkUserPermission("articles", "delete", 0, $dbUser1ID);
+    echo "User 1 has articles delete permission: " . ($dbHasDeletePerm ? "Yes" : "No") . $br;
+    echo $br;   
+    $dbPermValue = $userManagerDB->getUserPermissionValue("articles", "read", $dbUser1ID);
+    echo "User 1 articles read permission value: " . print_r($dbPermValue, true) . $br;
+    $dbPermValue = $userManagerDB->getUserPermissionValue("articles", "write", $dbUser1ID);
+    echo "User 1 articles write permission value: " . print_r($dbPermValue, true) . $br;
+    $dbPermValue = $userManagerDB->getUserPermissionValue("articles", "delete", $dbUser1ID);
+    echo "User 1 articles delete permission value: " . print_r($dbPermValue, true) . $br;
+} else {
+    echo "Failed to check permissions for User 1: dbuser1ID is not valid" . $br;
+}
+$meow->profiler->record("Check permissions via UserManager DB", "UserManager DB Test");
+echo $br;
+
+// Logout via UserManager
+echo "Logout via UserManager (UserDB)".$br;
+echo "Before logout:".$br;
+echo "Is logged in after logout: " . ($userManagerDB->isLoggedIn() ? "Yes" : "No") . $br;
+echo "Current user:".$br;
+var_dump($userManagerDB->user);
+echo "Current Groups:".$br;
+var_dump($userManagerDB->userGroup);
+echo "Current Permissions:".$br;
+var_dump($userManagerDB->userPerm);
+echo "Current Group Links:".$br;
+var_dump($userManagerDB->userGroupLink);
+echo "Current Perm Group:".$br;
+var_dump($userManagerDB->userPermGroup);
+echo "\$_SESSION[".$userManagerDB->sessionVarName."]:".$br;
+var_dump($_SESSION[$userManagerDB->sessionVarName] ?? null) . $br;
+$userManagerDB->logout();
+echo "After logout:".$br;
+echo "Is logged in after logout: " . ($userManagerDB->isLoggedIn() ? "Yes" : "No") . $br;
+echo "Current user:".$br;
+var_dump($userManagerDB->user);
+echo "Current Groups:".$br;
+var_dump($userManagerDB->userGroup);
+echo "Current Permissions:".$br;
+var_dump($userManagerDB->userPerm);
+echo "Current Group Links:".$br;
+var_dump($userManagerDB->userGroupLink);
+echo "Current Perm Group:".$br;
+var_dump($userManagerDB->userPermGroup);
+echo "\$_SESSION[".$userManagerDB->sessionVarName."]:".$br;
+var_dump($_SESSION[$userManagerDB->sessionVarName] ?? null) . $br;
+
+$meow->profiler->record("Logout via UserManager DB", "UserManager DB Test");
+echo $br;
 
 // Show report //
 echo $br . $meow->profiler->report($isWeb);

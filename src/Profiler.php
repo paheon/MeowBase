@@ -1,12 +1,14 @@
 <?php
-//
-// Profiler.php - Profiler class
-//
-// Version: 1.0.0   - 2024-12-02
-// Author: Vincent Leung
-// Copyright: 2023-2024 Vincent Leung
-// License: MIT
-//
+/**
+ * Profiler Class
+ * 
+ * This class is a profiler for measuring the performance of the application.
+ * 
+ * @author Vincent Leung <meow@paheon.com>
+ * @version 1.3.0
+ * @license MIT
+ * @package Paheon\MeowBase
+ */ 
 namespace Paheon\MeowBase;
 
 use Paheon\MeowBase\ClassBase;

@@ -1,4 +1,14 @@
 <?php
+/**
+ * Mailer Class
+ * 
+ * This class is used to send emails with PHPMailer.
+ * 
+ * @author Vincent Leung <meow@paheon.com>
+ * @version 1.3.0
+ * @license MIT
+ * @package Paheon\MeowBase\Tools
+ */
 namespace Paheon\MeowBase\Tools;
 
 use Paheon\MeowBase\ClassBase;
@@ -234,7 +244,6 @@ class Mailer {
             $this->throwException($this->lastError, 4);
             return false;
         }
-        return true;
     }
 
     // Add String Attachment //
@@ -263,6 +272,7 @@ class Mailer {
     // Add Embedded Attachment //
     public function addEmbeddedImage(string $path, string $cid, string $name = '', string $encoding = PHPMailer::ENCODING_BASE64, string $type = '', string $disposition = 'inline'): bool {
         $this->lastError = "";
+        $result = false;
         try {
             $result = $this->mailer->addEmbeddedImage($path, $cid, $name, $encoding, $type, $disposition);
             if ($result) {
@@ -276,13 +286,12 @@ class Mailer {
                     'disposition' => $disposition
                 ];
             }
-            return $result;
         } catch (\Exception $e) {
             $this->lastError = $e->getMessage();
             $this->throwException($this->lastError, 4);
             return false;
         }
-        return true;
+        return $result;
     }
 
 

@@ -1,12 +1,14 @@
 <?php
-//
-// Cache.php - Cache class
-//
-// Version: 1.0.0   - 2024-12-02
-// Author: Vincent Leung
-// Copyright: 2023-2024 Vincent Leung
-// License: MIT
-//
+/**
+ * Cache Class
+ * 
+ * This class is used to manage cache.
+ * 
+ * @author Vincent Leung <meow@paheon.com>
+ * @version 1.3.0
+ * @license MIT
+ * @package Paheon\MeowBase
+ */
 namespace Paheon\MeowBase;
 
 use Paheon\MeowBase\ClassBase;

@@ -1,4 +1,14 @@
 <?php
+/**
+ * CsvDB Class
+ * 
+ * This class is used to manage CSV data and provide database-like features.
+ * 
+ * @author Vincent Leung <meow@paheon.com>
+ * @version 1.3.0
+ * @license MIT
+ * @package Paheon\MeowBase\Tools
+ */
 namespace Paheon\MeowBase\Tools;
 use Paheon\MeowBase\ClassBase;
 use Paheon\MeowBase\Tools\File;
@@ -80,7 +90,8 @@ class CsvDB implements \Iterator {
 	
 	// Getter //
 	public function getRow(int $rowID = 0):array|false {
-		return (isset($this->keyList[$rowID]) && isset($this->data[$this->keyList[$rowID]])) ? $this->data[$this->keyList[$rowID]] : false; 
+		// Use keyList to find data key if it maps rowID to data key
+		return $this->data[$rowID] ?? false;
 	}
 	
 	// Setter //
@@ -129,7 +140,8 @@ class CsvDB implements \Iterator {
 
 		// Replace old record //
 		if ($replaceRec) {
-			if (array_search($rowID, $this->keyList) !== false) {
+			//if (array_search($rowID, $this->keyList) !== false) {
+			if (isset($this->data[$rowID])) {
 				$this->data[$rowID] = array_replace($this->data[$rowID], $newRec);
 			} else {
 				$replaceRec = false;
@@ -142,13 +154,16 @@ class CsvDB implements \Iterator {
 				$rowID = (count($this->keyList) > 0) ? (int)max($this->keyList) + 1 : 0;
 			}
 			$newRec[CsvDB::REC_ROW_ID] = $rowID;
-			$newRec[CsvDB::REC_CREATE_DATE] = date("Y-m-d H:i:s");
-			$newRec[CsvDB::REC_UPDATE_DATE] = "";
+			if (!$newRec[CsvDB::REC_CREATE_DATE]) {
+				$newRec[CsvDB::REC_CREATE_DATE] = date("Y-m-d H:i:s");
+			}	
+			if (!$newRec[CsvDB::REC_UPDATE_DATE]) {
+				$newRec[CsvDB::REC_UPDATE_DATE] = date("Y-m-d H:i:s");
+			}		
 			$newRowNum = count($this->data);
 			$this->keyList[$newRowNum] = $rowID;
 			$this->data[$rowID] = $newRec;
 		}
-
 		return $rowID;
 	}
 
@@ -245,6 +260,7 @@ class CsvDB implements \Iterator {
 
 	// Evaluate criteria with AND/OR support
 	protected function evaluateCriteria(array $row, array $criteria): bool {
+
 		// Handle AND/OR operators
 		foreach ($criteria as $key => $value) {
 			// Extract operator and comment from key
@@ -421,6 +437,12 @@ class CsvDB implements \Iterator {
 			"del"	 => [],
 		];
 		$exitCode = 0; 
+
+		// Create file if csv file not exist //
+		if (!file_exists($readFileName)) {
+			$this->save();
+		}
+
 		$lineCnt = 0;
 		while ($writeFile = fopen($writeFileName, 'w')) {
 				
@@ -451,7 +473,7 @@ class CsvDB implements \Iterator {
 			$data = [];
 			$accLine = "";
 			$rowID = 0;
-			if ($readFile = fopen($readFileName, 'r')) {
+			if ($readFile = fopen($readFileName, 'r')) {				
 				while (!feof($readFile)) {			
 					// Load a line //
 					$line = fgets($readFile);
@@ -482,7 +504,7 @@ class CsvDB implements \Iterator {
 							$newHeader = $this->splitLine($line);
 							$defHeader = $this->sysFields;	// Preload system fields
 							foreach($newHeader as $label) {
-								if ($label == "") {
+								if ($label === "") {
 									$this->lastError = "Invalid header";
 									$exitCode = 4;
 									break 2;			// break while loop and exit
@@ -557,28 +579,34 @@ class CsvDB implements \Iterator {
 										$data[$field] = $value;
 									}
 								}	
-							}								
+							}
 							
 							// Use read record to fill up empty field //
 							$data = $this->fillupByHeader($data, $forceUseHeader ? $this->header : $defHeader);
-							$this->setRow($data, $rowID);
+							$newRowID = $this->setRow($data, $rowID);
 
 							// Write to file //
-							$line = $this->composeLine($this->getRow($rowID));
-							if (fwrite($writeFile, $line) === false) {
-								$this->lastError = "Failed to write data";
+							if (isset($this->data[$newRowID])) {
+								$newRow = $this->data[$newRowID];
+								$line = $this->composeLine($newRow);
+								if (fwrite($writeFile, $line) === false) {
+									$this->lastError = "Failed to write data";
+									$exitCode = 4;
+									break;
+								}
+							} else {
+								$this->lastError = "Data not found with rowID=$newRowID";								
 								$exitCode = 4;
 								break;
 							}
 						}
-
 					}
 					$lineCnt++;
 				}
 				
 				// Close read file //
 				fclose($readFile);
-
+				
 				if ($exitCode == 0) {
 
 					// Write header if not write before (mainly for write data to empty csv file)//
@@ -590,7 +618,6 @@ class CsvDB implements \Iterator {
 							break;
 						}	
 					}
-
 					// Add new records //
 					// Add queue: ['add' => [ 
 					// 					recList0 => [ field0 => $value0, ... ], 
@@ -601,9 +628,14 @@ class CsvDB implements \Iterator {
 						// Setup a record with header structure //
 						$data = $this->fillupByHeader($addRec, $forceUseHeader ? $this->header : $defHeader);
 						$rowID = $this->setRow($data);
-
-						// Write to file //						
-						$line = $this->composeLine($data);
+						// Write to file using the processed data from setRow //
+						$processedData = $this->getRow($rowID);
+						if ($processedData === false) {
+							$this->lastError = "Cannot obtain record from rowID=$rowID";
+							$exitCode = 5;
+							break;
+						}
+						$line = $this->composeLine($processedData);
 						if (fwrite($writeFile, $line) === false) {
 							$this->lastError = "Failed to write data";
 							$exitCode = 5;
@@ -613,12 +645,13 @@ class CsvDB implements \Iterator {
 						$lineCnt++;
 					}
 				}
-			}	
+			}
 
 			// Close write file //
 			fflush($writeFile);           			// flush output before releasing the lock
 			flock($writeFile, LOCK_UN); 			// Release lock
 			fclose($writeFile);						// Close file but not release the lock
+
 			if ($exitCode == 0) {
 				$retries = 0; 
 				$maxRetries = 50;
@@ -649,18 +682,21 @@ class CsvDB implements \Iterator {
 			}	
 			break;
 		}			
+		// Remove temp file //
+		if (file_exists($writeFileName)) @unlink($writeFileName);
+
+		// Set result //
 		$result["exitCode"]	 = $exitCode;
 		$result["lineCount"] = $lineCnt;
+
+		// Throw exception if error occured //
 		if ($exitCode != 0) {
 			$this->throwException($this->lastError, $exitCode);
 		}
-
 		return $result;
 	}
 
 	// Read all data from csv file //
-	//	
-	// Return : number of row saved (-1 = error occured)
 	public function load(?string $fileName = null):int {		
 		$this->lastError = "";
 
@@ -678,7 +714,6 @@ class CsvDB implements \Iterator {
 			while(!feof($csvFile)) {
 				// Load a line //
 				$line = fgets($csvFile);
-
 				// Skip empty line //
 				if ($accLine == "" && strlen($line) == 0) continue;
 				// check enclosure marks //
@@ -747,8 +782,9 @@ class CsvDB implements \Iterator {
 			$exitCode = 1;
 			$this->throwException($this->lastError, $exitCode);
 		}
-		fclose($csvFile);
-		
+		if (is_resource($csvFile)) {
+			fclose($csvFile);
+		}
 		return $exitCode;
 	}
 
@@ -827,7 +863,7 @@ class CsvDB implements \Iterator {
 	
 
 	// Search by field matching //
-	public function search(array $criteria, ?string $field = null, bool $asc = true):array|false {
+	public function search(array $criteria = [], ?string $field = null, bool $asc = true):array|false {
 		$result = [];
 		foreach($this->data as $rowID => $row) {
 			if ($this->evaluateCriteria($row, $criteria)) {
@@ -853,6 +889,52 @@ class CsvDB implements \Iterator {
 		}
 
 		return $result;
+	}
+
+	// Get minimum value of a field //
+	public function getMin(string $field):mixed {
+		$field = trim($field);
+		if (!in_array($field, $this->header)) {
+			$this->lastError = "Field '$field' not found in header";
+			$this->throwException($this->lastError, 9);
+			return null;
+		}
+
+		$min = null;
+		foreach($this->data as $row) {
+			$value = $row[$field];
+			if ($min === null) {
+				$min = $value;
+			} else {
+				if ($value < $min) {
+					$min = $value;
+				}
+			}
+		}
+		return $min;
+	}
+
+	// Get maximum value of a field //
+	public function getMax(string $field):mixed {
+		$field = trim($field);
+		if (!in_array($field, $this->header)) {
+			$this->lastError = "Field '$field' not found in header";
+			$this->throwException($this->lastError, 9);
+			return null;
+		}
+
+		$max = null;
+		foreach($this->data as $row) {
+			$value = $row[$field];
+			if ($max === null) {
+				$max = $value;
+			} else {
+				if ($value > $max) {
+					$max = $value;
+				}
+			}
+		}
+		return $max;
 	}
 
 	// Search by custom function //

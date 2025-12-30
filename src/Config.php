@@ -1,12 +1,14 @@
 <?php
-//
-// Config.php - Configuration class
-//
-// Version: 1.0.0   - 2024-12-02
-// Author: Vincent Leung
-// Copyright: 2023-2024 Vincent Leung
-// License: MIT
-//
+/**
+ * Config Class
+ * 
+ * This class is used to manage the configuration for the application.
+ * 
+ * @author Vincent Leung <meow@paheon.com>
+ * @version 1.3.0
+ * @license MIT
+ * @package Paheon\MeowBase
+ */
 namespace Paheon\MeowBase;
 
 //use Paheon\MeowBase\ClassBase;
@@ -28,6 +30,7 @@ class Config {
         "general" => [
             "timeZone" => "Asia/Hong_Kong",
             "sessionName" => "meow",
+            "sessionLifeTime" => 604800,
             "debug" => true
         ],
         "db" => [
@@ -84,6 +87,14 @@ class Config {
                 "decodeAnimation" => true,
                 "driver" => "ffffff",
                 "strip" => false,
+            ],
+        ],
+        "user" => [
+            "sessionPath" => "var/session",
+            "singleLogin" => false,
+            "forceLogin" => false,      // Force login even if user is already logged in
+            "csvDB" => [
+                "path" => "var/db",
             ],
         ],
         "sapi" => "unknown",

@@ -1,12 +1,14 @@
 <?php
-//
-// ClassBase.php - MeowBase Component Fundamental Class
-//
-// Version: 1.0.0   - 2024-12-02
-// Author: Vincent Leung
-// Copyright: 2023-2024 Vincent Leung
-// License: MIT
-//
+/**
+ * ClassBase.php - MeowBase Component Fundamental Class
+ * 
+ * This class is used to manage the fundamental class for MeowBase.
+ * 
+ * @author Vincent Leung <meow@paheon.com>
+ * @version 1.3.0
+ * @license MIT
+ * @package Paheon\MeowBase
+ */
 namespace Paheon\MeowBase;
 
 trait ClassBase {
@@ -232,25 +234,32 @@ trait ClassBase {
 
 	// Test for truvalue //
 	public function isTrue(mixed $value, mixed $matchValue = null):bool {
-		if (is_bool($value)) return $value;
-		// Return false if value is array and object //
-		if (is_array($value) || is_object($value) || is_null($value) || is_callable($value)) return false;   
-		// Convert value //
+		if (is_bool($value)) {
+            return $value;
+        } else if (is_array($value)) {
+            // Return true if value is not empty array //
+            return (bool)$value;
+        } else if (is_object($value) || is_null($value) || is_callable($value)) {
+            // Return false if value is object, null or callable //
+            return false;   
+        }    
+		// Convert value for string and numeric //
 		$strValue = strtolower((string)$value);
         $firstChar = substr($strValue, 0, 1);
         $secondChar = substr($strValue, 1, 1);
-        if ($firstChar == 'y' || $firstChar == 't' || $firstChar == 'e' || $firstChar == 'a' || ($firstChar == 'o' && $secondChar != 'f')  || (is_numeric($value) && $strValue != "0")) {
-			return true;
-		} else if ($matchValue !== null) {
-			if (is_array($matchValue)) {
-				return in_array($value, $matchValue);
-			} else if ($matchValue === $value) {
+		if ($firstChar == 'y' || $firstChar == 't' || $firstChar == 'e' || $firstChar == 'a' || ($firstChar == 'o' && $secondChar != 'f')  || (is_numeric($value) && $strValue != "0")) {
+            return true;
+        } else if ($matchValue !== null) {
+            if (is_array($matchValue)) {
+                // Return true if value is in matchValue //
+                return in_array($value, $matchValue);
+            } else if ($matchValue === $value) {
 				return true;
 			}
-		}	
-		return false;
-	}
-
+		}
+        return false;
+    }
+    
     // Throw exception //
     public function throwException(string $message = "", int $code = 0, ?\Throwable $previous = null):void {
         if ($this->useException) {

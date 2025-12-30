@@ -1,3 +1,16 @@
 .htaccess
-etc/config.php
+info.php
+sync_config.jsonc
+composer.lock
 backup/
+etc/config.php
+etc/.htaccess
+var/db/*
+var/log/*
+var/cache/*
+var/session/*
+var/tmp/*
+var/spool/*
+var/spool/mailer/*
+var/.htaccess
+vendor/
