@@ -1,3 +1,43 @@
+v1.3.1 (2026-01-30)
+- Updated all PHPDoc @version tags to 1.3.1
+- Added new tool classes:
+    - Autoload: Autoload class for dynamic autoload management    
+- Added new example files:
+    - sample/userdb-example.php: User management with database storage (UserDB/UserGroupDB/UserPermDB)
+    - sample/usermanager-example.php: Complete UserManager integration example for both CSV and DB storage
+- Updated sample/README.md with comprehensive example file documentation and summary table
+- Updated 'path' option in configuration file for 'docRoot', 'etc', and 'var' paths
+- Updated .gitignore file and added .gitkeep in empty directories
+- Added _getBaseDebugInfo() method to ClassBase trait for sub-classes to use
+- test.php improvements:
+    - Added timing measurements for CacheDB operations showing cache hit/miss performance
+    - Added performance improvement percentage display (speedup factor)
+    - Fixed DTree node creation to properly assign $nodeB2X variable
+    - Added Autoload tests section (Test 15)
+- ClassBase:
+    - Added eventList and eventSerial properties to manage events
+    - Added registerEvent() method to register event
+    - Added triggerEvent() method to trigger event
+    - Added unregisterEvent() method to unregister event
+    - Added __debugInfo() method to return debug information
+- DTree:
+    - Added '.' and '..' support in findByPath() and createByPath() methods
+    - Changed the behavior of createByPath() method - return null instead if child node already exists
+- DTreeIterator:
+    - Added Breadth first Search (BFS) support
+    - Added levelPosition and currLevel properties to manage level position and current level in breadth first search
+    - Added deepFirst property to manage deep first search or breadth first search
+    - Added __debugInfo() method to return debug information    
+- SysLog:
+    - Changed setLogLevel() method to setThreshold() method to set log threshold level
+    - Changed getLogLevel() method to getThreshold() method to get log threshold level
+    - May use threshold virtual property to manage log threshold level instead of setLogThresholdLevel() and getLogThresholdLevel() methods
+- MeowBase:
+    - Modified the type of constructor parameter $preload to bool|array method for preload option
+    - Fixed the bug of 'engine' option in configuration file
+- New tool classes:
+    - Autoload: Autoload class for dynamic autoload management    
+
 v1.3.0
 - Added PHPDoc for all classes and - Updated all PHPDoc @version tags to 1.3.0
 - Added error code and error message documentation, document/error.txt, for all classes

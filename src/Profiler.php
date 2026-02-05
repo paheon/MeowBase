@@ -5,7 +5,7 @@
  * This class is a profiler for measuring the performance of the application.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase
  */ 
@@ -101,5 +101,14 @@ class Profiler {
             $out = nl2br($out);
         }
         return $out;
+    }
+
+    public function __debugInfo():array {
+        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
+            'serial' => $this->serial,
+            'timeRec' => $this->timeRec,
+            'zeroPad' => $this->zeroPad,
+        ]);
+        return $debugInfo;
     }
 }

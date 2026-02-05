@@ -6,7 +6,7 @@
  * It supports both CSV and Cache storage.
  * 
  * @author Vincent Leung <vincent@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase\Tools
  * 
@@ -766,7 +766,7 @@ class UserManager {
                 }
             }
             if (is_array($groupIDList)) {
-                foreach ($groupIDList as $groupID) {
+                foreach ($groupIDList as $groupID => $groupData) {
                     // Get permission value from cache if available
                     if (isset($this->userPermGroup[$groupID][$item][$permission])) {
                         $permValue = (int)$this->userPermGroup[$groupID][$item][$permission];
@@ -877,6 +877,27 @@ class UserManager {
         
         // Note: Permissions are loaded on-demand when needed
         // They will be cached in $this->userPerm and $this->userPermGroup
+    }
+
+    public function __debugInfo():array {
+        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
+            'userObj' => $this->userObj,
+            'userGroupObj' => $this->userGroupObj,
+            'userPermObj' => $this->userPermObj,
+            'passwordObj' => $this->passwordObj,
+            'user' => $this->user,
+            'userGroup' => $this->userGroup,
+            'userGroupLink' => $this->userGroupLink,
+            'userPerm' => $this->userPerm,
+            'userPermGroup' => $this->userPermGroup,
+            'singleLogin' => $this->singleLogin,
+            'forceLogin' => $this->forceLogin,
+            'encrypted' => $this->encrypted,
+            'lifeTime' => $this->lifeTime,
+            'sessionID' => $this->sessionID,
+            'sessionVarName' => $this->sessionVarName,
+        ]);
+        return $debugInfo;
     }
 
 }

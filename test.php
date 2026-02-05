@@ -4,13 +4,31 @@
  * 
  * This file is used to test MeowBase framework functionality.
  * 
+ * Test Categories:
+ * 1. ClassBase Trait Tests
+ * 2. Config Management Tests
+ * 3. Logging & Profiling Tests
+ * 4. Cache Management Tests
+ * 5. Cached Database Tests
+ * 6. Tree Structure Tests
+ * 7. File Utility Tests
+ * 8. URL Utility Tests
+ * 9. MIME Type Tests
+ * 10. Email/Mailer Tests
+ * 11. CSV Database Tests
+ * 12. User Management Tests (CSV)
+ * 13. User Management Tests (DB)
+ * 14. UserManager Integration Tests
+ * 15. Autoload Tests
+ * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  */
 use Paheon\MeowBase\Config;
 use Paheon\MeowBase\MeowBase;
 use Paheon\MeowBase\ClassBase;
+use Paheon\MeowBase\SysLog;
 use Paheon\MeowBase\Tools\DTree;
 use Paheon\MeowBase\Tools\DTreeIterator;
 use Paheon\MeowBase\Tools\File;
@@ -50,10 +68,30 @@ $meow = new MeowBase($config);
 $isWeb = !PHP::isCLI();
 $br = $isWeb ? "<br>\n" : "\n";
 
-//--- Test ClassBase function ---//
+// Better debug output for X-Debug extension //
+ini_set('xdebug.var_display_max_depth', '10');
+ini_set('xdebug.var_display_max_children', '256');
+ini_set('xdebug.var_display_max_data', '1024');
+
+//========================================
+// Test 1: ClassBase Trait Tests
+//========================================
+// This section tests the ClassBase trait functionality including:
+// - Property access control (denyRead, denyWrite)
+// - Mass getter and setter operations
+// - Variable mapping
+// - Array element access by path
+// - Event system
+// - isTrue() method
+// - __debugInfo() method
+//========================================
+
+echo "==========================================".$br;
+echo "Test 1: ClassBase Trait Tests".$br;
+echo "==========================================".$br.$br;
 
 // Protected property //
-echo "Test ClassBase function".$br;
+echo "1.1 Protected Property Access".$br;
 echo "--------------------------------".$br;
 echo "Non-write protected property:".$br;
 echo "Read debug = ".var_export($meow->debug, true).$br;
@@ -70,7 +108,11 @@ $meow->lazyLoad = [];
 echo "Read lazyLoad = ".var_export($meow->lazyLoad, true).$br;
 echo $br;
 
-// Mass Getter and Mass Setter //
+echo $br;
+
+// 1.2 Mass Getter and Mass Setter //
+echo "1.2 Mass Getter and Mass Setter".$br;
+echo "--------------------------------".$br;
 class test {
     use ClassBase;
     protected string $a = "a";
@@ -82,7 +124,7 @@ class test {
     protected string $g = "g";
 }
 $testClass = new test();
-echo "Test massSetter:".$br;
+echo "Testing massSetter:".$br;
 echo "Before massSetter:".var_export($testClass, true).$br;
 $unsetList = $testClass->massSetter([ "a" => "A", "c" => "C", "d" => "D", "f" => "F", "g" => "G" , "r" => "R", "x" => "X" ]);
 echo "After massSetter:".var_export($testClass, true).$br;
@@ -96,18 +138,70 @@ echo "propList list: ".var_export($propList, true).$br;
 echo "Error: ".$testClass->lastError.$br;
 echo $br;
 
+echo $br;
+
+// 1.3 isTrue() Method //
+echo "1.3 isTrue() Method".$br;
+echo "--------------------------------".$br;
 $logicList = [ "y", "Yup", "yes", "T", "ture", "turth", "1", "true", "on", "open", "enable", "E", "100", "1", "On", 1, 1000, 0.1, 0x10,
                "n", "Nop", "no", "F", "false", "Fake", "0", "off", "close", "disable", "D", "-1", "000", 0, 0.0, 0x0 ];
-echo "Test isTrue:".$br;
+echo "Testing isTrue with various values:".$br;
 foreach ($logicList as $value) {
     echo "Test isTrue('$value') = ".var_export($meow->isTrue($value), true).$br;
 }
 echo $br;
+
+// 1.4 Event System //
+echo $br;
+echo "1.4 Event System".$br;
+echo "--------------------------------".$br;
+class EventTestClass {
+    use ClassBase;
+}
+$eventTest = new EventTestClass();
+$handler1 = $eventTest->registerEvent('test.event', function($args) use ($br) {
+    echo "  Handler 1 called with: ".$args['data'].$br;
+    return "Handler1Result";
+});
+$handler2 = $eventTest->registerEvent('test.event', function($args) use ($br) {
+    echo "  Handler 2 called with: ".$args['data'].$br;
+    return "Handler2Result";
+});
+echo "Registered 2 event handlers for 'test.event'".$br;
+$results = $eventTest->triggerEvent('test.event', null, ['data' => 'Test Data']);
+echo "Event trigger results: ".var_export($results, true).$br;
+echo "Unregistering handler 1:".$br;
+$eventTest->unregisterEvent('test.event', $handler1);
+$results2 = $eventTest->triggerEvent('test.event', null, ['data' => 'Test Data 2']);
+echo "Event trigger results after unregister: ".var_export($results2, true).$br;
+echo $br;
+
+// 1.5 __debugInfo() Method //
+echo $br;
+echo "1.5 __debugInfo() Method".$br;
+echo "--------------------------------".$br;
+$debugInfo = $testClass->__debugInfo();
+echo "Debug info: ".var_export($debugInfo, true).$br;
+$eventDebugInfo = $eventTest->__debugInfo();
+echo "Event test debug info (showing eventList keys): ".implode(", ", array_keys($eventDebugInfo['eventList'])).$br;
+echo $br;
+
 $meow->profiler->record("ClassBase function test completed");
 
-//--- Test Config Function ---//
+//========================================
+// Test 2: Config Management Tests
+//========================================
+// This section tests the Config class functionality including:
+// - Reading configuration by path
+// - Writing configuration by path
+// - Hierarchical configuration structure
+//========================================
 
-echo "Test Config Function".$br;
+echo $br."==========================================".$br;
+echo "Test 2: Config Management Tests".$br;
+echo "==========================================".$br.$br;
+
+echo "2.1 Reading and Writing Configuration".$br;
 echo "--------------------------------".$br;
 
 // set Log enable and disable //
@@ -160,11 +254,27 @@ function logFunc1(MeowBase $meow, string $data, string $br) {
     $meow->log->sysLog("logFunc1 -> Test Log function", [ "data" => $data ], 'debug');
 }
 
-echo "Test Log function".$br;
+//========================================
+// Test 3: Logging & Profiling Tests
+//========================================
+// This section tests SysLog and Profiler functionality including:
+// - Different log levels (DEBUG, INFO, WARNING, ERROR)
+// - Stack tracking
+// - Performance profiling
+//========================================
+
+echo $br."==========================================".$br;
+echo "Test 3: Logging & Profiling Tests".$br;
+echo "==========================================".$br.$br;
+
+echo "3.1 SysLog - System Logging".$br;
 echo "--------------------------------".$br;
 $data = null;
-$logFile = $meow->log->getLogFilePath();
-echo "Log file path: ".$logFile.$br;
+echo "Log file path: ".$meow->log->logFilePath.$br;
+$orgThreshold = $meow->log->threshold;
+echo "Log threshold: ".$orgThreshold.$br;
+$meow->log->threshold = SysLog::LOG_DEBUG;
+echo "Set threshold to ".$meow->log->threshold.$br;
 echo $br;
 echo "Write debug message".$br;  
 $meow->log->sysLog("Current time zone", [ "timeZone" => $meow->config->getConfigByPath("general/timeZone") ]);     // Log time zone for debug
@@ -178,12 +288,24 @@ logFunc2($meow, "Call stack enabled!", $br);
 $meow->log->stack = false;                       // Disable stack tracking to hide calling process
 logFunc2($meow, "Call stack disabled!", $br);    
 $meow->log->sysLog("Log demo completed!", null, 'info');
+$meow->log->threshold = $orgThreshold;
 echo $br;
 $meow->profiler->record("Log test completed");
 
-//--- Test Cache function ---//
+//========================================
+// Test 4: Cache Management Tests
+//========================================
+// This section tests Cache functionality including:
+// - Cache hit/miss checking
+// - Storing and retrieving data
+// - Cache tags and invalidation
+//========================================
 
-echo "Test Cache function".$br;
+echo $br."==========================================".$br;
+echo "Test 4: Cache Management Tests".$br;
+echo "==========================================".$br.$br;
+
+echo "4.1 Cache Operations".$br;
 echo "--------------------------------".$br;
 echo "Site ID: ".var_export($meow->cache->siteID, true).$br;
 echo $br;
@@ -242,10 +364,21 @@ if ($meow->cache->isHit($key)) {
 echo $br;
 $meow->profiler->record("Cache function test completed");
 
-//--- Test CacheDB function ---//
+//========================================
+// Test 5: Cached Database Tests
+//========================================
+// This section tests CacheDB functionality including:
+// - Cached SELECT queries
+// - Automatic cache invalidation
+// - Query logging
+//========================================
+
+echo $br."==========================================".$br;
+echo "Test 5: Cached Database Tests".$br;
+echo "==========================================".$br.$br;
 
 // Drop table if exists //
-echo "Test CacheDB function".$br;
+echo "5.1 CacheDB Operations".$br;
 echo "--------------------------------".$br;
 $meow->db->enableLog = true;
 $meow->profiler->record("DB Test start", "DB Test");
@@ -276,45 +409,75 @@ for ($i = 1; $i <= 1000; $i++) {
 $meow->log->enable = true;          // Enable log again
 $meow->profiler->record("Insert 1000 Records", "DB Test");
 
-// Select records //
+// Select records (without cache) //
 $meow->profiler->record("Cached Select Test Start", "DB Cached Select Test");
+$startTime = microtime(true);
 $data0 = $meow->db->select("test", "*", [
     "value[>=]" => 500
 ]);
-echo "select command readed ".count($data0)." records".$br;
+$selectTime = (microtime(true) - $startTime) * 1000;
+echo "select command read ".count($data0)." records".$br;
+echo "  Time: ".number_format($selectTime, 4)." ms (without cache)".$br;
 $meow->profiler->record("Select Records where value >= 500 (By select)", "DB Cached Select Test");
 
 // Select records and build cache //
+$startTime = microtime(true);
 $data1 = $meow->db->cachedSelect("test", "*", [
     "value[>=]" => 500
 ]);
-echo "cachedSelect command readed ".count($data1)." records (first time)".$br;
+$cachedSelectFirstTime = (microtime(true) - $startTime) * 1000;
+echo "cachedSelect command read ".count($data1)." records (first time - cache miss)".$br;
+echo "  Time: ".number_format($cachedSelectFirstTime, 4)." ms (building cache)".$br;
 $meow->profiler->record("Select Records where value >= 500 (By cachedSelect first time)", "DB Cached Select Test");
 
 // Select records again and test cache hit //
+$startTime = microtime(true);
 $data2 = $meow->db->cachedSelect("test", "*", [
     "value[>=]" => 500
 ]);
-echo "cachedSelect command readed ".count($data2)." records (second time)".$br;
+$cachedSelectSecondTime = (microtime(true) - $startTime) * 1000;
+echo "cachedSelect command read ".count($data2)." records (second time - cache hit)".$br;
+echo "  Time: ".number_format($cachedSelectSecondTime, 4)." ms (from cache)".$br;
+if ($selectTime > 0) {
+    $speedup = $selectTime / $cachedSelectSecondTime;
+    echo "  Performance improvement: ".number_format($speedup, 2)."x faster".$br;
+}
 $meow->profiler->record("Select Records where value >= 500 (By cachedSelect second time)", "DB Cached Select Test");
 
-// Get a single record //
+echo $br;
+// Get a single record (without cache) //
 $meow->profiler->record("Cached Get Test Start", "DB Cached Get Test");
+$startTime = microtime(true);
 $data3 = $meow->db->get("test", "*", [
     "name" => "name-00500"
 ]);
+$getTime = (microtime(true) - $startTime) * 1000;
+echo "get command for single record".$br;
+echo "  Time: ".number_format($getTime, 4)." ms (without cache)".$br;
 $meow->profiler->record("Get a single record (By get)", "DB Cached Get Test");
 
 // Get a single record and build cache //
+$startTime = microtime(true);
 $data4 = $meow->db->cachedGet("test", "*", [
     "name" => "name-00500"
 ]);
+$cachedGetFirstTime = (microtime(true) - $startTime) * 1000;
+echo "cachedGet command for single record (first time - cache miss)".$br;
+echo "  Time: ".number_format($cachedGetFirstTime, 4)." ms (building cache)".$br;
 $meow->profiler->record("Get a single record (By cachedGet first time)", "DB Cached Get Test");
 
-// Select records again and test cache hit //
+// Get a single record again and test cache hit //
+$startTime = microtime(true);
 $data5 = $meow->db->cachedGet("test", "*", [
     "name" => "name-00500"
 ]);
+$cachedGetSecondTime = (microtime(true) - $startTime) * 1000;
+echo "cachedGet command for single record (second time - cache hit)".$br;
+echo "  Time: ".number_format($cachedGetSecondTime, 4)." ms (from cache)".$br;
+if ($getTime > 0) {
+    $speedup = $getTime / $cachedGetSecondTime;
+    echo "  Performance improvement: ".number_format($speedup, 2)."x faster".$br;
+}
 $meow->profiler->record("Get a single record (By cachedGet second time)", "DB Cached Get Test");
 
 echo "data3: (Get a single record by get) get(\"test\", \"*\", [ \"name\" => \"name-00500\" ]) = ".$br;
@@ -370,10 +533,23 @@ var_dump($data9);
 
 $meow->profiler->record("DB Test Completed!", "DB Test");
 
-// Test DTree //
-echo "Test DTree function".$br;
+//========================================
+// Test 6: Tree Structure Tests  
+//========================================
+// This section tests DTree functionality including:
+// - Creating tree structures
+// - Node operations (add, delete, copy, move, rename)
+// - Path-based navigation
+// - Tree iteration (DFS and BFS)
+//========================================
+
+echo $br."==========================================".$br;
+echo "Test 6: Tree Structure Tests".$br;
+echo "==========================================".$br.$br;
+
+echo "6.1 DTree Operations".$br;
 echo "--------------------------------".$br;
-echo "The test will create a tree structure like this:".$br;
+echo "The tree structure:".$br;
 echo "Root".$br;
 echo "├── A".$br;
 echo "│   ├── A1".$br;
@@ -412,7 +588,7 @@ $nodeB->AddNode($nodeB2);                       // Hook node B2 to node B by Add
 $nodeB->createNode([ 'name' => "B3", 'data' => "Data B3" ]);
 
 // Create third level nodes under B2
-$nodeB2->createNode([ 'name' => "B2X", 'data' => "Data B2X" ]);
+$nodeB2X = $nodeB2->createNode([ 'name' => "B2X", 'data' => "Data B2X" ]);
 $nodeB2Y = new DTree("B2Y", "Data B2Y", $nodeB2);
 
 // Create remained nodes by createByArray //
@@ -464,19 +640,58 @@ foreach ($testPaths as $path) {
     echo "Finding path '$path': " . ($node ? "Found (path: {$node->getPath()}, data: {$node->data})" : "Not found") . $br;
 }
 
-// Test tree iteration
-echo $br."Test tree iteration (Global):".$br;
-$iterator = new DTreeIterator($tree);
+// Test . and .. path navigation
+echo $br."Test . and .. path navigation:".$br;
+$testNode = $nodeB2X;
+echo "Current node: ".$testNode->getPath().$br;
+$currentDir = $testNode->findByPath('.');
+echo "findByPath('.'): " . ($currentDir ? "Found (path: {$currentDir->getPath()})" : "Not found") . $br;
+$parentDir = $testNode->findByPath('..');
+echo "findByPath('..'): " . ($parentDir ? "Found (path: {$parentDir->getPath()})" : "Not found") . $br;
+$grandparentDir = $testNode->findByPath('../..');
+echo "findByPath('../..'): " . ($grandparentDir ? "Found (path: {$grandparentDir->getPath()})" : "Not found") . $br;
+$relativePath = $testNode->findByPath('./../B1');
+echo "findByPath('./../B1'): " . ($relativePath ? "Found (path: {$relativePath->getPath()})" : "Not found") . $br;
+
+// Test tree iteration - Depth First Search (DFS)
+echo $br."Test tree iteration - DFS (Global):".$br;
+$iterator = new DTreeIterator($tree, true, true);
 foreach ($iterator as $position => $node) {
     echo str_pad("", strlen($node->getPath()) * 2, " ") . $node->getPath() . " => " . $node->data . $br;
 }
 
-echo $br."Test tree iteration (from nodeB):".$br;
-$iterator = new DTreeIterator($nodeB, false);
+// Test tree iteration - Breadth First Search (BFS)
+echo $br."Test tree iteration - BFS (Global):".$br;
+$iteratorBFS = new DTreeIterator($tree, true, false);
+foreach ($iteratorBFS as $position => $node) {
+    echo str_pad("", strlen($node->getPath()) * 2, " ") . $node->getPath() . " => " . $node->data . $br;
+}
+
+echo $br."Test tree iteration - DFS (from nodeB):".$br;
+$iterator = new DTreeIterator($nodeB, false, true);
 foreach ($iterator as $position => $node) {
     echo "Position: ".$position.$br;
     echo str_pad("", strlen($node->getPath()) * 2, " ") . $node->getPath() . " => " . $node->data . $br;
 }
+
+echo $br."Test tree iteration - BFS (from nodeB):".$br;
+$iteratorBFSLocal = new DTreeIterator($nodeB, false, false);
+foreach ($iteratorBFSLocal as $position => $node) {
+    echo "Position: ".$position.$br;
+    echo str_pad("", strlen($node->getPath()) * 2, " ") . $node->getPath() . " => " . $node->data . $br;
+}
+
+// Test DTreeIterator __debugInfo()
+echo $br."Test DTreeIterator __debugInfo():".$br;
+$debugIterator = new DTreeIterator($tree, true, true);
+$debugIterator->next(); // Move to next node to populate state
+$iteratorDebugInfo = $debugIterator->__debugInfo();
+echo "Iterator debug info (global, DFS):".$br;
+echo "  global: ".var_export($iteratorDebugInfo['global'], true).$br;
+echo "  deepFirst: ".var_export($iteratorDebugInfo['deepFirst'], true).$br;
+echo "  position: ".$iteratorDebugInfo['position'].$br;
+echo "  currLevel: ".$iteratorDebugInfo['currLevel'].$br;
+echo $br;
 
 // Test node operations
 echo $br."Test node operations:".$br;
@@ -554,19 +769,39 @@ echo "Unserialized tree: ".($unserializedTree ? "Success" : "Failed - " . $tree-
 
 // Verify the unserialized tree structure
 if ($unserializedTree) {
-    echo "Unserialized tree structure:".$br;
-    $iterator = new DTreeIterator($unserializedTree);
+    echo "Unserialized tree structure (DFS):".$br;
+    $iterator = new DTreeIterator($unserializedTree, true, true);
     foreach ($iterator as $position => $node) {
         echo str_pad("", strlen($node->getPath()) * 2, " ") . $node->getPath() . " => " . $node->data . $br;
     }
+    
+    // Test __debugInfo() on DTree
+    echo $br."Test DTree __debugInfo():".$br;
+    $treeDebugInfo = $tree->__debugInfo();
+    echo "Tree debug info:".$br;
+    echo "  path: ".$treeDebugInfo['path'].$br;
+    echo "  name: ".$treeDebugInfo['name'].$br;
+    echo "  isRoot: ".var_export($treeDebugInfo['isRoot'], true).$br;
+    echo "  children count: ".count($treeDebugInfo['children']).$br;
 } else {
     echo "Failed to unserialize tree due to hash mismatch or other error.".$br;
 }
 
 $meow->profiler->record("Unserialize test completed", "DTree Test");
 
-// Test File class //
-echo $br."Test File class".$br;
+//========================================
+// Test 7: File Utility Tests
+//========================================
+// This section tests File utility functionality including:
+// - File path operations
+// - Temporary file creation
+//========================================
+
+echo $br."==========================================".$br;
+echo "Test 7: File Utility Tests".$br;
+echo "==========================================".$br.$br;
+
+echo "7.1 File Operations".$br;
 echo "--------------------------------".$br;
 $meow->profiler->record("File Test Start", "File Test");
 
@@ -638,8 +873,19 @@ if (file_exists($tempFilePath)) {
 
 $meow->profiler->record("File Test Completed", "File Test");
 
-// Test Url class //
-echo $br."Test Url class".$br;
+//========================================
+// Test 8: URL Utility Tests
+//========================================
+// This section tests URL utility functionality including:
+// - URL building and manipulation
+// - URL info retrieval
+//========================================
+
+echo $br."==========================================".$br;
+echo "Test 8: URL Utility Tests".$br;
+echo "==========================================".$br.$br;
+
+echo "8.1 URL Operations".$br;
 echo "--------------------------------".$br;
 $meow->profiler->record("Url Test Start", "Url Test");
 
@@ -681,8 +927,19 @@ if ($urlInfo !== false) {
 
 $meow->profiler->record("Url Test Completed", "Url Test");
 
-// Test Mime class //
-echo $br."Test Mime class".$br;
+//========================================
+// Test 9: MIME Type Tests
+//========================================
+// This section tests MIME type detection functionality including:
+// - File to MIME type detection
+// - MIME type to icon mapping
+//========================================
+
+echo $br."==========================================".$br;
+echo "Test 9: MIME Type Tests".$br;
+echo "==========================================".$br.$br;
+
+echo "9.1 MIME Operations".$br;
 echo "--------------------------------".$br;
 $meow->profiler->record("Mime Test Start", "Mime Test");
 
@@ -722,8 +979,21 @@ if ($aliasMime !== false) {
 
 $meow->profiler->record("Mime Test Completed", "Mime Test");
 
-// Test Mailer class //
-echo $br."Test Mailer class".$br;
+//========================================
+// Test 10: Email/Mailer Tests
+//========================================
+// This section tests Mailer functionality including:
+// - Email validation
+// - Address management
+// - Email sending (HTML/plain text)
+// - Attachments
+//========================================
+
+echo $br."==========================================".$br;
+echo "Test 10: Email/Mailer Tests".$br;
+echo "==========================================".$br.$br;
+
+echo "10.1 Mailer Operations".$br;
 echo "--------------------------------".$br;
 $meow->profiler->record("Mailer Test Start", "Mailer Test");
 
@@ -964,8 +1234,20 @@ echo $br;
 
 $meow->profiler->record("Mailer Test Completed", "Mailer Test");
 
-// Test CsvDB class //
-echo $br."Test CsvDB class".$br;
+//========================================
+// Test 11: CSV Database Tests
+//========================================
+// This section tests CsvDB functionality including:
+// - CRUD operations
+// - Advanced search
+// - Queue operations
+//========================================
+
+echo $br."==========================================".$br;
+echo "Test 11: CSV Database Tests".$br;
+echo "==========================================".$br.$br;
+
+echo "11.1 CsvDB Operations".$br;
 echo "--------------------------------".$br;
 $meow->profiler->record("CsvDB Test Start", "CsvDB Test");
 
@@ -1363,8 +1645,20 @@ if (file_exists($testCsvFile)) {
 
 $meow->profiler->record("CsvDB Test Completed", "CsvDB Test");
 
-//--- Test UserCSV Function ---//
-echo $br."USER CLASS TEST (CSV Storage)".$br;
+//========================================
+// Test 12: User Management Tests (CSV)
+//========================================
+// This section tests User management with CSV storage including:
+// - UserCSV: User CRUD operations
+// - UserGroupCSV: User group management
+// - UserPermCSV: User permission management
+//========================================
+
+echo $br."==========================================".$br;
+echo "Test 12: User Management Tests (CSV)".$br;
+echo "==========================================".$br.$br;
+
+echo "12.1 UserCSV Function".$br;
 echo "--------------------------------".$br;
 $meow->profiler->record("UserCSV Test Start", "UserCsv Test");
 
@@ -1631,8 +1925,8 @@ if ($remainingUser) {
 }
 echo $br;
 
-//--- Test UserGroupCSV Function ---//
-echo $br."USERGROUP CLASS TEST (CSV Storage)".$br;
+echo $br;
+echo "12.2 UserGroupCSV Function".$br;
 echo "--------------------------------".$br;
 $meow->profiler->record("UserGroupCSV Test Start", "UserGroupCsv Test");
 
@@ -1729,8 +2023,8 @@ echo "Is user still in admin group? " . ($csvIsInAdminAfter ? "Yes (unexpected)"
 $meow->profiler->record("UserGroupCSV Test Completed", "UserGroupCsv Test");
 echo $br;
 
-//--- Test UserPermCSV Function ---//
-echo $br."USERPERM CLASS TEST (CSV Storage)".$br;
+echo $br;
+echo "12.3 UserPermCSV Function".$br;
 echo "--------------------------------".$br;
 $meow->profiler->record("UserPermCSV Test Start", "UserPermCSV Test");
 
@@ -1949,8 +2243,20 @@ echo $br;
 
 $meow->profiler->record("UserPermCSV Test Completed", "UserPermCSV Test");
 
-//--- Test UserDB Function ---//
-echo $br."USER CLASS TEST (Database Storage)".$br;
+//========================================
+// Test 13: User Management Tests (DB)
+//========================================
+// This section tests User management with database storage including:
+// - UserDB: User CRUD operations
+// - UserGroupDB: User group management
+// - UserPermDB: User permission management
+//========================================
+
+echo $br."==========================================".$br;
+echo "Test 13: User Management Tests (DB)".$br;
+echo "==========================================".$br.$br;
+
+echo "13.1 UserDB Function".$br;
 echo "--------------------------------".$br;
 $meow->profiler->record("UserDB Test Start", "UserDB Test");
 
@@ -1973,6 +2279,8 @@ foreach ($userFields as $key => $value) {
 echo $br;
 
 // Create Users Test //
+$meow->db->delete($userDB->userTable, []);
+echo "User table record deleted".$br.$br;
 $meow->profiler->record("Ready for user testing", "UserDB Test");
 echo "Creating Users:".$br;
 
@@ -2188,8 +2496,8 @@ if ($remainingUser) {
 echo $br;
 $meow->profiler->record("UserDB Test Completed", "UserDB Test");
 
-//--- Test UserGroupDB Function ---//
-echo $br."USERGROUP CLASS TEST (Database Storage)".$br;
+echo $br;
+echo "13.2 UserGroupDB Function".$br;
 echo "--------------------------------".$br;
 $meow->profiler->record("UserGroupDB Test Start", "UserGroupDB Test");
 
@@ -2251,8 +2559,8 @@ echo "Is user still in DB admin group? " . ($dbIsInAdminAfter ? "Yes (unexpected
 $meow->profiler->record("UserGroupDB Test Completed", "UserGroupDB Test");
 echo $br;
 
-//--- Test UserPermDB Function ---//
-echo $br."USERPERM CLASS TEST (Database Storage)".$br;
+echo $br;
+echo "13.3 UserPermDB Function".$br;
 echo "--------------------------------".$br;
 $meow->profiler->record("UserPermDB Test Start", "UserPermDB Test");
 
@@ -2425,8 +2733,20 @@ echo $br;
 
 $meow->profiler->record("UserPermDB Test Completed", "UserPermDB Test");
 
-//--- Test UserManager with UserCSV ---//
-echo $br."USER MANAGER CLASS TEST (with CSV Storage)".$br;
+//========================================
+// Test 14: UserManager Integration Tests
+//========================================
+// This section tests UserManager integration including:
+// - User login/logout
+// - Session management
+// - Permission checking
+//========================================
+
+echo $br."==========================================".$br;
+echo "Test 14: UserManager Integration Tests".$br;
+echo "==========================================".$br.$br;
+
+echo "14.1 UserManager with UserCSV".$br;
 echo "--------------------------------".$br;
 $meow->profiler->record("UserManager CSV Test Start", "UserManager CSV Test");
 
@@ -2691,7 +3011,8 @@ $meow->profiler->record("Logout via UserManager CSV", "UserManager CSV Test");
 echo $br;
 
 //--- Test UserManager with UserDB ---//
-echo $br."Test UserManager with UserDB".$br;
+echo $br;
+echo "14.2 UserManager with UserDB".$br;
 echo "--------------------------------".$br;
 $meow->profiler->record("UserManager DB Test Start", "UserManager DB Test");
 
@@ -2948,6 +3269,18 @@ var_dump($_SESSION[$userManagerDB->sessionVarName] ?? null) . $br;
 
 $meow->profiler->record("Logout via UserManager DB", "UserManager DB Test");
 echo $br;
+
+//========================================
+// Test Report
+//========================================
+// Show the profiler report
+//========================================
+
+use Paheon\Meow\Autoload;
+
+echo $br."==========================================".$br;
+echo "Test Report".$br;
+echo "==========================================".$br.$br;
 
 // Show report //
 echo $br . $meow->profiler->report($isWeb);

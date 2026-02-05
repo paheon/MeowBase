@@ -5,7 +5,7 @@
  * This class is the main class for MeowBase.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase
  * 
@@ -22,7 +22,7 @@ use Paheon\MeowBase\Profiler;
 class MeowBase {
 
     use ClassBase {
-        ClassBase::__get as _getBase;
+        ClassBase::__get as _getBase;   // Modified local __get method by renaming the original __get method to _getBase method
     }
 
     // Objects //
@@ -41,7 +41,7 @@ class MeowBase {
     protected   bool            $debug = false;                 // Debug Mode
 
     // Constructor //
-    public function __construct(Config $config, bool $preload = true) {
+    public function __construct(Config $config, bool|array $preload = true) {
 
         $this->denyWrite = array_merge($this->denyWrite, [ 'profiler', 'config', 'log', 'cache', 'db', 'image', 'configTree', 'lazyLoad' ]);
         
@@ -55,14 +55,19 @@ class MeowBase {
         // Set time zone //
         $timeZone = $this->config->config['general']['timeZone'];
         if (!is_null($timeZone))  date_default_timezone_set($timeZone);
-
-        // Init Session //
-
         // Preload objects (no lazy loading)//
         if ($preload) {
-            $this->initLogger();
-            $this->initCache();
-            $this->initCacheDB();
+            if (is_array($preload)) {
+                foreach ($preload as $prop) {
+                    if (isset($this->lazyLoad[$prop])) {
+                        if (is_null($this->$prop)) $this->{$this->lazyLoad[$prop]}();
+                    } 
+                }
+            } else {
+                $this->initLogger();
+                $this->initCache();
+                $this->initCacheDB();
+            }
         }
     }
 
@@ -85,14 +90,19 @@ class MeowBase {
 
     // Init Cache DB //
     private function initCacheDB():void {
-        // Set Cached Medoo Database //
-        if (is_null($this->cache)) $this->initCache();
-        if (is_null($this->log)) $this->initLogger();
-        $sqlConfig = $this->config->config['db']['sql'];
-        $this->db = new CacheDB($sqlConfig, $this->cache, $this->log);
-        $this->db->enableLog = $this->debug;    		// Enable SQL Log
-        //$this->db->enableCache(false);        // Disable Cache
-        //$this->profiler->record("Cache DB loaded");
+        $sqlConfig = $this->config->config['db']['sql'] ?? [];
+        $engine = $this->config->config['db']['engine'] ?? "sql";
+        if ($engine === "sql") {
+            // Load Cache and Logger if not loaded yet //
+            if (is_null($this->cache)) $this->initCache();
+            if (is_null($this->log)) $this->initLogger();
+            
+            // Set Cached Medoo Database //
+            $this->db = new CacheDB($sqlConfig, $this->cache, $this->log);
+            $this->db->enableLog = $this->debug;    		// Enable SQL Log
+            //$this->db->enableCache(false);        // Disable Cache
+            //$this->profiler->record("Cache DB loaded");
+        }
     }
 
     // Set Config Tree //
@@ -110,6 +120,20 @@ class MeowBase {
             return $this->config->config;
         }
         return $this->_getBase($prop);
+    }
+
+    public function __debugInfo():array {
+        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
+            'profiler' => $this->profiler,
+            'config' => $this->config,
+            'log' => $this->log,
+            'cache' => $this->cache,
+            'db' => $this->db,
+            'lazyLoad' => $this->lazyLoad,
+            'configTree' => $this->configTree,
+            'debug' => $this->debug,
+        ]);
+        return $debugInfo;
     }
         
 }

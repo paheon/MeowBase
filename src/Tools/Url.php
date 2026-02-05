@@ -5,7 +5,7 @@
  * This class is used to manage URLs.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase\Tools
  */
@@ -150,5 +150,13 @@ class Url  {
     // Convert to string //
     public function __toString():string {
         return $this->home ?? "";
+    }
+
+    public function __debugInfo():array {
+        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
+            'home' => $this->home,
+            'fullUrl' => $this->fullUrl,
+        ]);
+        return $debugInfo;
     }
 }

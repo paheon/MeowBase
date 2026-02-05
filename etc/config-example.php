@@ -8,7 +8,7 @@
  * IMPORTANT: Never commit config.php to version control as it contains sensitive information.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase\Config
  */
@@ -31,6 +31,11 @@ $getSysConfig = function (string $docRoot, string $etcPath, string $varPath): ar
             "sessionName" => "meow",                // Session cookie name
             "sessionLifeTime" => 604800,            // Session lifetime in seconds (default: 7 days = 604800)
             "debug" => true,                        // Enable/disable debug mode (set to false in production)
+        ],
+        "path" => [
+            "docRoot" => $docRoot,
+            "etc" => $docRoot.$etcPath,
+            "var" => $docRoot.$varPath,
         ],
         "db" => [
             // CSV Database settings (for simple file-based storage)

@@ -2,7 +2,7 @@
 /**
  * File and Url Class //
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase\Tools
  */
@@ -107,5 +107,12 @@ class File {
     // Convert to string //
     public function __toString():string {
         return $this->home ?? "";
+    }
+
+    public function __debugInfo():array {
+        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
+            'home' => $this->home,
+        ]);
+        return $debugInfo;
     }
 }

@@ -5,11 +5,11 @@
     "type": "framework",
     "require": {
         "php": "^8.2",
-        "catfan/medoo": "^2.1.6",
+        "catfan/medoo": "^2.2.0",
         "katzgrau/klogger": "^1.2.2",
-        "symfony/cache": "^6.4.12", 
-        "phpmailer/phpmailer": "^6.9.3",
-        "guzzlehttp/guzzle": "^7.9.2"
+        "symfony/cache": "^6.4.33", 
+        "phpmailer/phpmailer": "^6.12.0",
+        "guzzlehttp/guzzle": "^7.10.0"
     },
     "autoload": {
         "psr-4": {

@@ -5,7 +5,7 @@
  * Start the MeowBase application with minimal code.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  */
 use Paheon\MeowBase\Config;

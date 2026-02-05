@@ -5,7 +5,7 @@
  * This class is used to manage the fundamental class for MeowBase.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase
  */
@@ -13,11 +13,13 @@ namespace Paheon\MeowBase;
 
 trait ClassBase {
     protected	array	$denyRead  = [];                // Read deny list
-    protected	array	$denyWrite = ["lastError"];     // Write deny list
+    protected	array	$denyWrite = ["lastError", 'eventList' ];     // Write deny list
     protected	array	$varMap    = [];                // Variable Mapping [ "srcProp" => "destProp" ]
     protected	string	$lastError = "";                // Last error message
     protected	bool	$useException = false;          // Enable exception
     protected   string  $exceptionClass = "\Exception"; // Name of exception class
+    protected   array   $eventList = [];                // Event List
+    protected   int     $eventSerial = 1;               // Event Serial Number
 
     // Get Property //
 	private function _getProperty(string $prop, string $elem = ""):mixed {
@@ -292,6 +294,54 @@ trait ClassBase {
             
             throw $exception;
         }
+    }
+
+    // Register Event //
+    public function registerEvent(string $event, callable $callback):int {
+        $this->eventList[$event][$this->eventSerial] = $callback;
+        return $this->eventSerial++;
+    }
+
+    // Trigger Event //
+    public function triggerEvent(string $event, mixed $caller = null, array $args = []):array {
+        $result = [];
+        if (isset($this->eventList[$event])) {
+            foreach($this->eventList[$event] as $handlerID => $callback) {
+                $args = [ "event" => $event, "caller" => $caller, "handlerID" => $handlerID ] + $args;
+                $result[$handlerID] = call_user_func_array($callback, [$args]);
+            }
+        }
+        return $result;
+    }
+
+    // Unregister Event //
+    public function unregisterEvent(string $event, int $handlerID = 0):bool {
+        if (!isset($this->eventList[$event])) return false;
+        if ($handlerID > 0) {
+            unset($this->eventList[$event][$handlerID]);
+        } else {
+            unset($this->eventList[$event]);
+        }
+        return true;
+    }
+
+    // Get base debug info (for sub-classes to use) //
+    protected function _getBaseDebugInfo():array {
+        return [
+            'denyRead'          => $this->denyRead,
+            'denyWrite'         => $this->denyWrite,
+            'varMap'            => $this->varMap,
+            'lastError'         => $this->lastError,
+            'useException'      => $this->useException,
+            'exceptionClass'    => $this->exceptionClass,
+            'eventList'         => $this->eventList,
+            'eventSerial'       => $this->eventSerial,
+        ];
+    }
+
+    // Debug info //
+    public function __debugInfo():array {
+        return $this->_getBaseDebugInfo();
     }
 }
 

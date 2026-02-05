@@ -5,7 +5,7 @@
  * This class is used to send emails with PHPMailer.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase\Tools
  */
@@ -686,6 +686,24 @@ class Mailer {
         $this->async = $prevAsync;
 
         return $results;
+    }
+
+    public function __debugInfo():array {
+        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
+            'mailer' => $this->mailer,
+            'logger' => $this->logger,
+            'spoolPath' => $this->spoolPath,
+            'logPath' => $this->logPath,
+            'logPrefix' => $this->logPrefix,
+            'mode' => $this->mode,
+            'async' => $this->async,
+            'checkDNS' => $this->checkDNS,
+            'useHTML' => $this->useHTML,
+            'embeddedImages' => $this->embeddedImages,
+            'attachments' => $this->attachments,
+            'stringAttachments' => $this->stringAttachments,
+        ]);
+        return $debugInfo;
     }
 }
 

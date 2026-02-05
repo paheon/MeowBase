@@ -5,7 +5,7 @@
  * This class is used to manage CSV data and provide database-like features.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase\Tools
  */
@@ -957,4 +957,24 @@ class CsvDB implements \Iterator {
 		}
 		$this->rewind();
 	}
+
+    public function __debugInfo():array {
+        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
+            'csvFile' => $this->csvFile,
+            'header' => $this->header,
+            'data' => $this->data,
+            'splitRegex' => $this->splitRegex,
+            'seperator' => $this->seperator,
+            'enclosure' => $this->enclosure,
+            'escape' => $this->escape,
+            'terminator' => $this->terminator,
+            'bom' => $this->bom,
+            'queue' => $this->queue,
+            'currPtr' => $this->currPtr,
+            'currKey' => $this->currKey,
+            'keyList' => $this->keyList,
+            'sysFields' => $this->sysFields,
+        ]);
+        return $debugInfo;
+    }
 }

@@ -5,7 +5,7 @@
  * This class is used to manage MIME types.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase\Tools
  */
@@ -138,5 +138,17 @@ class Mime  {
             }
         } 
         return $mime;
+    }
+
+    public function __debugInfo():array {
+        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
+            'globs2File' => $this->globs2File,
+            'aliasesFile' => $this->aliasesFile,
+            'genericIconsFile' => $this->genericIconsFile,
+            'globs2' => $this->globs2,
+            'aliases' => $this->aliases,
+            'genericIcons' => $this->genericIcons,
+        ]);
+        return $debugInfo;
     }
 }

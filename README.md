@@ -42,7 +42,9 @@ The `Mime` class handles MIME type detection and conversion, supporting file-to-
 
 The `PHP` class provides utility functions for PHP environment checks. All member functions are static functions that may be called directly.
 
-The `CsvDB` class provides an efficient solution for managing CSV files as a database system for small datasets. For large datasets, please consider using a more robust database system. 
+The `CsvDB` class provides an efficient solution for managing CSV files as a database system for small datasets. For large datasets, please consider using a more robust database system.
+
+The `Autoload` class provides dynamic autoload management capabilities, allowing you to add PSR-4, PSR-0, and classmap entries at runtime without modifying composer.json. This is particularly useful for plugin systems and dynamic module loading. 
 
 
 ## Getting Started
@@ -127,7 +129,7 @@ The class maintains references to all core components through its properties, wi
 - `setConfigTree(array &$configTree): void`: Internal method to set configuration tree reference
 
 **Public Methods:**
-- `__construct(Config $config, bool $preload = false)`: Initializes MeowBase with configuration
+- `__construct(Config $config, bool|array $preload = true)`: Initializes MeowBase with configuration. When `$preload` is `true`, all optional components (log, cache, db) are preloaded. When `false`, all components use lazy loading. When an array, only specified components are preloaded (e.g., `['log', 'cache']`). *(parameter type changed to bool|array in v1.3.1)*
 - `__get(string $prop): mixed`: Magic method for property access and lazy loading
 
 ### 2. Fundamental class - ClassBase
@@ -280,10 +282,13 @@ try {
 - `$lastError`: Last error message
 - `$useException`: Flag to control exception throwing
 - `$exceptionClass`: Custom exception class name
+- `$eventList`: Array of registered event handlers *(since v1.3.1)*
+- `$eventSerial`: Serial counter for event handlers *(since v1.3.1)*
 
 **Private Methods:**
 - `_getProperty(string $prop, string $elem = ""): mixed`: Internal property getter
 - `_setProperty(string $prop, mixed $value): void`: Internal property setter
+- `_getBaseDebugInfo(): array`: Get base debug information for sub-classes *(since v1.3.1)*
 
 **Public Methods:**
 - `__get(string $prop): mixed`: Magic method for property access
@@ -294,6 +299,10 @@ try {
 - `setElemByPath(string $prop, string $path, mixed $value): void`: Set array property element by path
 - `isTrue(mixed $value, mixed $matchValue = null): bool`: Evaluate if value is considered to be true
 - `throwException(string $message, int $code = 0): void`: Handle error conditions consistently
+- `registerEvent(string $eventName, callable $handler): int`: Register an event handler *(since v1.3.1)*
+- `triggerEvent(string $eventName, mixed ...$args): array`: Trigger an event and call all registered handlers *(since v1.3.1)*
+- `unregisterEvent(string $eventName, ?int $handlerID = null): bool`: Unregister event handler(s) *(since v1.3.1)*
+- `__debugInfo(): array`: Return debug information *(since v1.3.1)*
 
 ### 3. Configuration Management - Config
 `Config` class handles application configuration with a PHP file, `etc/config.php`. The path of the config file is composed of three parts: `$docRoot`, `$etcPath` and `$file`. `$docRoot` is the document root of the application; `$etcPath` is the path of the etc folder; `$file` is the name of the config file. By default, `$docRoot` is the document path of website for Web and current working directory for CLI; `$etcPath` is `/etc`; `$file` is `config.php`.
@@ -550,6 +559,11 @@ $meow->log->enable = true;           // Enable log again
 **Public Methods:**
 - `__construct(string $logDirectory, string $logLevelThreshold = LogLevel::DEBUG, array $options = [])`: Initializes logger
 - `sysLog(string $msg, ?array $context = null, string $level = LogLevel::DEBUG): void`: Logs message with tracking information
+- `setThreshold(string $level): void`: Sets log threshold level *(renamed from setLogLevel() in v1.3.1)*
+- `getThreshold(): string`: Gets log threshold level *(renamed from getLogLevel() in v1.3.1)*
+- `__debugInfo(): array`: Returns debug information *(since v1.3.1)*
+
+**Note:** The `threshold` property can also be used as a virtual property to get/set log threshold level instead of using `setThreshold()` and `getThreshold()` methods.
 - `setLogLevel(string $level): void`: Sets logging level
 - `getLogLevel(): string`: Returns current log level
 
@@ -599,7 +613,7 @@ The cache lifecycle is as follows:
 <?php
 $key = ['user', ['id' => 135]];           // Key can be string, integer, float, boolean, array or object
 
-if ($meow->cache->isHit($key)) {          // Check cache hit (saveKey is generated in isHit() method)
+if ($meow->cache->isHit($key)) {          // Check cache hit (safeKey is generated in isHit() method)
     $value = $meow->cache->get();         // Retrieve cached value
 } else {
     $value = fetchData();                 // Generate new data item
@@ -885,8 +899,10 @@ foreach ($iterator as $position => $node) {
 - `getChild(string $name): ?DTree`: Retrieves a child node by name.
 - `isRoot(): bool`: Checks if the node is the root node.
 - `getPath(): string`: Gets the path from the root to the current node.
-- `findByPath(string $path): ?DTree`: Finds a node by its path.
+- `findByPath(string $path): ?DTree`: Finds a node by its path. Supports '.' (current node) and '..' (parent node) path components *(since v1.3.1)*.
 - `findByData(mixed $data, bool $singleResult = false, bool $global = true): array|DTree|null`: Finds single node or multiple nodes by data matching.
+
+**Note:** Since v1.3.1, `findByPath()` and `createByPath()` methods support '.' and '..' path components for relative path navigation. The `createByPath()` method now returns null instead of the existing child node if it already exists.
 - `__toString(): string`: Returns the name of the node.
 - `__debugInfo(): array`: Provides debug information about the node.
 - *Parameters of some methods is changed since MeowBase v1.1.2 and these functions are not backward compatible.*
@@ -907,12 +923,16 @@ foreach ($iterator as $position => $node) {
 - `$treeCurr`: The current node in the iteration.
 - `$nodeStack`: Stack to manage node traversal.
 - `$position`: Current position in the iteration.
+- `$deepFirst`: Flag for deep-first search (DFS) or breadth-first search (BFS) *(since v1.3.1)*
+- `$levelPosition`: Level position tracking for BFS *(since v1.3.1)*
+- `$currLevel`: Current level in BFS *(since v1.3.1)*
 
 **Methods:**
-- `__construct(DTree $tree, bool $global = true)`: Initializes the iterator with the root node.
+- `__construct(DTree $tree, bool $global = true, bool $deepFirst = true)`: Initializes the iterator with the root node. Set `$deepFirst` to false for Breadth-First Search (BFS) *(BFS support added in v1.3.1)*.
 - `current(): mixed`: Returns the current node.
 - `key(): mixed`: Returns the current position.
 - `next(): void`: Moves to the next node.
+- `__debugInfo(): array`: Returns debug information *(since v1.3.1)*
 - `rewind(): void`: Rewinds the iterator to the start.
 - `valid(): bool`: Checks if the current position is valid.
 
@@ -1225,7 +1245,54 @@ $type = PHP::valueType($myVariable);
 - `isCLI(): bool`: Checks if running in CLI mode
 - `getSessionInfo(): array`: Retrieves current session information
 
-### 7. CSV Database - CsvDB
+### 7. Dynamic Autoload Management - Autoload
+
+The `Autoload` class provides a convenient interface for dynamically managing PHP autoload rules at runtime. It allows you to add PSR-4 and PSR-0 namespace mappings, as well as class-to-file mappings, without modifying your composer.json file. This is particularly useful for plugin systems, dynamic module loading, or temporary testing scenarios.
+
+#### Key Features
+
+The `Autoload` class integrates seamlessly with Composer's autoload system, providing runtime modification capabilities. It automatically locates and accesses Composer's ClassLoader instance, allowing you to extend autoload rules on-the-fly. The class supports all major autoload standards including PSR-4 namespaces, PSR-0 namespaces, and direct classmap entries.
+
+All methods in the Autoload class are static, making them easy to call from anywhere in your application without needing to instantiate the class. The class also includes robust error handling and returns clear boolean status indicators for all operations.
+
+#### Usage Examples
+
+```php
+use Paheon\MeowBase\Tools\Autoload;
+
+// Add PSR-4 namespace mapping
+Autoload::addPsr4('MyPlugin\\', __DIR__ . '/plugins/myplugin/src');
+
+// Add PSR-0 namespace mapping
+Autoload::addPsr0('Legacy_', __DIR__ . '/legacy/lib');
+
+// Add direct class-to-file mapping
+Autoload::addClassMap([
+    'SpecialClass' => __DIR__ . '/special/SpecialClass.php',
+    'AnotherClass' => __DIR__ . '/another/AnotherClass.php'
+]);
+
+// Add multiple paths for a namespace (useful for multi-directory packages)
+Autoload::addPsr4('Shared\\', [
+    __DIR__ . '/src/shared',
+    __DIR__ . '/vendor/shared'
+]);
+```
+
+#### Important Notes
+
+- The Autoload class works by modifying Composer's ClassLoader instance at runtime
+- Changes made with Autoload are not persisted - they only last for the current script execution
+- For permanent autoload rules, you should still use composer.json
+- The class is ideal for plugins, dynamic modules, or testing scenarios where you need temporary autoload rules
+
+**Public Static Methods:**
+- `getComposerLoader(): ?\Composer\Autoload\ClassLoader`: Gets Composer's ClassLoader instance
+- `addPsr4(string $prefix, string|array $paths, bool $prepend = false): bool`: Adds PSR-4 namespace mapping dynamically
+- `addPsr0(string $prefix, string|array $paths, bool $prepend = false): bool`: Adds PSR-0 namespace mapping dynamically
+- `addClassMap(array $classMap): bool`: Adds direct class-to-file mappings
+
+### 8. CSV Database - CsvDB
 
 The `CsvDB` class offers an efficient solution for managing CSV files as a lightweight database system for small datasets. For larger datasets, it is recommended to use a more robust database system. This class is designed to handle CSV files with automatic metadata management, ensuring data integrity and providing search capabilities.
 
@@ -1410,7 +1477,7 @@ $results = $csv->search([
 - `rewind(): void`: Resets iterator to the first record
 - `valid(): bool`: Checks if current iterator position is valid
 
-### 8. User Management System - UserManager and Related Classes
+### 9. User Management System - UserManager and Related Classes
 
 The User Management System in MeowBase provides a comprehensive, flexible solution for managing users, groups, and permissions. At its core is the `UserManager` class, which acts as a centralized management layer that coordinates user authentication, session management, group membership, and permission checking. The system is designed with a flexible architecture that allows developers to inject different storage implementations (CSV or Database) without changing application code, making it easy to switch between storage backends or even use different storage types for different components.
 
@@ -2139,265 +2206,10 @@ The trade-off is increased complexity. Database storage requires a database serv
 - `checkPassword(string $password, string $hash): bool`: Verifies password against hash
 - `genSalt(int $length = 0): string`: Generates a random salt string
 
-#### Features
-
-The `UserCSV` class provides a complete user management system built on top of the efficient `CsvDB` class. At its core, the class handles authentication through secure login mechanisms that support both plain text and encrypted passwords. The default encryption uses SHA-256 algorithm with customizable salt, ensuring password security while maintaining flexibility for different security requirements. The authentication system is session-based with configurable lifetime, automatically managing sessions for both CLI and Web environments. This means developers don't need to worry about the underlying session handling differences between command-line scripts and web applications.
-
-One of the standout features is the continue login capability, which allows users to seamlessly restore their previous sessions. This is particularly useful for web applications where users might close their browsers and return later, or for CLI scripts that need to maintain authentication across multiple executions. The class also supports single login enforcement, ensuring that only one active session exists per user at any given time, which is critical for applications requiring strict access control. Additionally, a force login option allows administrators to override existing sessions when necessary.
-
-User data management is comprehensive and intuitive. The class supports creating new user accounts with customizable fields beyond the standard authentication credentials, allowing applications to store additional user information such as display names, email addresses, and any custom data needed. User information can be retrieved efficiently either by unique user ID or by login name, with the underlying CsvDB providing fast search capabilities. Updating user records is flexible – the system can update the currently logged-in user's information, or administrators can update any user by specifying their ID. When users are deleted, the system ensures proper cleanup of associated sessions and data.
-
-Password management is robust and user-friendly. The class automatically handles password encryption when the encrypted mode is enabled, and includes built-in password strength validation. Developers can configure minimum requirements for password length, uppercase letters, lowercase letters, numbers, and special characters. When passwords are updated, the system automatically re-encrypts them, maintaining security without requiring additional code.
-
-Session and status tracking provides valuable insights into user behavior. The class automatically tracks login and logout times as Unix timestamps (integer values), monitors the last active time for detecting idle sessions, associates each login with a unique session ID for security, and maintains user status flags to quickly determine if a user is currently logged in or logged out. This information is crucial for implementing features like automatic logout after inactivity or displaying online user lists.
-
-The flexible field mapping system is one of the class's most powerful features. Instead of forcing developers to use predefined column names in their CSV files, the system allows complete customization through configuration. Default mappings include `userID` for unique user identification, `userName` for display names, `loginName` for authentication credentials, `password` for encrypted or plain passwords, `email` for email addresses, `status` for tracking login/logout state, `loginTime` and `logoutTime` for session timestamps, `lastActive` for activity monitoring, and `sessionID` for session association. Developers can override any of these mappings to match their existing data structures, making the class adaptable to various project requirements.
-
-#### Configuration
-
-The UserCSV class requires configuration similar to the User class. Here's an example configuration:
-
-```php
-$userConfig = [
-    'sessionVarName' => 'meowUser',          // Session variable name
-    'sessionPath' => '/path/to/sessions',    // Session storage path
-    'singleLogin' => false,                  // Allow multiple sessions
-    'forceLogin' => false,                   // Don't force login
-    'lifeTime' => 3600,                      // Session lifetime in seconds
-    'password' => [
-        'type' => 'encrypted',               // 'encrypted' or 'plain'
-        'algorithm' => 'sha256',             // Hash algorithm
-        'salt' => 'your-secret-salt',        // Salt for encryption
-        'minLength' => 8,                    // Minimum password length
-        'maxLength' => 20,                   // Maximum password length
-        'minUppercase' => 1,                 // Minimum uppercase letters
-        'minLowercase' => 1,                 // Minimum lowercase letters
-        'minNumber' => 1,                    // Minimum numbers
-        'minSpecial' => 1,                   // Minimum special characters
-    ],
-    'csvDB' => [
-        'path' => '/path/to/csv/files',      // CSV storage directory
-    ],
-    'userTable' => 'user',                   // CSV filename (without .csv)
-    'userFields' => [                        // Field name mapping
-        'userID' => 'user_id',
-        'userName' => 'user_name',
-        'loginName' => 'login_name',
-        'password' => 'password',
-        'email' => 'email',
-        'status' => 'status',
-        'loginTime' => 'login_time',
-        'logoutTime' => 'logout_time',
-        'lastActive' => 'last_active',
-        'sessionID' => 'session_id',
-    ],
-];
-```
-
-#### Usage Examples
-
-**Initialization and Setup**
-
-Before using any user management features, you need to initialize the UserCSV class with your configuration. The configuration is typically stored in your main config file and includes settings for password encryption, session management, and field mappings.
-
-```php
-use Paheon\MeowBase\Tools\UserCSV;
-
-// Initialize UserCSV with configuration from MeowBase
-$userCSV = new UserCSV($meow->configTree['user']);
-
-// Get field mappings for easy access
-$userFields = $userCSV->config['userFields'];
-```
-
-**Creating New Users**
-
-Creating a new user account is straightforward. You provide a login name, password, and any additional user data fields. The system automatically handles password encryption if enabled in your configuration. The method returns the new user's ID on success, or -1 on failure with error details available in `lastError`.
-
-```php
-// Prepare user data with additional fields
-$userData = [
-    $userFields['userName'] => "John Doe",
-    $userFields['email'] => "john@example.com",
-];
-
-// Create the user account
-$userID = $userCSV->createUser("johndoe", "SecurePass123!", $userData);
-if ($userID > 0) {
-    echo "User created successfully with ID: $userID";
-} else {
-    echo "Failed to create user: " . $userCSV->lastError;
-}
-```
-
-**User Authentication and Login**
-
-The login process verifies credentials against the stored data and establishes a session. Upon successful login, the user's information is loaded into the `$user` property, and the session is maintained automatically. You can check login status at any time using the `isLoggedIn()` method.
-
-```php
-// Attempt to login with credentials
-$loginResult = $userCSV->login("johndoe", "SecurePass123!");
-if ($loginResult) {
-    echo "Login successful!";
-    echo "User ID: " . $userCSV->user[$userFields['userID']];
-    echo "Username: " . $userCSV->user[$userFields['userName']];
-    echo "Is logged in: " . ($userCSV->isLoggedIn() ? 'Yes' : 'No');
-} else {
-    echo "Login failed: " . $userCSV->lastError;
-}
-```
-
-**Retrieving User Information**
-
-You can retrieve user information either by user ID or by login name. This is useful for displaying user profiles, validating user existence, or loading user data for administrative purposes. Both methods return an associative array with all user fields, or null if the user is not found.
-
-```php
-// Get user by ID
-$user = $userCSV->getUserByID($userID);
-if ($user) {
-    echo "Username: " . $user[$userFields['userName']];
-    echo "Email: " . $user[$userFields['email']];
-    echo "Status: " . $user[$userFields['status']];
-}
-
-// Get user by login name
-$user = $userCSV->getUserByLoginName("johndoe");
-if ($user) {
-    echo "Found user: " . $user[$userFields['userName']];
-    echo "User ID: " . $user[$userFields['userID']];
-}
-```
-
-**Updating User Information**
-
-User updates can be performed in two ways: updating the currently logged-in user (by calling `updateUser()` without a user ID parameter), or updating any specific user by providing their ID. When updating the current user, the system automatically refreshes the `$user` property with the new data from the CSV file.
-
-```php
-// Update current logged-in user
-$updateData = [
-    $userFields['userName'] => "John Updated",
-    $userFields['email'] => "john.updated@example.com",
-];
-if ($userCSV->updateUser($updateData)) {
-    echo "User updated successfully";
-    // Current user object is automatically refreshed
-    echo "New username: " . $userCSV->user[$userFields['userName']];
-}
-
-// Update specific user by ID (administrative function)
-$updateData = [
-    $userFields['email'] => "newemail@example.com"
-];
-if ($userCSV->updateUser($updateData, $userID)) {
-    echo "User $userID updated successfully";
-}
-```
-
-**Password Management**
-
-Passwords can be updated securely using the `updatePassword()` method. The system automatically handles encryption based on your configuration settings, so you never need to manually encrypt passwords. After a password update, the user will need to use the new password for subsequent logins.
-
-```php
-// Update password for a specific user
-if ($userCSV->updatePassword("NewSecurePass456!", $userID)) {
-    echo "Password updated successfully";
-    
-    // User can now login with the new password
-    if ($userCSV->login("johndoe", "NewSecurePass456!")) {
-        echo "Login with new password successful";
-    }
-}
-```
-
-**Session Management and Logout**
-
-The class provides methods to check login status and properly log out users. When a user logs out, the session is cleared and the user's status is updated in the CSV file. The continue login feature allows users to restore their sessions across page loads or script executions.
-
-```php
-// Check current login status
-if ($userCSV->isLoggedIn()) {
-    echo "User is currently logged in";
-    echo "Session ID: " . $userCSV->sessionID;
-    echo "Login Name: " . $userCSV->user[$userFields['loginName']];
-}
-
-// Logout current user
-$userCSV->logout();
-echo "User logged out successfully";
-
-// Later, restore previous session
-if ($userCSV->continueLogin()) {
-    echo "Previous session restored";
-    echo "Logged in as: " . $userCSV->user[$userFields['loginName']];
-}
-```
-
-**Deleting User Accounts**
-
-Deleting a user removes their record from the CSV file and cleans up any associated session data. If the deleted user is currently logged in, the system automatically logs them out. You can delete either the current user or specify a user by their ID.
-
-```php
-// Delete a specific user
-if ($userCSV->delUser($userID)) {
-    echo "User deleted successfully";
-} else {
-    echo "Failed to delete user: " . $userCSV->lastError;
-}
-
-// If you want to delete the currently logged-in user
-if ($userCSV->isLoggedIn()) {
-    if ($userCSV->delUser()) {
-        echo "Current user account deleted";
-    }
-}
-```
-
-**Properties:**
-- `$userDB`: CsvDB instance for user data storage
-- `$dbLoaded`: Flag indicating whether the CSV database has been loaded
-- `$csvPath`: Path to the CSV storage directory
-- `$userTableFile`: Full path to user CSV file
-- `$config`: User configuration array (inherited from User)
-- `$user`: Current user data array (inherited from User)
-- `$sessionID`: Current session identifier (inherited from User)
-- `$sessionVarName`: Session variable name (inherited from User)
-- `$userTable`: User table name (inherited from User)
-- `$userFields`: User field mappings (inherited from User)
-- `$encrypted`: Password encryption flag (inherited from User)
-- `$lastError`: Last error message (inherited from User)
-
-**Protected Methods:**
-- `copyUserFromDB(?string $userID = null): bool`: Copies user data from CSV database to current user object
-
-**Public Methods:**
-- `__construct(array $config)`: Initializes UserCSV with configuration and sets up CSV database connection
-- `loadUserRec(bool $forceLoad = false): bool`: Loads user records from CSV file into memory
-- `getField(string $field, ?string $default = null): string`: Gets mapped field name from configuration
-- `getUserByID(int $userID, bool $forceLoad = false): ?array`: Retrieves user data by ID
-- `getUserByLoginName(string $loginName, bool $forceLoad = false): ?array`: Retrieves user data by login name
-- `createUser(string $loginName, string $userPassword, array $fieldList = []): int`: Creates new user and returns user ID
-- `updateUser(array $fieldList, ?string $userID = null): bool`: Updates user information
-- `delUser(?string $userID = null): bool`: Deletes user account
-- `updatePassword(string $password, ?string $userID = null): bool`: Updates user password
-- `updateUserStatus(bool $login, int $lastActiveTime, ?int $loginTime = null, ?string $userID = null): bool`: Updates user login status
-
-**Inherited Public Methods from User class:**
-- `login(string $loginName, string $password, ?bool $forceLogin = null): bool`: Authenticates user and creates session
-- `continueLogin(): bool`: Continues previous login session
-- `logout(): void`: Logs out current user and clears session
-- `isLoggedIn(bool $forceLogout = false): bool`: Checks if user is currently logged in
-- `touchSession(int $currTime): void`: Updates session activity timestamp
-- `getSessionID(): ?string`: Retrieves session ID from database
-- `validatePassword(string $password): bool`: Validates password against configured rules
-- `genPassword(): string`: Generates a secure password following configured rules
-- `getPasswordHash(string $password, ?string $algorithm = null): string`: Generates password hash
-- `checkPassword(string $password, string $hash): bool`: Verifies password against hash
-- `changePassword(?string $newPassword = null, ?string $oldPassword = null): string|false`: Changes user password with optional validation
-
-
 
 ## Directory Structure
 The framework uses the following directory structure:
+- `/document`: Document and reference directorys
 - `/etc`: Configuration directory
 - `/src`: Core class directory
   - `/src/Tools`: Tools components directory
@@ -2412,11 +2224,34 @@ The framework uses the following directory structure:
 
 ## System Requirements
 - PHP: 8.2 or higher
-- catfan/medoo: 2.1.6 or higher
+- catfan/medoo: 2.2.0 or higher
 - katzgrau/klogger: 1.2.2 or higher
-- symfony/cache: 6.4.12 or higher
-- phpmailer/phpmailer: 6.9.3 or higher
-- guzzlehttp/guzzle: 7.9.2 or higher
+- symfony/cache: 6.4.33 or higher
+- phpmailer/phpmailer: 6.12.0 or higher
+- guzzlehttp/guzzle: 7.10.0 or higher
+
+## Version History
+
+### v1.3.1 (2026-01-30)
+- **New Features:**
+  - Added `Autoload` tool class for dynamic autoload management
+  - Added event system to `ClassBase` trait (`registerEvent()`, `triggerEvent()`, `unregisterEvent()`)
+  - Added Breadth-First Search (BFS) support to `DTreeIterator`
+  - Added '.' and '..' path component support in `DTree::findByPath()` and `createByPath()`
+- **API Changes:**
+  - `SysLog`: Renamed `setLogLevel()` to `setThreshold()` and `getLogLevel()` to `getThreshold()`
+  - `MeowBase`: Constructor `$preload` parameter now accepts `bool|array` (previously only `bool`)
+  - `DTree::createByPath()`: Now returns null if child node already exists (behavior change)
+- **Improvements:**
+  - Added `_getBaseDebugInfo()` to `ClassBase` for better debug info inheritance
+  - Added `__debugInfo()` methods to `ClassBase`, `SysLog`, `DTreeIterator`
+  - Enhanced configuration file path options for 'docRoot', 'etc', and 'var'
+- **Documentation:**
+  - Added comprehensive example files: `userdb-example.php`, `usermanager-example.php`
+  - Updated all example files with better demonstrations
+  - Added this version history section
+
+For complete version history, see [ChangeLog](ChangeLog).
 
 ## License
 MIT License

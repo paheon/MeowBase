@@ -5,7 +5,7 @@
  * This class is used to manage a tree structure.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase\Tools
  */
@@ -117,7 +117,13 @@ class DTree {
         $param['data'] = $param['data'] ?? null;
         $param['replace'] = $param['replace'] ?? true;
         foreach ($pathList as $idx =>$name) {
-            if ($name === '') continue;
+            if ($name === '' || $name === '.') continue;
+            if ($name === '..') {
+                if (!$currNode->isRoot()) {
+                    $currNode = $currNode->parent;
+                }                
+                continue;
+            }
             if (isset($currNode->children[$name])) {
                 // has child node //
                 if ($idx == $lastIdx) {
@@ -128,6 +134,7 @@ class DTree {
                     } else {
                         $this->lastError = "Child node '{$param['name']}' already exists!";
                         $this->throwException($this->lastError, 2);
+                        return null;
                     }    
                     return $currNode->children[$name];
                 }
@@ -146,6 +153,8 @@ class DTree {
                 $currNode = $newNode;
             }
         }
+        $this->lastError = "Create node by path '$path' failed!";
+        $this->throwException($this->lastError, 8);
         return null;
     }
 
@@ -350,8 +359,11 @@ class DTree {
         }
         $pathList = explode('/', $path);
         foreach ($pathList as $name) {
-            if ($name === '') continue;
-            if (isset($currNode->children[$name])) {
+            if ($name === '' || $name === '.') continue;
+            if ($name === '..') {
+                if ($currNode->isRoot()) continue;
+                $currNode = $currNode->parent;
+            } else if (isset($currNode->children[$name])) {
                 $currNode = $currNode->children[$name];
             } else {
                 return null;
@@ -379,14 +391,15 @@ class DTree {
     }
 
     public function __debugInfo():array {
-        return [
+        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
             'path' => $this->getPath(),
             'name' => $this->name,
             'data' => $this->data,
             'isRoot' => $this->isRoot(),
             'parent' => is_null($this->parent) ? null : $this->parent->name,
             'children' => $this->children,
-        ];
+        ]);
+        return $debugInfo;
     }
     
 }

@@ -5,7 +5,7 @@
  * This class is used to manage the system logger.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase
  */
@@ -19,6 +19,14 @@ class SysLog extends Logger{
 
     use ClassBase;
 
+    const LOG_DEBUG = LogLevel::DEBUG;
+    const LOG_INFO = LogLevel::INFO;
+    const LOG_WARNING = LogLevel::WARNING;
+    const LOG_ERROR = LogLevel::ERROR;
+    const LOG_CRITICAL = LogLevel::CRITICAL;
+    const LOG_ALERT = LogLevel::ALERT;
+    const LOG_EMERGENCY = LogLevel::EMERGENCY;
+
     // Properties //
     public	bool	$enable = true;	// Enable Log by default
     public	bool	$stack	= false;	// Show full tracking stack
@@ -27,6 +35,7 @@ class SysLog extends Logger{
     // Constructor //
     public function __construct(string $logDirectory, string $logLevelThreshold = LogLevel::DEBUG, array $options = []) {
         parent::__construct($logDirectory, $logLevelThreshold, $options);
+        $this->denyWrite = array_merge($this->denyWrite, [ 'logLevelThreshold', 'options', 'logFilePath', 'logLevels' ]);
     }
     
     // Log message with tracking //
@@ -58,15 +67,24 @@ class SysLog extends Logger{
         return $out;
     }
 
-    // Set log level //
-    public function setLogLevel(string$level): void {
-        if (in_array($level, $this->logLevels)) {
+    // Set log threshold level //
+    public function setThreshold(string $level): void {
+        if (isset($this->logLevels[$level])) {
             $this->logLevelThreshold = $level;
         }
     }
 
-    // Get log level //
-    public function getLogLevel(): string {
+    // Get log threshold level //
+    public function getThreshold(): string {
         return $this->logLevelThreshold;
+    }
+
+    public function __debugInfo():array {
+        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
+            'enable' => $this->enable,
+            'stack' => $this->stack,
+            'depth' => $this->depth,
+        ]);
+        return $debugInfo;
     }
 }

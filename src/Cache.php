@@ -5,7 +5,7 @@
  * This class is used to manage cache.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase
  */
@@ -318,4 +318,16 @@ class Cache {
 		}
 		return $result;
 	}
+
+    public function __debugInfo():array {
+        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
+            'config' => $this->config,
+            'pool' => $this->pool,
+            'item' => $this->item,
+            'adpater' => $this->adpater,
+            'lifeTime' => $this->lifeTime,
+            'enable' => $this->enable,
+        ]);
+        return $debugInfo;
+    }
 }	

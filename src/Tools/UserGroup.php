@@ -5,7 +5,7 @@
  * This class is a base class to handle user group information.
  * 
  * @author Vincent Leung <vincent@paheon.com>
- * @version 1.3.0
+ * @version 1.3.1
  * @license MIT
  * @package Paheon\MeowBase\Tools
  * 
@@ -111,6 +111,16 @@ class UserGroup {
     // Remove user from group
     public function delUserFromGroup(int $userID, ?int $userGroupID = null): bool {
         return false;
+    }
+
+    public function __debugInfo():array {
+        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
+            'userGroupFields' => $this->userGroupFields,
+            'userGroupTable' => $this->userGroupTable,
+            'userGroupLinkTable' => $this->userGroupLinkTable,
+            'userGroupLinkFields' => $this->userGroupLinkFields,
+        ]);
+        return $debugInfo;
     }
 
 }
