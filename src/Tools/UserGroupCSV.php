@@ -5,7 +5,7 @@
  * This class is used to manage user information for CSV storage.
  * 
  * @author Vincent Leung <vincent@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  * @package Paheon\MeowBase\Tools
  * 

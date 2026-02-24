@@ -5,7 +5,7 @@
  * This class is used to iterate through a DTree structure.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  * @package Paheon\MeowBase\Tools
  */
@@ -174,18 +174,4 @@ class DTreeIterator implements \Iterator {
         return $this->treeCurr !== null;
     }
 
-    public function __debugInfo():array {
-        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
-            'global' => $this->global,
-            'deepFirst' => $this->deepFirst,
-            'position' => $this->position,
-            'treeRoot' => $this->treeRoot,
-            'treeCurr' => $this->treeCurr,
-            'rootParent' => $this->rootParent,
-            'nodeStack' => $this->nodeStack,
-            'levelPosition' => $this->levelPosition,
-            'currLevel' => $this->currLevel,    
-        ]);
-        return $debugInfo;
-    }
 }

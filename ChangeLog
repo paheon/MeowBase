@@ -1,3 +1,14 @@
+v1.3.2 
+- SysLog:
+    - Modified the name of error level constants
+- ClassBase:
+    - Bug fixed the __debugInfo() method
+    - Changed the _getBaseDebugInfo() method to be customDebugInfo() method to set the custom debug information 
+    - Updated __debugInfo() method to return debug information width class information 
+- Url:
+    - Added composeUrl() static method to compose url from parts
+    - Changed joinPath(), modifyUrl() methods to be static methods
+
 v1.3.1 (2026-01-30)
 - Updated all PHPDoc @version tags to 1.3.1
 - Added new tool classes:

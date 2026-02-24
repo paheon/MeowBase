@@ -5,7 +5,7 @@
  * This class is a base class to handle user information.
  * 
  * @author Vincent Leung <vincent@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  * @package Paheon\MeowBase\Tools
  * 
@@ -105,14 +105,6 @@ class User {
     // Update login time and last active time
      public function updateUserStatus(bool $login, int $lastActiveTime, ?string $sessionID = null, ?int $loginTime = null, ?int $userID = null): bool {
         return false;
-    }
-
-    public function __debugInfo():array {
-        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
-            'userTable' => $this->userTable,
-            'userFields' => $this->userFields,
-        ]);
-        return $debugInfo;
     }
 
 } 

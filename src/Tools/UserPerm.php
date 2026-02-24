@@ -6,7 +6,7 @@
  * It supports both CSV and Database storage.
  * 
  * @author Vincent Leung <vincent@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  * @package Paheon\MeowBase\Tools
  * 
@@ -107,13 +107,4 @@ class UserPerm {
         return false;
     }
 
-    public function __debugInfo():array {
-        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
-            'userPermTable' => $this->userPermTable,
-            'userGroupPermTable' => $this->userGroupPermTable,
-            'userPermFields' => $this->userPermFields,
-            'userGroupPermFields' => $this->userGroupPermFields,
-        ]);
-        return $debugInfo;
-    }
 }

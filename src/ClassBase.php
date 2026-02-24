@@ -5,7 +5,7 @@
  * This class is used to manage the fundamental class for MeowBase.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  * @package Paheon\MeowBase
  */
@@ -325,23 +325,114 @@ trait ClassBase {
         return true;
     }
 
-    // Get base debug info (for sub-classes to use) //
-    protected function _getBaseDebugInfo():array {
-        return [
-            'denyRead'          => $this->denyRead,
-            'denyWrite'         => $this->denyWrite,
-            'varMap'            => $this->varMap,
-            'lastError'         => $this->lastError,
-            'useException'      => $this->useException,
-            'exceptionClass'    => $this->exceptionClass,
-            'eventList'         => $this->eventList,
-            'eventSerial'       => $this->eventSerial,
-        ];
+    // Check if parent property exists //
+    function parentPropertyExists($childClassOrObject, $propertyName):?bool {
+        try {
+            $reflectionClass = new \ReflectionClass($childClassOrObject);
+            $parentClass = $reflectionClass->getParentClass();
+    
+            // Check if the property is defined in the parent class
+            if ($parentClass) {
+                return $parentClass->hasProperty($propertyName);
+            }
+        } catch (\ReflectionException $e) {
+            return null;
+        }
+        return false;
     }
 
-    // Debug info //
+    // Get debug info of current class for user customization //
+    // User can override this method to add or modify properties in debug output
+    // Must be private so each class can have its own without affecting sub-classes
+    private function customDebugInfo():array {
+        return [];
+    }
+
+    // Debug info - automatically groups properties by declaring class //
     public function __debugInfo():array {
-        return $this->_getBaseDebugInfo();
+        $debugInfo = [];
+        
+        try {
+            // Use Reflection to get all properties including private ones from sub-classes
+            $reflection = new \ReflectionClass($this);
+            $properties = $reflection->getProperties();
+            
+            // Group properties by their declaring class
+            $groupedProperties = [];
+            $currentClass = "";
+            foreach ($properties as $property) {
+                // Get the class that declared this property
+                $declaringClass = $property->getDeclaringClass()->getName();
+                
+                // Make property accessible (handles private/protected)
+                $property->setAccessible(true);
+                
+                // Get property name and value
+                $propName = $property->getName();
+                $propValue = $property->getValue($this);
+                
+                // Group by declaring class
+                if (!isset($groupedProperties[$declaringClass])) {
+                    $groupedProperties[$declaringClass] = [];
+                }
+                $groupedProperties[$declaringClass][$propName] = $propValue;
+            }
+            
+            // Build class hierarchy list (from current class to top parent)
+            $reflectionList = [];
+            for ($currReflection = $reflection; $currReflection; $currReflection = $currReflection->getParentClass()) {
+                $reflectionList[$currReflection->getName()] = $currReflection;
+            }
+            $currClassName = $reflection->getName();
+            foreach (array_reverse($reflectionList) as $className => $currReflection) {
+
+                // Get custom debug info from current class
+                // Only call customDebugInfo() if it's declared in THIS specific class (not inherited)
+                if ($currReflection->hasMethod('customDebugInfo')) {
+                    $methodReflection = $currReflection->getMethod('customDebugInfo');
+                    
+                    // Check if the method is declared in this class (not inherited from parent)
+                    if ($methodReflection->getDeclaringClass()->getName() === $className) {
+                        // Make private method accessible
+                        $methodReflection->setAccessible(true);
+                        $userDebugInfo = $methodReflection->invoke($this);
+                            
+                        if (!empty($userDebugInfo)) {
+                            // Merge customizations from this class
+                            if (isset($groupedProperties[$className])) {
+                                $groupedProperties[$className] = array_merge($groupedProperties[$className], $userDebugInfo);
+                            } else {
+                                $groupedProperties[$className] = $userDebugInfo;
+                            }
+                        }
+                    }
+                }
+            }    
+
+            // Compose debug info //
+            foreach ($reflectionList as $className => $currReflection) {
+                // Add class border if it is not the current class ///
+                if ($className != $currClassName) {
+                    $debugInfo["<<< Class: {$className} >>>"] = str_repeat('-', 25) . " (parent) " . str_repeat('-', 25);
+                }
+                // Add properties of this class //
+                $properties = [];
+                if (isset($groupedProperties[$className]) && is_array($groupedProperties[$className])) {
+                    $properties = array_diff_key($groupedProperties[$className], $debugInfo);
+                    if (!is_array($properties)) {
+                        $properties = [];
+                    }
+                }    
+                $debugInfo = array_merge($debugInfo, $properties);
+            } 
+            
+        } catch (\ReflectionException $e) {
+            // Fallback to simple property list if reflection fails
+            $debugInfo['_error'] = 'Reflection failed: ' . $e->getMessage();
+            $debugInfo = array_merge($debugInfo, get_object_vars($this));
+        }
+        
+        return $debugInfo;
     }
 }
 

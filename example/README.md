@@ -199,7 +199,7 @@ Demonstrates the integrated UserManager for both CSV and database storage:
 
 ### Autoload Configuration
 
-#### 13. `autoload-simple-example.php` - Simple Dynamic Autoload Usage
+#### 13. `autoload-example.php` - Simple Dynamic Autoload Usage
 Demonstrates basic dynamic autoload configuration:
 - Adding new namespace mappings
 - Using relative paths
@@ -311,7 +311,7 @@ print_r($debugInfo);
 | **User Management** | user-csv-example.php | User management with CSV storage (User/Group/Perm) |
 | | userdb-example.php | User management with database storage |
 | | usermanager-example.php | Integrated user authentication system |
-| **Autoload** | autoload-simple-example.php | Basic dynamic autoload configuration |
+| **Autoload** | autoload-example.php | Basic dynamic autoload configuration |
 | | autoload-usage.php | Advanced autoload features |
 
 ## Additional Resources

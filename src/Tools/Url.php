@@ -5,7 +5,7 @@
  * This class is used to manage URLs.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  * @package Paheon\MeowBase\Tools
  */
@@ -29,7 +29,6 @@ class Url  {
         $this->fullUrl = $fullUrl;
     }
 
-
     // Setter //
     public function setHome(?string $home = null):void {
         if ($home) {
@@ -39,14 +38,19 @@ class Url  {
             $this->home .= isset($url["host"])     ? $url["host"]          : "";
             $this->home .= isset($url["port"])     ? ":".$url["port"]      : "";
             if (isset($url["path"])) {
-                $this->home .= preg_replace('/[\\\\]|[\/]{2,}/', '/', $url["path"]);
+                $this->home .= $this->joinPath($url["path"]);
             }
         } else {
             $this->home = null;
         }
     }
 
-    // Build Url //
+    static public function joinPath(string $path1, ?string $path2 = null):string {
+        $path = (is_null($path2)) ? $path1 : $path1."/".$path2;
+        return preg_replace('/[\\\\]|[\/]{2,}/', '/', $path);
+    }
+
+    // Build Url base on home url //
     public function genUrl(string $path, array $query = [], string $fragment = "", ?bool $fullUrl = null):string {
         $fullUrl = $fullUrl ?? $this->fullUrl;
         if ($fullUrl && $this->home) {
@@ -58,8 +62,34 @@ class Url  {
         return $path;
     }
 
+    // Compose Url //
+    static public function composeUrl(string $scheme = "", string $host = "", ?int $port = null, string $path = "", string|array $query = "", string $fragment = ""):string {
+        $url = "";
+        if ($scheme)    $url .= $scheme."://";
+        if ($host)      $url .= $host;
+        if (!is_null($port))     $url .= ":".$port;
+        if (substr($path, 0, 1) != "/") $path = "/".$path;
+        $queryPos = strpos($path, "?");
+        // Prevent query attaced to path //
+        if ($queryPos !== false) {
+            $url .= substr($path, 0, $queryPos);
+            if (!$query && is_string($query)) $query = substr($path, $queryPos + 1);
+        } else {
+            $url .= $path;
+        }
+        if (is_array($query)) {
+            if (count($query) > 0) {
+                $url .= "?".http_build_query($query);
+            }
+        } else if ($query) {
+            $url .= "?".$query;
+        }
+        if ($fragment)  $url .= "#".$fragment;
+        return $url;
+    }
+
     // Modify Url //
-    public function modifyUrl(string $srcUrl, array $replace):string {
+    static public function modifyUrl(string $srcUrl, array $replace):string {
 
         $url = parse_url($srcUrl);
 
@@ -152,11 +182,4 @@ class Url  {
         return $this->home ?? "";
     }
 
-    public function __debugInfo():array {
-        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
-            'home' => $this->home,
-            'fullUrl' => $this->fullUrl,
-        ]);
-        return $debugInfo;
-    }
 }

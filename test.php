@@ -22,7 +22,7 @@
  * 15. Autoload Tests
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  */
 use Paheon\MeowBase\Config;
@@ -273,7 +273,7 @@ $data = null;
 echo "Log file path: ".$meow->log->logFilePath.$br;
 $orgThreshold = $meow->log->threshold;
 echo "Log threshold: ".$orgThreshold.$br;
-$meow->log->threshold = SysLog::LOG_DEBUG;
+$meow->log->threshold = SysLog::DEBUG;
 echo "Set threshold to ".$meow->log->threshold.$br;
 echo $br;
 echo "Write debug message".$br;  

@@ -5,7 +5,7 @@
  * This class is used to handle password generation and verification.
  * 
  * @author Vincent Leung <vincent@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  * @package Paheon\MeowBase\Tools
  * 
@@ -231,20 +231,6 @@ class Password {
             $salt .= $allChars[random_int(0, strlen($allChars) - 1)];
         }
         return $salt;
-    }
-
-    public function __debugInfo():array {
-        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
-            'minLength' => $this->minLength,
-            'maxLength' => $this->maxLength,
-            'minUppercase' => $this->minUppercase,
-            'minLowercase' => $this->minLowercase,
-            'minNumber' => $this->minNumber,
-            'minSpecial' => $this->minSpecial,
-            'algorithm' => $this->algorithm,
-            'salt' => $this->salt,
-        ]);
-        return $debugInfo;
     }
 
 }

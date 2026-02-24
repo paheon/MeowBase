@@ -5,7 +5,7 @@
  * This class is used to manage the system logger.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  * @package Paheon\MeowBase
  */
@@ -19,13 +19,13 @@ class SysLog extends Logger{
 
     use ClassBase;
 
-    const LOG_DEBUG = LogLevel::DEBUG;
-    const LOG_INFO = LogLevel::INFO;
-    const LOG_WARNING = LogLevel::WARNING;
-    const LOG_ERROR = LogLevel::ERROR;
-    const LOG_CRITICAL = LogLevel::CRITICAL;
-    const LOG_ALERT = LogLevel::ALERT;
-    const LOG_EMERGENCY = LogLevel::EMERGENCY;
+    const DEBUG = LogLevel::DEBUG;
+    const INFO = LogLevel::INFO;
+    const WARNING = LogLevel::WARNING;
+    const ERROR = LogLevel::ERROR;
+    const CRITICAL = LogLevel::CRITICAL;
+    const ALERT = LogLevel::ALERT;
+    const EMERGENCY = LogLevel::EMERGENCY;
 
     // Properties //
     public	bool	$enable = true;	// Enable Log by default
@@ -79,12 +79,4 @@ class SysLog extends Logger{
         return $this->logLevelThreshold;
     }
 
-    public function __debugInfo():array {
-        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
-            'enable' => $this->enable,
-            'stack' => $this->stack,
-            'depth' => $this->depth,
-        ]);
-        return $debugInfo;
-    }
 }

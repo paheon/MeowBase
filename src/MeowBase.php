@@ -5,7 +5,7 @@
  * This class is the main class for MeowBase.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  * @package Paheon\MeowBase
  * 
@@ -122,18 +122,4 @@ class MeowBase {
         return $this->_getBase($prop);
     }
 
-    public function __debugInfo():array {
-        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
-            'profiler' => $this->profiler,
-            'config' => $this->config,
-            'log' => $this->log,
-            'cache' => $this->cache,
-            'db' => $this->db,
-            'lazyLoad' => $this->lazyLoad,
-            'configTree' => $this->configTree,
-            'debug' => $this->debug,
-        ]);
-        return $debugInfo;
-    }
-        
 }

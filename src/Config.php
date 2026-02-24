@@ -5,7 +5,7 @@
  * This class is used to manage the configuration for the application.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  * @package Paheon\MeowBase
  */
@@ -187,14 +187,4 @@ class Config {
         }
     }
 
-    public function __debugInfo():array {
-        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
-            'etcPath' => $this->etcPath,
-            'varPath' => $this->varPath,
-            'file' => $this->file,
-            'docRoot' => $this->docRoot,
-            'config' => $this->config,
-        ]);
-        return $debugInfo;
-    }
 };	

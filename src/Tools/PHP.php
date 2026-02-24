@@ -5,7 +5,7 @@
  * This class stores some useful functions for PHP environment and performance.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  * @package Paheon\MeowBase\Tools
  */

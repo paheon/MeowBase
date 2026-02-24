@@ -5,7 +5,7 @@
  * This file is used for changing the path of configuration directories and name of configuration files for the MeowBase application.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  */
 

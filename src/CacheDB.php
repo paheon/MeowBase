@@ -5,7 +5,7 @@
  * This class is used to manage cache with CacheDB.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  * @package Paheon\MeowBase
  */
@@ -474,16 +474,4 @@ class CacheDB extends Medoo {
         return $result;
     }
 
-    public function __debugInfo():array {
-        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
-            'cache' => $this->cache,
-            'log' => $this->log,
-            'enableCache' => $this->enableCache,
-            'enableLog' => $this->enableLog,
-            'logResult' => $this->logResult,
-        ]);
-        return $debugInfo;
-    }
-
- 
 }

@@ -5,7 +5,7 @@
  * This class is used to manage a tree structure.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  * @package Paheon\MeowBase\Tools
  */
@@ -390,16 +390,4 @@ class DTree {
         return $this->name;
     }
 
-    public function __debugInfo():array {
-        $debugInfo = array_merge($this->_getBaseDebugInfo(), [
-            'path' => $this->getPath(),
-            'name' => $this->name,
-            'data' => $this->data,
-            'isRoot' => $this->isRoot(),
-            'parent' => is_null($this->parent) ? null : $this->parent->name,
-            'children' => $this->children,
-        ]);
-        return $debugInfo;
-    }
-    
 }

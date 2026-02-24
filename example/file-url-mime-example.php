@@ -6,7 +6,7 @@
  * for file operations, URL manipulation, and MIME type detection.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.1
+ * @version 1.3.2
  * @license MIT
  */
 
