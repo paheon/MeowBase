@@ -5,7 +5,7 @@
  * This class is used to manage URLs.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.2
+ * @version 1.3.3
  * @license MIT
  * @package Paheon\MeowBase\Tools
  */

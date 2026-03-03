@@ -6,7 +6,7 @@
  * for file operations, URL manipulation, and MIME type detection.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.2
+ * @version 1.3.3
  * @license MIT
  */
 
@@ -89,8 +89,8 @@ if ($tempFile !== false) {
 }
 echo $br;
 
-// Method 2: genTempFile (returns file path)
-$tempFile2 = $file->genTempFile("", "test_");
+// Method 2: uniqueFile (returns file path)
+$tempFile2 = $file->uniqueFile("", "test_");
 if ($tempFile2 !== false) {
     echo "Temporary file created (path): ".$tempFile2.$br;
     file_put_contents($tempFile2, "Test content 2");

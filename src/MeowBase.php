@@ -5,7 +5,7 @@
  * This class is the main class for MeowBase.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.2
+ * @version 1.3.3
  * @license MIT
  * @package Paheon\MeowBase
  * 

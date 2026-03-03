@@ -5,7 +5,7 @@
  * This class is used to manage CSV data and provide database-like features.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.2
+ * @version 1.3.3
  * @license MIT
  * @package Paheon\MeowBase\Tools
  */
@@ -429,7 +429,7 @@ class CsvDB implements \Iterator {
 		// Read source file and write to temp file //
 		$readFileName  = $this->csvFile;
 		$file = new File();
-		$writeFileName = $file->genTempFile($file->getFilePath($readFileName), "csvtmp_");
+		$writeFileName = $file->uniqueFile(File::getFilePath($readFileName), "csvtmp_");
 		$readFile = $writeFile = false;
 		$result = [
 			"add"	 => [],

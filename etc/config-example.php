@@ -8,7 +8,7 @@
  * IMPORTANT: Never commit config.php to version control as it contains sensitive information.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.1
+ * @version 1.3.3
  * @license MIT
  * @package Paheon\MeowBase\Config
  */
@@ -32,11 +32,13 @@ $getSysConfig = function (string $docRoot, string $etcPath, string $varPath): ar
             "sessionLifeTime" => 604800,            // Session lifetime in seconds (default: 7 days = 604800)
             "debug" => true,                        // Enable/disable debug mode (set to false in production)
         ],
+        // Path setting //
         "path" => [
             "docRoot" => $docRoot,
             "etc" => $docRoot.$etcPath,
             "var" => $docRoot.$varPath,
         ],
+        // System Database setting //
         "db" => [
             // CSV Database settings (for simple file-based storage)
             "csv" => [
@@ -57,12 +59,14 @@ $getSysConfig = function (string $docRoot, string $etcPath, string $varPath): ar
             ],
             "engine" => "sql",                      // Database engine: "sql" or "csv"
         ],
+        // System Log setting //
         "log" => [
             "path" => $docRoot.$varPath."/log",
             "level" => LogLevel::DEBUG,
             "enable" => true,
             "option" => [],
         ],
+        // System Cache setting //
         "cache" => [
             "adapterList" => [
                 // File-based cache adapter
@@ -94,6 +98,7 @@ $getSysConfig = function (string $docRoot, string $etcPath, string $varPath): ar
             "lifeTime" => 604800,                   // Default cache lifetime in seconds (7 days)
             "adapter" => "files",                  // Default cache adapter: "files" or "memcached"
         ],
+        // Mailer setting //
         "mailer" => [
             // PHPMailer settings //
             "host" => "localhost",                  // SMTP server hostname
@@ -122,6 +127,7 @@ $getSysConfig = function (string $docRoot, string $etcPath, string $varPath): ar
             "spoolPath" => $docRoot.$varPath."/spool/mailer", // Path to mail spool directory (for async mode)
             "checkDNS" => false,                    // Check DNS for email addresses
         ],
+        // User management setting //
         "user" => [
             "manager" => [
                 "sessionPath" => $docRoot.$varPath."/session", // Path to session files
@@ -219,7 +225,19 @@ $getSysConfig = function (string $docRoot, string $etcPath, string $varPath): ar
                 */
             ],
         ],
-        
+        // JsonAPI setting //
+        "JsonAPI" => [
+            "apiHost" => "https://your_backend_server.com",         // API Host - The entry point of the API
+            "apiKey" => null,                                       // API key - Null for no authentication
+            "userAgent" => "JsonAPI/1.3.2",                         // User agent - Null for no user agent in header
+            "timeout" => 30,                                        // Timeout in seconds
+            "maxRetry" => 10,                                       // Maximum number of retries
+            "encoding" => "",                                       // Encoding to use
+            "followLocation" => true,                               // Follow location
+            "httpVersion" => CURL_HTTP_VERSION_1_1,                 // HTTP version
+            "sslVerifyPeer" => false,                               // Verify peer
+            "sslVerifyHost" => false,                               // Verify host
+        ],
         // User defined settings - Add your custom configuration here
         "mySetting" => [
             "mySetting1" => "MySetting1",

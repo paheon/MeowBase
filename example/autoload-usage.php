@@ -6,7 +6,7 @@
  * in your PHP program.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.0.0
+ * @version 1.3.3
  * @license MIT
  */
 

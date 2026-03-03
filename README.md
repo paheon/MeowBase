@@ -34,7 +34,7 @@ The `DTree` class is a versatile and efficient tree data structure implementatio
 
 The `Mailer` class provides email functionality through PHPMailer integration, supporting both direct mode and asynchronous mode email sending, with features for handling attachments, embedded images, and HTML content. For PHPMailer details, please refer to [PHPMailer](https://github.com/PHPMailer/PHPMailer).
 
-The `File` class offers file system operations with path management and temporary file handling capabilities.
+The `File` class offers file system operations with path management and temporary file handling capabilities. Many functions are static methods including `getFilePath()`, `getFileName()`, and `getFileExt()` for convenient file path parsing.
 
 The `Url` class provides URL manipulation and validation features, including URL building, modification, and information retrieval.
 
@@ -44,7 +44,9 @@ The `PHP` class provides utility functions for PHP environment checks. All membe
 
 The `CsvDB` class provides an efficient solution for managing CSV files as a database system for small datasets. For large datasets, please consider using a more robust database system.
 
-The `Autoload` class provides dynamic autoload management capabilities, allowing you to add PSR-4, PSR-0, and classmap entries at runtime without modifying composer.json. This is particularly useful for plugin systems and dynamic module loading. 
+The `Autoload` class provides dynamic autoload management capabilities, allowing you to add PSR-4, PSR-0, and classmap entries at runtime without modifying composer.json. This is particularly useful for plugin systems and dynamic module loading.
+
+The `JsonAPI` class provides a robust solution for handling JSON API requests and responses. It supports various HTTP methods (GET, POST, PUT, DELETE, etc.), API key authentication, custom headers, SSL configuration, and automatic retry mechanisms. The class can be used both as an API client (for making requests to external APIs) and as an API server (for handling incoming API requests and sending responses).
 
 
 ## Getting Started
@@ -288,7 +290,7 @@ try {
 **Private Methods:**
 - `_getProperty(string $prop, string $elem = ""): mixed`: Internal property getter
 - `_setProperty(string $prop, mixed $value): void`: Internal property setter
-- `_getBaseDebugInfo(): array`: Get base debug information for sub-classes *(since v1.3.1)*
+- `customDebugInfo(): array`: Override in sub-classes to add custom debug information *(since v1.3.2)*
 
 **Public Methods:**
 - `__get(string $prop): mixed`: Magic method for property access
@@ -564,8 +566,6 @@ $meow->log->enable = true;           // Enable log again
 - `__debugInfo(): array`: Returns debug information *(since v1.3.1)*
 
 **Note:** The `threshold` property can also be used as a virtual property to get/set log threshold level instead of using `setThreshold()` and `getThreshold()` methods.
-- `setLogLevel(string $level): void`: Sets logging level
-- `getLogLevel(): string`: Returns current log level
 
 ### 6. Cache System - Cache
 
@@ -959,7 +959,13 @@ $fileName = $file->genFile("[type]/[name].[ext]", [
 ]);
 // $fileName = "/var/www/html/documents/report.pdf"
 
+// Parse file path (static methods)
+$path = File::getFilePath("/var/www/html/documents/report.pdf");  // "/var/www/html/documents"
+$name = File::getFileName("/var/www/html/documents/report.pdf");   // "report.pdf"
+$ext  = File::getFileExt("/var/www/html/documents/report.pdf");   // "pdf"
+
 // Create a temporary file (return the resource)
+$filePath = "";
 $tempFile = $file->tempFile($filePath);
 if ($tempFile !== false) {
     // Use the temporary file
@@ -968,8 +974,8 @@ if ($tempFile !== false) {
     // $filePath contains the path to the temporary file
 }
 
-// Another way to create temporary file (return file name)
-$tempFile = $file->genTempFile("", "MyApp_");
+// Another way to create temporary file (return file path)
+$tempFile = $file->uniqueFile("", "MyApp_");
 if ($tempFile !== false) {
     file_put_contents($tempFile, "Temporary content");
     // $tempFile = "/tmp/MyApp_ce0JDh"
@@ -983,8 +989,11 @@ if ($tempFile !== false) {
 - `setHome(?string $home = null): void`: Sets home directory
 - `setHomeToCurrent(): void`: Sets home to current directory
 - `genFile(string $relativePath, array $substituteList = []): string`: Builds file path with variable substitution
-- `tempFile(string &$filePath): mixed`: Creates temporary file and returns resource
-- `genTempFile(string $path = "", string $prefix = ""): mixed`: Creates temporary file and returns path
+- `getFilePath(string $fileWithPath): string`: Gets directory path from file path *(static)*
+- `getFileName(string $fileWithPath): string`: Gets file name from file path *(static)*
+- `getFileExt(string $fileWithPath): string`: Gets file extension from file path *(static)*
+- `tempFile(?string &$filePath = null): mixed`: Creates temporary file and returns resource (auto-deleted on close)
+- `uniqueFile(string $path = "", string $prefix = ""): mixed`: Creates temporary file and returns path
 
 ### 3. URL Handling - Url
 The `Url` class provides URL manipulation and validation features, including URL building, modification, and information retrieval. It supports both relative and absolute URL handling.
@@ -2206,6 +2215,221 @@ The trade-off is increased complexity. Database storage requires a database serv
 - `checkPassword(string $password, string $hash): bool`: Verifies password against hash
 - `genSalt(int $length = 0): string`: Generates a random salt string
 
+### 10. JsonAPI - JSON API Client and Server
+
+The `JsonAPI` class provides a robust solution for handling JSON API requests and responses. It can be used in two modes: as an **API client** for making HTTP requests to external APIs, and as an **API server** for handling incoming requests and sending JSON responses. The class supports various HTTP methods, API key authentication with SHA-256 hashing, custom headers, SSL configuration, and automatic retry mechanisms.
+
+#### Configuration Options
+
+The `JsonAPI` class accepts a configuration array in its constructor:
+
+```php
+$apiConfig = [
+    'apiHost'       => 'https://api.example.com',   // Base URL for API requests
+    'apiKey'        => 'your-secret-api-key',      // API key (hashed with SHA-256)
+    'apiKeyHeader'  => 'x-api-key',                 // Header name for API key (default: x-api-key)
+    'userAgent'     => 'MyApp/1.0',                 // Custom User-Agent header
+    'timeout'       => 30,                          // Request timeout in seconds (default: 30)
+    'maxRetry'      => 10,                          // Max redirects (default: 10)
+    'encoding'      => '',                           // Accept-Encoding (e.g., 'gzip')
+    'followLocation'=> true,                         // Follow redirects (default: true)
+    'httpVersion'   => CURL_HTTP_VERSION_1_1,       // HTTP version
+    'sslVerifyPeer' => false,                        // Verify SSL certificate (default: false)
+    'sslVerifyHost' => false,                        // Verify SSL hostname (default: false)
+];
+
+$jsonAPI = new JsonAPI($meow, $apiConfig);
+```
+
+#### API Client Mode - Making Requests
+
+Use the `request()` method to make HTTP requests to external APIs. The method supports GET, POST, PUT, DELETE, PATCH, and other HTTP methods.
+
+**GET Request:**
+```php
+// Simple GET request
+$response = $jsonAPI->request('/posts/1', JsonAPI::METHOD_GET);
+
+// GET with query parameters
+$params = ['userId' => 1, 'limit' => 10];
+$response = $jsonAPI->request('/posts', JsonAPI::METHOD_GET, $params);
+
+if ($response !== null) {
+    $data = json_decode($response['body'], true);
+    $headers = $response['header'];
+} else {
+    echo "Error: " . $jsonAPI->lastError;
+}
+```
+
+**POST Request:**
+```php
+$postData = [
+    'title' => 'New Post',
+    'body' => 'Post content',
+    'userId' => 1,
+];
+
+$response = $jsonAPI->request('/posts', JsonAPI::METHOD_POST, $postData);
+```
+
+**PUT and DELETE Requests:**
+```php
+$updateData = ['title' => 'Updated Title', 'body' => 'Updated content'];
+$response = $jsonAPI->request('/posts/1', JsonAPI::METHOD_PUT, $updateData);
+
+$response = $jsonAPI->request('/posts/1', JsonAPI::METHOD_DELETE);
+```
+
+**Custom Headers:**
+```php
+$headers = [
+    'X-Custom-Header: CustomValue',
+    'Accept: application/json',
+];
+$response = $jsonAPI->request('/api/data', JsonAPI::METHOD_GET, '', $headers);
+```
+
+When `apiKey` is configured, it is automatically included in request headers. The API key is hashed with SHA-256 before being sent.
+
+#### API Server Mode - Handling Requests and Sending Responses
+
+Use the `response()` method to send JSON responses to API clients. This is typically used in your API endpoint scripts.
+
+**Sending JSON Response:**
+```php
+$jsonAPI = new JsonAPI($meow);
+
+// Send success response (automatically sets Content-Type and ends script)
+$jsonAPI->response([
+    'status' => 'success',
+    'data' => ['id' => 123, 'name' => 'Test User'],
+    'timestamp' => time(),
+]);
+
+// Send error response with custom HTTP status
+$jsonAPI->response(
+    ['status' => 'error', 'message' => 'Resource not found'],
+    'HTTP/1.1 404 Not Found'
+);
+
+// Send with custom headers
+$headers = [
+    'Content-Type: application/json',
+    'X-API-Version: 1.3.3',
+    'X-RateLimit-Remaining: 100',
+];
+$jsonAPI->response($data, $headers);
+
+// Send without terminating script (die = false)
+$jsonAPI->response($data, 'Content-Type: application/json', false);
+```
+
+#### API Key Authentication (Server-Side)
+
+When building an API server, use `compareApiKey()` to validate incoming requests:
+
+```php
+$apiConfig = [
+    'apiKey' => 'your-secret-key',
+    'apiKeyHeader' => 'x-api-key',
+];
+$jsonAPI = new JsonAPI($meow, $apiConfig);
+
+// Validate API key from request headers
+if (!$jsonAPI->compareApiKey()) {
+    $jsonAPI->response(
+        ['status' => 'error', 'message' => 'Invalid API key'],
+        'HTTP/1.1 401 Unauthorized'
+    );
+    exit;
+}
+
+// Process authenticated request...
+$jsonAPI->response(['status' => 'success', 'data' => $result]);
+```
+
+The `getUserApiKey()` method retrieves the API key from the request headers for custom validation logic.
+
+#### Complete API Server Example
+
+```php
+// api.php - Your API endpoint
+require(__DIR__ . '/vendor/autoload.php');
+
+use Paheon\MeowBase\Config;
+use Paheon\MeowBase\MeowBase;
+use Paheon\MeowBase\Tools\JsonAPI;
+
+$config = new Config();
+$meow = new MeowBase($config);
+
+$api = new JsonAPI($meow, [
+    'apiKey' => 'your-secret-key',
+    'apiKeyHeader' => 'x-api-key',
+]);
+
+if (!$api->compareApiKey()) {
+    $api->response(['status' => 'error', 'message' => 'Unauthorized'], 'HTTP/1.1 401 Unauthorized');
+    exit;
+}
+
+$method = $_SERVER['REQUEST_METHOD'];
+$route = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+if ($route === '/api/users' && $method === 'GET') {
+    $users = getUsersFromDatabase();
+    $api->response(['status' => 'success', 'data' => $users]);
+} elseif ($route === '/api/user' && $method === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $result = createUser($input);
+    $api->response(['status' => 'success', 'data' => $result]);
+} else {
+    $api->response(['status' => 'error', 'message' => 'Not found'], 'HTTP/1.1 404 Not Found');
+}
+```
+
+#### HTTP Method Constants
+
+The class provides constants for all supported HTTP methods:
+
+- `JsonAPI::METHOD_GET`
+- `JsonAPI::METHOD_POST`
+- `JsonAPI::METHOD_PUT`
+- `JsonAPI::METHOD_DELETE`
+- `JsonAPI::METHOD_PATCH`
+- `JsonAPI::METHOD_OPTIONS`
+- `JsonAPI::METHOD_HEAD`
+- `JsonAPI::METHOD_CONNECT`
+- `JsonAPI::METHOD_TRACE`
+- `JsonAPI::METHOD_MERGE`
+
+#### Properties
+
+- `$apiHost`: Base API URL
+- `$apiKey`: Hashed API key (SHA-256)
+- `$apiKeyHeader`: Header name for API key
+- `$userAgent`: User-Agent string
+- `$timeout`: Request timeout in seconds
+- `$maxRetry`: Maximum redirect count
+- `$encoding`: Accept-Encoding value
+- `$followLocation`: Follow redirects flag
+- `$httpVersion`: HTTP version constant
+- `$sslVerifyPeer`: SSL peer verification flag
+- `$sslVerifyHost`: SSL host verification flag
+
+#### Public Methods
+
+- `__construct(MeowBase $meow, array $config = [])`: Initializes JsonAPI with MeowBase and configuration
+- `setApiHost(string $apiHost): void`: Sets the API base URL
+- `setApiKey(?string $apiKey): void`: Sets API key (hashed with SHA-256)
+- `compareApiKey(): bool`: Validates client's API key against configured key
+- `getUserApiKey(): ?string`: Gets API key from request headers
+- `response(string|array $data = [], string|array $header = 'Content-Type: application/json', bool $die = true): void`: Sends JSON response
+- `request(string $path = '', string $method = METHOD_GET, string|array $params = "", string|array $headers = []): ?array`: Makes HTTP request, returns `['header' => string, 'body' => string]` or null on error
+
+For more examples, see `example/jsonapi-example.php` and the JsonAPI tests in `test.php`.
+
 
 ## Directory Structure
 The framework uses the following directory structure:
@@ -2229,29 +2453,6 @@ The framework uses the following directory structure:
 - symfony/cache: 6.4.33 or higher
 - phpmailer/phpmailer: 6.12.0 or higher
 - guzzlehttp/guzzle: 7.10.0 or higher
-
-## Version History
-
-### v1.3.1 (2026-01-30)
-- **New Features:**
-  - Added `Autoload` tool class for dynamic autoload management
-  - Added event system to `ClassBase` trait (`registerEvent()`, `triggerEvent()`, `unregisterEvent()`)
-  - Added Breadth-First Search (BFS) support to `DTreeIterator`
-  - Added '.' and '..' path component support in `DTree::findByPath()` and `createByPath()`
-- **API Changes:**
-  - `SysLog`: Renamed `setLogLevel()` to `setThreshold()` and `getLogLevel()` to `getThreshold()`
-  - `MeowBase`: Constructor `$preload` parameter now accepts `bool|array` (previously only `bool`)
-  - `DTree::createByPath()`: Now returns null if child node already exists (behavior change)
-- **Improvements:**
-  - Added `_getBaseDebugInfo()` to `ClassBase` for better debug info inheritance
-  - Added `__debugInfo()` methods to `ClassBase`, `SysLog`, `DTreeIterator`
-  - Enhanced configuration file path options for 'docRoot', 'etc', and 'var'
-- **Documentation:**
-  - Added comprehensive example files: `userdb-example.php`, `usermanager-example.php`
-  - Updated all example files with better demonstrations
-  - Added this version history section
-
-For complete version history, see [ChangeLog](ChangeLog).
 
 ## License
 MIT License

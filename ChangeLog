@@ -1,3 +1,9 @@
+v1.3.3
+- Added new tool classes:
+    - JsonAPI: JSON API class for handling JSON API requests and responses
+- File:
+    - Changed some functions to static methods and added getFileExt() to get file extension from file path
+
 v1.3.2 
 - SysLog:
     - Modified the name of error level constants

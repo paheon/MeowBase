@@ -337,7 +337,7 @@ print_r($debugInfo);
 
 ### For Sub-Classes
 
-Sub-classes can use `_getBaseDebugInfo()` to merge with their own debug info:
+Sub-classes can override `customDebugInfo()` to add custom debug information. The returned array will be merged with the automatically collected property information:
 
 ```php
 class MySubClass {
@@ -345,13 +345,16 @@ class MySubClass {
     
     protected string $customProp = "custom";
     
-    public function __debugInfo(): array {
-        return array_merge($this->_getBaseDebugInfo(), [
-            'customProp' => $this->customProp
-        ]);
+    private function customDebugInfo(): array {
+        return [
+            'customProp' => $this->customProp,
+            'computedValue' => $this->customProp . '_computed',
+        ];
     }
 }
 ```
+
+Note: `customDebugInfo()` is a private method. Each class that uses the ClassBase trait can define its own implementation. The `__debugInfo()` method automatically discovers and invokes it via reflection.
 
 ## Error Handling
 
@@ -381,7 +384,7 @@ if ($obj->lastError) {
 
 6. **Custom getters/setters**: If you need custom logic, implement `getPropertyName()` or `setPropertyName($value)` methods.
 
-7. **Debug info**: Override `__debugInfo()` in sub-classes to provide useful debugging information.
+7. **Debug info**: Override `customDebugInfo()` in sub-classes to add custom properties to the debug output.
 
 ## Property Access Methods
 
@@ -447,8 +450,8 @@ $obj->arrayProperty = '{"key":"value"}';  // Converts JSON string to array
 - `registerEvent(string $event, callable $callback): int` - Register event handler
 - `triggerEvent(string $event, array $args = []): array` - Trigger event
 - `unregisterEvent(string $event, int $handlerID = 0): bool` - Unregister event handler
-- `_getBaseDebugInfo(): array` - Get base debug info (for sub-classes)
-- `__debugInfo(): array` - Get debug information
+- `customDebugInfo(): array` - Override to add custom debug info (for sub-classes)
+- `__debugInfo(): array` - Get debug information (automatically includes properties and customDebugInfo)
 
 ## Example Files
 

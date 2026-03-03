@@ -27,7 +27,7 @@ Demonstrates the fundamental ClassBase trait that provides:
 - Property protection mechanisms
 - Event registration and triggering
 - Exception handling configuration with custom exception classes
-- Debug information support with `_getBaseDebugInfo()` for sub-classes
+- Debug information support with `customDebugInfo()` for sub-classes
 
 **Documentation:** See `classbase-readme.md` for detailed usage guide
 
@@ -151,9 +151,27 @@ Demonstrates the Mailer class for sending emails:
 - Email validation with DNS checking
 - Logging support
 
+#### 10. `jsonapi-example.php` - JSON API Client and Server
+Demonstrates the JsonAPI class for API integration:
+- **Client Mode**: Making API requests to external services
+- **Server Mode**: Handling incoming API requests and sending responses
+- API key authentication with SHA-256 hashing
+- Various HTTP methods (GET, POST, PUT, DELETE, PATCH)
+- Custom headers and SSL configuration
+
+**Key Features:**
+- Complete REST API client functionality
+- API server response handling
+- API key authentication and validation
+- Custom HTTP headers
+- SSL/TLS configuration options
+- Automatic retry and timeout handling
+- Request/response logging support
+- Configurable user agent and encoding
+
 ### User Management
 
-#### 10. `user-csv-example.php` - User Management (CSV Storage)
+#### 11. `user-csv-example.php` - User Management (CSV Storage)
 Shows comprehensive user management with CSV storage including:
 - **UserCSV**: User CRUD operations, password hashing, status management
 - **UserGroupCSV**: User group management, group membership
@@ -167,7 +185,7 @@ Shows comprehensive user management with CSV storage including:
 - User and group permissions
 - Permission checking
 
-#### 11. `userdb-example.php` - User Management (Database Storage)
+#### 12. `userdb-example.php` - User Management (Database Storage)
 Demonstrates user management with database storage including:
 - **UserDB**: User CRUD operations with database tables
 - **UserGroupDB**: Database-backed user group management
@@ -180,7 +198,7 @@ Demonstrates user management with database storage including:
 - Permission management with database storage
 - Integration with CacheDB
 
-#### 12. `usermanager-example.php` - Complete User Management System
+#### 13. `usermanager-example.php` - Complete User Management System
 Demonstrates the integrated UserManager for both CSV and database storage:
 - User login/logout with both storage types
 - Session management
@@ -199,13 +217,13 @@ Demonstrates the integrated UserManager for both CSV and database storage:
 
 ### Autoload Configuration
 
-#### 13. `autoload-example.php` - Simple Dynamic Autoload Usage
+#### 14. `autoload-example.php` - Simple Dynamic Autoload Usage
 Demonstrates basic dynamic autoload configuration:
 - Adding new namespace mappings
 - Using relative paths
 - Loading autoload rules from config
 
-#### 14. `autoload-usage.php` - Advanced Autoload Configuration
+#### 15. `autoload-usage.php` - Advanced Autoload Configuration
 Shows advanced autoload features:
 - PSR-4 and PSR-0 mapping
 - Multiple paths for same namespace
@@ -308,6 +326,7 @@ print_r($debugInfo);
 | | csvdb-example.php | CSV file database with advanced search |
 | **Utilities** | file-url-mime-example.php | File, URL, and MIME type utilities |
 | | mailer-example.php | Email sending with attachments and async mode |
+| | jsonapi-example.php | JSON API client and server with authentication |
 | **User Management** | user-csv-example.php | User management with CSV storage (User/Group/Perm) |
 | | userdb-example.php | User management with database storage |
 | | usermanager-example.php | Integrated user authentication system |

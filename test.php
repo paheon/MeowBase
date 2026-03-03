@@ -20,9 +20,10 @@
  * 13. User Management Tests (DB)
  * 14. UserManager Integration Tests
  * 15. Autoload Tests
+ * 16. JsonAPI Tests
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.2
+ * @version 1.3.3
  * @license MIT
  */
 use Paheon\MeowBase\Config;
@@ -46,6 +47,7 @@ use Paheon\MeowBase\Tools\UserPermCSV;
 use Paheon\MeowBase\Tools\UserPermDB;
 use Paheon\MeowBase\Tools\UserManager;
 use Paheon\MeowBase\Tools\Password;
+use Paheon\MeowBase\Tools\JsonAPI;
 
 // Profiler will read this global variable for the application start time, 
 //   so it should be run at the beginning of the application
@@ -851,9 +853,9 @@ if (file_exists($tempFilePath)) {
     unlink($tempFilePath);
 }
 
-// Test temporary file creation by genTempFile
+// Test temporary file creation by uniqueFile
 $tempFilePath = "";
-$tempFile = $file->genTempFile("", "MyTemp_");
+$tempFile = $file->uniqueFile("", "MyTemp_");
 if ($tempFile !== false) {
     echo "Temporary file created: ".$tempFile.$br;
     // Write something to the temp file
@@ -861,13 +863,12 @@ if ($tempFile !== false) {
     // Read the content
     $content = file_get_contents($tempFile);
     echo "Content read from temp file: ".$content.$br;
-    // Close the temp file (this will also delete it)
 } else {
     echo "Failed to create temporary file: ".$file->lastError.$br;
 }
-if (file_exists($tempFilePath)) {
-    echo "Deleting temp file: ".$tempFilePath.$br;
-    unlink($tempFilePath);
+if ($tempFile !== false && file_exists($tempFile)) {
+    echo "Deleting temp file: ".$tempFile.$br;
+    unlink($tempFile);
 }
 
 
@@ -1082,7 +1083,7 @@ echo "Testing email sending with async mode:".$br;
 if ($skipSendTest) {
     echo "This test skipped! (set \$skipSendTest to false to run this test):".$br;
 } else {
-    $tempFile = $tmpFile->genTempFile("", "test_");
+    $tempFile = $tmpFile->uniqueFile("", "test_");
     try {
         $mailer->reset();
         $mailer->async = true;
@@ -1170,7 +1171,7 @@ echo "Testing email sending with direct mode:".$br;
 if ($skipSendTest) {
     echo "This test skipped! (set \$skipSendTest to false to run this test):".$br;
 } else {
-    $tempFile = $tmpFile->genTempFile("", "test_");
+    $tempFile = $tmpFile->uniqueFile("", "test_");
     try {
         $mailer->reset();
         $mailer->async = false;
@@ -3268,6 +3269,241 @@ echo "\$_SESSION[".$userManagerDB->sessionVarName."]:".$br;
 var_dump($_SESSION[$userManagerDB->sessionVarName] ?? null) . $br;
 
 $meow->profiler->record("Logout via UserManager DB", "UserManager DB Test");
+echo $br;
+
+//========================================
+// Test 16: JsonAPI Tests
+//========================================
+// This section tests the JsonAPI class functionality including:
+// - Client mode: Making API requests
+// - Server mode: Handling responses
+// - API key authentication
+// - Various HTTP methods
+//========================================
+
+echo "==========================================".$br;
+echo "Test 16: JsonAPI Tests".$br;
+echo "==========================================".$br.$br;
+
+// Test 16.1: Basic JsonAPI Client Setup
+echo "16.1 Basic JsonAPI Client Setup".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("JsonAPI Client Setup Start", "JsonAPI Test");
+
+$apiConfig = [
+    'apiHost' => 'https://jsonplaceholder.typicode.com',
+    'timeout' => 30,
+    'maxRetry' => 3,
+    'followLocation' => true,
+    'sslVerifyPeer' => false,
+    'sslVerifyHost' => false,
+];
+
+$jsonAPI = new JsonAPI($meow, $apiConfig);
+echo "JsonAPI client created".$br;
+echo "API Host: " . $jsonAPI->apiHost . $br;
+echo "Timeout: " . $jsonAPI->timeout . " seconds" . $br;
+echo "Max Retry: " . $jsonAPI->maxRetry . $br;
+
+$meow->profiler->record("JsonAPI Client Setup Complete", "JsonAPI Test");
+echo $br;
+
+// Test 16.2: GET Request
+echo "16.2 GET Request (Fetch Single Post)".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("GET Request Start", "JsonAPI Test");
+
+$response = $jsonAPI->request('/posts/1', JsonAPI::METHOD_GET);
+if ($response !== null) {
+    echo "Response received successfully".$br;
+    echo "Header length: " . strlen($response['header']) . " bytes" . $br;
+    echo "Body length: " . strlen($response['body']) . " bytes" . $br;
+    $data = json_decode($response['body'], true);
+    if ($data) {
+        echo "Post ID: " . $data['id'] . $br;
+        echo "Title: " . $data['title'] . $br;
+        echo "User ID: " . $data['userId'] . $br;
+    }
+} else {
+    echo "Error: " . $jsonAPI->lastError . $br;
+}
+
+$meow->profiler->record("GET Request Complete", "JsonAPI Test");
+echo $br;
+
+// Test 16.3: GET Request with Parameters
+echo "16.3 GET Request with Query Parameters".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("GET with Params Start", "JsonAPI Test");
+
+$params = ['userId' => 1];
+$response = $jsonAPI->request('/posts', JsonAPI::METHOD_GET, $params);
+if ($response !== null) {
+    echo "Response received successfully".$br;
+    $data = json_decode($response['body'], true);
+    if ($data && is_array($data)) {
+        echo "Found " . count($data) . " posts for user ID 1" . $br;
+        echo "First post title: " . $data[0]['title'] . $br;
+    }
+} else {
+    echo "Error: " . $jsonAPI->lastError . $br;
+}
+
+$meow->profiler->record("GET with Params Complete", "JsonAPI Test");
+echo $br;
+
+// Test 16.4: POST Request
+echo "16.4 POST Request (Create New Post)".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("POST Request Start", "JsonAPI Test");
+
+$postData = [
+    'title' => 'Test Post from MeowBase',
+    'body' => 'This is a test post created using JsonAPI class',
+    'userId' => 1,
+];
+
+$response = $jsonAPI->request('/posts', JsonAPI::METHOD_POST, $postData);
+if ($response !== null) {
+    echo "POST request successful".$br;
+    $data = json_decode($response['body'], true);
+    if ($data) {
+        echo "Created post ID: " . $data['id'] . $br;
+        echo "Title: " . $data['title'] . $br;
+    }
+} else {
+    echo "Error: " . $jsonAPI->lastError . $br;
+}
+
+$meow->profiler->record("POST Request Complete", "JsonAPI Test");
+echo $br;
+
+// Test 16.5: PUT Request
+echo "16.5 PUT Request (Update Post)".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("PUT Request Start", "JsonAPI Test");
+
+$updateData = [
+    'id' => 1,
+    'title' => 'Updated Title via MeowBase',
+    'body' => 'Updated body content',
+    'userId' => 1,
+];
+
+$response = $jsonAPI->request('/posts/1', JsonAPI::METHOD_PUT, $updateData);
+if ($response !== null) {
+    echo "PUT request successful".$br;
+    $data = json_decode($response['body'], true);
+    if ($data) {
+        echo "Updated post ID: " . $data['id'] . $br;
+        echo "New title: " . $data['title'] . $br;
+    }
+} else {
+    echo "Error: " . $jsonAPI->lastError . $br;
+}
+
+$meow->profiler->record("PUT Request Complete", "JsonAPI Test");
+echo $br;
+
+// Test 16.6: DELETE Request
+echo "16.6 DELETE Request (Delete Post)".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("DELETE Request Start", "JsonAPI Test");
+
+$response = $jsonAPI->request('/posts/1', JsonAPI::METHOD_DELETE);
+if ($response !== null) {
+    echo "DELETE request successful".$br;
+    echo "Response body: " . $response['body'] . $br;
+} else {
+    echo "Error: " . $jsonAPI->lastError . $br;
+}
+
+$meow->profiler->record("DELETE Request Complete", "JsonAPI Test");
+echo $br;
+
+// Test 16.7: Custom Headers
+echo "16.7 Request with Custom Headers".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("Custom Headers Start", "JsonAPI Test");
+
+$customHeaders = [
+    'X-Custom-Header: TestValue',
+    'Accept: application/json',
+];
+
+$response = $jsonAPI->request('/posts/1', JsonAPI::METHOD_GET, '', $customHeaders);
+if ($response !== null) {
+    echo "Request with custom headers successful".$br;
+    $data = json_decode($response['body'], true);
+    if ($data) {
+        echo "Post title: " . $data['title'] . $br;
+    }
+} else {
+    echo "Error: " . $jsonAPI->lastError . $br;
+}
+
+$meow->profiler->record("Custom Headers Complete", "JsonAPI Test");
+echo $br;
+
+// Test 16.8: API Key Configuration
+echo "16.8 API Key Configuration".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("API Key Config Start", "JsonAPI Test");
+
+$secureApiConfig = [
+    'apiHost' => 'https://api.example.com',
+    'apiKey' => 'test-secret-key-12345',
+    'apiKeyHeader' => 'X-API-Key',
+    'timeout' => 30,
+];
+
+$secureAPI = new JsonAPI($meow, $secureApiConfig);
+echo "Secure API client created".$br;
+echo "API Key configured: " . ($secureAPI->apiKey ? "Yes (hashed with SHA-256)" : "No") . $br;
+echo "API Key Header: " . $secureAPI->apiKeyHeader . $br;
+
+$meow->profiler->record("API Key Config Complete", "JsonAPI Test");
+echo $br;
+
+// Test 16.9: Response Method (Server Mode)
+echo "16.9 Response Method (Server Mode Simulation)".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("Response Method Start", "JsonAPI Test");
+
+$serverAPI = new JsonAPI($meow);
+$responseData = [
+    'status' => 'success',
+    'message' => 'Test response data',
+    'data' => ['id' => 123, 'name' => 'Test User'],
+    'timestamp' => time(),
+];
+
+echo "Server API created for response handling".$br;
+echo "Response data prepared:".$br;
+echo json_encode($responseData) . $br;
+echo "Note: In production, use \$serverAPI->response(\$responseData) to send JSON response".$br;
+
+$meow->profiler->record("Response Method Complete", "JsonAPI Test");
+echo $br;
+
+// Test 16.10: API Configuration Properties
+echo "16.10 API Configuration Properties".$br;
+echo "--------------------------------".$br;
+$meow->profiler->record("Config Properties Start", "JsonAPI Test");
+
+echo "API Configuration Details:".$br;
+echo "Host: " . $jsonAPI->apiHost . $br;
+echo "Timeout: " . $jsonAPI->timeout . " seconds" . $br;
+echo "Max Retry: " . $jsonAPI->maxRetry . $br;
+echo "Follow Location: " . ($jsonAPI->followLocation ? "Yes" : "No") . $br;
+echo "SSL Verify Peer: " . ($jsonAPI->sslVerifyPeer ? "Yes" : "No") . $br;
+echo "SSL Verify Host: " . ($jsonAPI->sslVerifyHost ? "Yes" : "No") . $br;
+echo "HTTP Version: " . $jsonAPI->httpVersion . $br;
+
+$meow->profiler->record("Config Properties Complete", "JsonAPI Test");
+echo $br;
+
+echo "JsonAPI tests completed".$br;
 echo $br;
 
 //========================================

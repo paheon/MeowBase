@@ -5,7 +5,7 @@
  * This class is a base class to handle user group information.
  * 
  * @author Vincent Leung <vincent@paheon.com>
- * @version 1.3.2
+ * @version 1.3.3
  * @license MIT
  * @package Paheon\MeowBase\Tools
  * 

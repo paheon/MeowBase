@@ -2,7 +2,7 @@
 /**
  * File and Url Class //
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.2
+ * @version 1.3.3
  * @license MIT
  * @package Paheon\MeowBase\Tools
  */
@@ -61,25 +61,25 @@ class File {
     }
 
     // Get file path //
-    public function getFilePath(string $fileWithPath):string {
+    public static function getFilePath(string $fileWithPath):string {
         $path_parts = pathinfo($fileWithPath);
         return $path_parts['dirname'] ?? "";
     }
 
     // Get file name //
-    public function getFileName(string $fileWithPath):string {
+    public static function getFileName(string $fileWithPath):string {
         $path_parts = pathinfo($fileWithPath);
         return $path_parts['basename'] ?? "";
     }
 
     // Get file extension //
-    public function getFileExt(string $fileWithPath):string {
+    public static function getFileExt(string $fileWithPath):string {
         $path_parts = pathinfo($fileWithPath);
         return $path_parts['extension'] ?? "";
     }
 
     // Generate a temp file by path and prefix //
-    public function genTempFile(string $path = "", string $prefix = ""):mixed {
+    public function uniqueFile(string $path = "", string $prefix = ""):mixed {
         $this->lastError = "";
         $path = (trim($path) === "") ? sys_get_temp_dir() : $path;
         $tmpFile = tempnam($path, $prefix);
@@ -91,8 +91,8 @@ class File {
         return $tmpFile;
     }
 
-    // Create temp file //
-    public function tempFile(string &$filePath):mixed {
+    // Create temp file (remove the temp file after close) //
+    public function tempFile(?string &$filePath = null):mixed {
         $this->lastError = "";
         $tmpFile = tmpfile();
         if ($tmpFile === false) {
@@ -100,7 +100,9 @@ class File {
             $this->throwException($this->lastError, 1);
             return false;
         }
-        $filePath = stream_get_meta_data($tmpFile)['uri'];
+        if (!is_null($filePath)) {
+            $filePath = stream_get_meta_data($tmpFile)['uri'];
+        }
         return $tmpFile;
     }
 

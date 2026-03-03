@@ -5,7 +5,7 @@
  * This class is used to manage user permissions for CacheDB storage.
  * 
  * @author Vincent Leung <vincent@paheon.com>
- * @version 1.3.2
+ * @version 1.3.3
  * @license MIT
  * @package Paheon\MeowBase\Tools
  * 

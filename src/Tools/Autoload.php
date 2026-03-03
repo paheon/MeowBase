@@ -5,7 +5,7 @@
  * A utility class to dynamically add or modify autoload rules in PHP.
  * 
  * @author Vincent Leung <meow@paheon.com>
- * @version 1.3.2
+ * @version 1.3.3
  * @license MIT
  */
 namespace Paheon\MeowBase\Tools;
