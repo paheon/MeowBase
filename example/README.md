@@ -124,13 +124,14 @@ Demonstrates CsvDB for CSV file database operations:
 
 #### 8. `file-url-mime-example.php` - File, URL, and MIME Utilities
 Shows utility classes:
-- **File**: File path operations, temporary file creation
+- **File**: File path operations, temporary file creation, zip and unzip
 - **Url**: URL building and manipulation
 - **Mime**: MIME type detection and icon mapping
 
 **Key Features:**
 - File path building with substitution
 - Temporary file management
+- Zip and unzip archive operations
 - URL generation and modification
 - MIME type detection
 - Icon mapping

@@ -40,7 +40,7 @@ echo "Example 1: Basic JsonAPI Client Setup".$br;
 echo "--------------------------------".$br;
 
 $apiConfig = [
-    'apiHost' => 'https://jsonplaceholder.typicode.com',
+    'apiHost' => 'https://your_backend_server.com',
     'timeout' => 30,
     'maxRetry' => 3,
     'followLocation' => true,
@@ -269,10 +269,6 @@ $customResponseHeaders = [
     'Access-Control-Allow-Origin: *',
 ];
 
-echo "Custom headers prepared:".$br;
-foreach ($customResponseHeaders as $header) {
-    echo "  ".$header.$br;
-}
 echo "Note: Pass headers array as second parameter to response() method".$br;
 echo $br;
 

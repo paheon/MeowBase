@@ -32,6 +32,35 @@ class JsonAPI {
 
     const DEFAULT_API_KEY_HEADER = 'x-api-key';
 
+    const TYPE_JSON = "application/json";
+    const TYPE_XML = "application/xml";
+    const TYPE_HTML = "text/html";
+    const TYPE_TEXT = "text/plain";
+    const TYPE_CSV = "text/csv";
+    const TYPE_PDF = "application/pdf";
+    const TYPE_DOC = "application/msword";
+    const TYPE_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    const TYPE_XLS = "application/vnd.ms-excel";
+    const TYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    const TYPE_PPT = "application/vnd.ms-powerpoint";
+    const TYPE_PPTX = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+    const TYPE_ZIP = "application/zip";
+    const TYPE_RAR = "application/x-rar-compressed";
+    const TYPE_7Z = "application/x-7z-compressed";
+    const TYPE_TAR = "application/x-tar";
+    const TYPE_GZ = "application/gzip";
+    const TYPE_BZ2 = "application/x-bzip2";
+    const TYPE_TGZ = "application/x-compressed";
+    const TYPE_XZ = "application/x-xz";
+    const TYPE_TSV = "text/tab-separated-values";
+    const TYPE_RSS = "application/rss+xml";
+    const TYPE_ATOM = "application/atom+xml";
+    const TYPE_ATOM_FEED = "application/atom+xml;type=feed";
+    const TYPE_ATOM_ENTRY = "application/atom+xml;type=entry";
+    const TYPE_FORM_URLENCODED = "application/x-www-form-urlencoded";
+    const TYPE_FORM_MULTIPART = "multipart/form-data";
+    const TYPE_FORM_DATA = "application/x-www-form-urlencoded";
+    
     protected   MeowBase $meow;
 
     protected   string    $apiHost;
@@ -92,6 +121,32 @@ class JsonAPI {
         return $headerList[$this->apiKeyHeader] ?? null;
     }
 
+    // Convert header to array //
+    public static function headerToArray(string $header, bool $decode = true): array {
+        $lines = explode("\n", $header);
+        if ($decode) {
+            $result = [];
+            foreach ($lines as $lineNum => $line) {
+                if (empty(trim($line))) continue;
+                if (strpos($line, ': ') !== false) {
+                    $parts = explode(': ', $line);
+                    $result[$parts[0]] = $parts[1];
+                } else {
+                    $parts = explode(' ', $line);
+                    if (count($parts) >= 1 && substr($parts[0], 0, 4) == 'HTTP') {
+                        $result['http-protocol'] = $parts[0] ?? "";
+                        $result['http-respond-code'] = $parts[1] ?? "";
+                        $result['http-respond-message'] = implode(' ', array_slice($parts, 2));
+                    } else {
+                        $result[$lineNum] = $line;
+                    }
+                }
+            }
+            return $result;
+        }
+        return $lines;
+    }
+
     // Send API Response //
     public function response(string|array $data = [], string|array $header = 'Content-Type: application/json', bool $die = true): void {
         if ($header) {
@@ -110,10 +165,14 @@ class JsonAPI {
         if ($die) die(0);
     }
     // Get Page Content by URL //
-    public function request(string $path = '', string $method = self::METHOD_GET, string|array $params = "", string|array $headers = []): ?array {
+    public function request(string $path = '', 
+                            string $method = self::METHOD_GET, 
+                            string|array $params = "", 
+                            string|array $headers = [], 
+                            bool $useRawParams = false): ?array {
         // Get API configuration //
         $url = $this->apiURL->genUrl($path);
-        if (is_array($params)) {
+        if (is_array($params) && !$useRawParams) {
             $fieldList = http_build_query($params);
         } else {
             $fieldList = $params;
@@ -146,9 +205,21 @@ class JsonAPI {
             $curlOptList[CURLOPT_USERAGENT] = $this->userAgent;
         }
         if ($headers) {
-            if (!is_array($headers)) {
+            if (is_array($headers)) {
+                $headerList = [];
+                foreach ($headers as $key => $value) {
+                    $intKey = intval($key);
+                    if ($key == $intKey) {
+                        $headerList[] = $value;
+                    } else {
+                        $headerList[] = $key.': '.$value;
+                    }
+                }
+                $headers = $headerList;
+            } else {
                 $headers = [$headers];
             }
+
         }
         if ($this->apiKey && $this->apiKeyHeader) {
             $headers[] = $this->apiKeyHeader.': '.$this->apiKey;

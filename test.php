@@ -70,10 +70,11 @@ $meow = new MeowBase($config);
 $isWeb = !PHP::isCLI();
 $br = $isWeb ? "<br>\n" : "\n";
 
+
 // Better debug output for X-Debug extension //
-ini_set('xdebug.var_display_max_depth', '10');
-ini_set('xdebug.var_display_max_children', '256');
-ini_set('xdebug.var_display_max_data', '1024');
+ini_set('xdebug.var_display_max_depth', 3);
+ini_set('xdebug.var_display_max_children', 256);
+ini_set('xdebug.var_display_max_data', 1024);
 
 //========================================
 // Test 1: ClassBase Trait Tests
@@ -601,6 +602,7 @@ $nodeList = $tree->loadFromArray([
 ]);
 $nodeC = $nodeList["/C/C1"]->parent;
 $nodeD = $nodeList["/D/D1"]->parent;
+
 echo "Result from loadFromArray:".$br;
 var_dump($nodeList);
 
@@ -776,15 +778,7 @@ if ($unserializedTree) {
     foreach ($iterator as $position => $node) {
         echo str_pad("", strlen($node->getPath()) * 2, " ") . $node->getPath() . " => " . $node->data . $br;
     }
-    
-    // Test __debugInfo() on DTree
-    echo $br."Test DTree __debugInfo():".$br;
-    $treeDebugInfo = $tree->__debugInfo();
-    echo "Tree debug info:".$br;
-    echo "  path: ".$treeDebugInfo['path'].$br;
-    echo "  name: ".$treeDebugInfo['name'].$br;
-    echo "  isRoot: ".var_export($treeDebugInfo['isRoot'], true).$br;
-    echo "  children count: ".count($treeDebugInfo['children']).$br;
+   
 } else {
     echo "Failed to unserialize tree due to hash mismatch or other error.".$br;
 }
@@ -871,6 +865,35 @@ if ($tempFile !== false && file_exists($tempFile)) {
     unlink($tempFile);
 }
 
+// Test zip and unzip (requires zip extension)
+echo $br."7.2 Zip and Unzip".$br;
+echo "--------------------------------".$br;
+if (class_exists('ZipArchive')) {
+    $zipTestFile = $file->uniqueFile(sys_get_temp_dir(), "meow_zip_");
+    if ($zipTestFile !== false) {
+        file_put_contents($zipTestFile, "Zip test content");
+        $zipDest = sys_get_temp_dir() . "/meow_test_" . uniqid() . ".zip";
+        $extractDir = sys_get_temp_dir() . "/meow_extract_" . uniqid();
+        if ($file->zip($zipTestFile, $zipDest)) {
+            echo "Zip created: " . $zipDest . $br;
+            if ($file->unzip($zipDest, $extractDir)) {
+                echo "Unzip successful: " . $extractDir . $br;
+                $extractedFile = $extractDir . "/" . basename($zipTestFile);
+                echo "Extracted file exists: " . (file_exists($extractedFile) ? "Yes" : "No") . $br;
+                if (file_exists($extractedFile)) unlink($extractedFile);
+                if (is_dir($extractDir)) rmdir($extractDir);
+            } else {
+                echo "Unzip failed: " . $file->lastError . $br;
+            }
+            if (file_exists($zipDest)) unlink($zipDest);
+        } else {
+            echo "Zip failed: " . $file->lastError . $br;
+        }
+        if (file_exists($zipTestFile)) unlink($zipTestFile);
+    }
+} else {
+    echo "ZipArchive not available, skipping zip/unzip tests".$br;
+}
 
 $meow->profiler->record("File Test Completed", "File Test");
 

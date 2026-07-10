@@ -105,12 +105,43 @@ if ($tempFile2 !== false) {
 }
 echo $br;
 
+// Example 5: Zip and Unzip
+echo "Example 5: Zip and Unzip".$br;
+echo "--------------------------------".$br;
+if (class_exists('ZipArchive')) {
+    $zipSource = $file->uniqueFile("", "zip_src_");
+    if ($zipSource !== false) {
+        file_put_contents($zipSource, "Content to zip");
+        $zipPath = $file->genFile("zip_test_" . uniqid() . ".zip");
+        $extractPath = $file->genFile("zip_extract_" . uniqid());
+        if ($file->zip($zipSource, $zipPath)) {
+            echo "Zip created: " . $zipPath . $br;
+            if ($file->unzip($zipPath, $extractPath)) {
+                echo "Unzip successful: " . $extractPath . $br;
+                $extracted = $extractPath . "/" . basename($zipSource);
+                echo "Extracted content: " . (file_exists($extracted) ? file_get_contents($extracted) : "N/A") . $br;
+                if (file_exists($extracted)) unlink($extracted);
+                if (is_dir($extractPath)) rmdir($extractPath);
+            } else {
+                echo "Unzip failed: " . $file->lastError . $br;
+            }
+            if (file_exists($zipPath)) unlink($zipPath);
+        } else {
+            echo "Zip failed: " . $file->lastError . $br;
+        }
+        if (file_exists($zipSource)) unlink($zipSource);
+    }
+} else {
+    echo "ZipArchive not available".$br;
+}
+echo $br;
+
 // ========== Url Class Examples ==========
 echo "Url Class Examples".$br;
 echo "==========================================".$br.$br;
 
-// Example 5: Basic URL Operations
-echo "Example 5: Basic URL Operations".$br;
+// Example 6: Basic URL Operations
+echo "Example 6: Basic URL Operations".$br;
 echo "--------------------------------".$br;
 
 $url = new Url();
@@ -121,8 +152,8 @@ echo "Home URL: ".($url->home ?? "null").$br.$br;
 $url->setHome("https://example.com/app");
 echo "Home URL set: ".$url->home.$br.$br;
 
-// Example 6: Generate URLs
-echo "Example 6: Generate URLs".$br;
+// Example 7: Generate URLs
+echo "Example 7: Generate URLs".$br;
 echo "--------------------------------".$br;
 
 // Full URL
@@ -137,8 +168,8 @@ echo "Relative URL: ".$relativeUrl.$br;
 $urlWithFragment = $url->genUrl("page", [], "section1", true);
 echo "URL with fragment: ".$urlWithFragment.$br.$br;
 
-// Example 7: Modify URLs
-echo "Example 7: Modify URLs".$br;
+// Example 8: Modify URLs
+echo "Example 8: Modify URLs".$br;
 echo "--------------------------------".$br;
 
 $sourceUrl = "https://example.com/products?category=electronics&sort=price";
@@ -150,8 +181,8 @@ $modifiedUrl = $url->modifyUrl($sourceUrl, [
 ]);
 echo "Modified URL: ".$modifiedUrl.$br.$br;
 
-// Example 8: URL Info (requires internet)
-echo "Example 8: URL Info".$br;
+// Example 9: URL Info (requires internet)
+echo "Example 9: URL Info".$br;
 echo "--------------------------------".$br;
 
 echo "Getting URL info for https://example.com:".$br;
@@ -169,8 +200,8 @@ echo $br;
 echo "Mime Class Examples".$br;
 echo "==========================================".$br.$br;
 
-// Example 9: Basic MIME Operations
-echo "Example 9: Basic MIME Operations".$br;
+// Example 10: Basic MIME Operations
+echo "Example 10: Basic MIME Operations".$br;
 echo "--------------------------------".$br;
 
 $mime = new Mime();
@@ -179,8 +210,8 @@ echo "Globs2 file: ".$mime->globs2File.$br;
 echo "Aliases file: ".$mime->aliasesFile.$br;
 echo "Generic icons file: ".$mime->genericIconsFile.$br.$br;
 
-// Example 10: File to MIME Type
-echo "Example 10: File to MIME Type".$br;
+// Example 11: File to MIME Type
+echo "Example 11: File to MIME Type".$br;
 echo "--------------------------------".$br;
 
 $testFile = __FILE__;
@@ -204,8 +235,8 @@ if ($mimeType2 !== false) {
 }
 echo $br;
 
-// Example 11: MIME to Icon
-echo "Example 11: MIME to Icon".$br;
+// Example 12: MIME to Icon
+echo "Example 12: MIME to Icon".$br;
 echo "--------------------------------".$br;
 
 if ($mimeType !== false) {
@@ -219,8 +250,8 @@ if ($mimeType !== false) {
 }
 echo $br;
 
-// Example 12: Alias to MIME
-echo "Example 12: Alias to MIME".$br;
+// Example 13: Alias to MIME
+echo "Example 13: Alias to MIME".$br;
 echo "--------------------------------".$br;
 
 $alias = "text/plain";
@@ -242,8 +273,8 @@ if ($aliasFromMime !== false) {
 }
 echo $br;
 
-// Example 13: Debug Information
-echo "Example 13: Debug Information".$br;
+// Example 14: Debug Information
+echo "Example 14: Debug Information".$br;
 echo "--------------------------------".$br;
 
 $fileDebug = $file->__debugInfo();

@@ -1,4 +1,17 @@
-v1.3.3
+v1.3.4 (2026-03-04)
+- File:
+    - Added zip() method to create zip archives from files or directories
+    - Added unzip() method to extract zip archives (supports fileList for selective extraction)
+    - Added unzipFromString() method to extract zip from binary string
+    - Added trimPath() and isAbsolutePath() helper methods
+    - Added removeAll() method to remove all files and sub-directories recursively
+    - Fixed setHome() to handle realpath() failure
+    - Fixed constructor to handle missing ZipArchive extension
+- JsonAPI:
+    - added useRawParams parameter to request() method to use raw parameters instead of building query string
+
+
+v1.3.3 (2026-03-03)
 - Added new tool classes:
     - JsonAPI: JSON API class for handling JSON API requests and responses
 - File:

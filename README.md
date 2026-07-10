@@ -4,6 +4,11 @@
 [![MIT Licensed](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
 [![Total Downloads](https://img.shields.io/packagist/dt/paheon/meowbase.svg)](https://packagist.org/packages/paheon/meowbase)
 
+## Abandoned
+This package is abandoned and will receive no further development!
+
+It is suggested to use the [MeowBase2](https://github.com/paheon/MeowBase2)
+
 ## Overview
 
 MeowBase is a lightweight PHP framework that provides various functionalities including configuration management, caching, database operations, and performance profiling. It is designed to be simple yet powerful, supporting both CLI and Web environments. MeowBase is the foundational base of the Meow Framework, which is a web-based framework for PHP. 
@@ -980,6 +985,19 @@ if ($tempFile !== false) {
     file_put_contents($tempFile, "Temporary content");
     // $tempFile = "/tmp/MyApp_ce0JDh"
 }
+
+// Zip files or directories
+$file->zip('/path/to/file.txt', '/path/to/archive.zip');
+$file->zip(['/path/to/file1.txt', '/path/to/dir'], '/path/to/archive.zip');
+
+// Unzip archive (paths are relative to $file->home when set)
+$file->unzip('/path/to/archive.zip', '/path/to/extract');
+
+// Unzip specific files only
+$file->unzip('/path/to/archive.zip', '/path/to/extract', ['file1.txt', 'dir/file2.txt']);
+
+// Unzip from string (e.g. from API response)
+$file->unzipFromString($zipBinaryString, '/path/to/extract');
 ```
 **Properties:**
 - `$home`: Home directory path
@@ -988,12 +1006,17 @@ if ($tempFile !== false) {
 - `__construct(?string $home = null)`: Initializes file handler
 - `setHome(?string $home = null): void`: Sets home directory
 - `setHomeToCurrent(): void`: Sets home to current directory
+- `trimPath(string $path): string`: Normalizes path separators
+- `isAbsolutePath(string $path): bool`: Checks if path is absolute
 - `genFile(string $relativePath, array $substituteList = []): string`: Builds file path with variable substitution
 - `getFilePath(string $fileWithPath): string`: Gets directory path from file path *(static)*
 - `getFileName(string $fileWithPath): string`: Gets file name from file path *(static)*
 - `getFileExt(string $fileWithPath): string`: Gets file extension from file path *(static)*
 - `tempFile(?string &$filePath = null): mixed`: Creates temporary file and returns resource (auto-deleted on close)
 - `uniqueFile(string $path = "", string $prefix = ""): mixed`: Creates temporary file and returns path
+- `zip(string|array $sources, string $destination, bool $overwrite = true): bool`: Creates zip archive from file(s) or directory(ies)
+- `unzip(string $zipFile, string $destination, array|string|null $fileList = null, bool $createDir = true): bool`: Extracts zip archive to destination
+- `unzipFromString(string $zipString, string $destination, array|string|null $fileList = null, bool $createDir = true): bool`: Extracts zip archive from string
 
 ### 3. URL Handling - Url
 The `Url` class provides URL manipulation and validation features, including URL building, modification, and information retrieval. It supports both relative and absolute URL handling.
